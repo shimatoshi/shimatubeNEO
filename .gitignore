@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+venv/
+.env
+.DS_Store
+downloads/
+user_data.json
+*.bat
+*.log
+node_modules/
+deploy.zip
