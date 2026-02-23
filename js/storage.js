@@ -1,29 +1,23 @@
-// js/storage.js
-// 複雑なDB操作を廃止し、localStorageのみを使用する軽量版
-
 const Storage = {
-    // 履歴の取得
+    getToken: () => localStorage.getItem('shimatube_token'),
+    setToken: (token) => localStorage.setItem('shimatube_token', token),
+    clearToken: () => localStorage.removeItem('shimatube_token'),
+
     getHistory: () => {
         const raw = localStorage.getItem('shimatube_history');
         return raw ? JSON.parse(raw) : [];
     },
-
-    // 履歴に追加 (重複排除して先頭に追加)
     addToHistory: (video) => {
         let list = Storage.getHistory();
-        list = list.filter(v => v.videoId !== video.videoId); // 重複削除
-        list.unshift(video); // 先頭に追加
-        if (list.length > 50) list.pop(); // 50件制限
+        list = list.filter(v => v.videoId !== video.videoId);
+        list.unshift(video);
+        if (list.length > 50) list.pop();
         localStorage.setItem('shimatube_history', JSON.stringify(list));
     },
-
-    // チャンネル登録の取得
     getSubs: () => {
         const raw = localStorage.getItem('shimatube_subs');
         return raw ? JSON.parse(raw) : [];
     },
-
-    // チャンネル登録の切り替え
     toggleSub: (channel) => {
         let list = Storage.getSubs();
         const exists = list.find(c => c.channelId === channel.channelId);
@@ -33,13 +27,9 @@ const Storage = {
             list.push(channel);
         }
         localStorage.setItem('shimatube_subs', JSON.stringify(list));
-        return !exists; // 登録されたらtrue
+        return !exists;
     },
-    
-    // 登録状態チェック
     isSubscribed: (channelId) => {
-        const list = Storage.getSubs();
-        return list.some(c => c.channelId === channelId);
+        return Storage.getSubs().some(c => c.channelId === channelId);
     }
 };
-

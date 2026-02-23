@@ -7,6 +7,7 @@ import os
 import threading
 import re
 import logging
+import hashlib
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%H:%M:%S')
 log = logging.getLogger('shimatube')
@@ -14,12 +15,16 @@ log = logging.getLogger('shimatube')
 PORT = 8080
 DATA_FILE = "user_data.json"
 DOWNLOAD_DIR = "downloads"
+AUTH_PASSWORD = os.environ.get('SHIMATUBE_PASS', 'shimatube')
 
 download_lock = threading.Lock()
 download_states = {}
 
 if not os.path.exists(DOWNLOAD_DIR):
     os.makedirs(DOWNLOAD_DIR)
+
+def make_token(password):
+    return hashlib.sha256(f"shimatube-neo:{password}".encode()).hexdigest()
 
 def format_date(date_str):
     if not date_str:
@@ -89,9 +94,55 @@ def download_worker(video_id, quality="720"):
         with download_lock:
             download_states[video_id] = {"status": "error"}
 
+
+def parse_video_items(stdout, udata=None):
+    """Parse yt-dlp JSON lines into video items."""
+    items = []
+    for line in stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            v = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not v.get('id'):
+            continue
+        item = {
+            "type": "video",
+            "videoId": v.get('id'),
+            "title": v.get('title'),
+            "author": v.get('channel') or v.get('uploader') or '',
+            "channelId": v.get('channel_id'),
+            "lengthSeconds": v.get('duration'),
+            "viewCount": v.get('view_count'),
+            "uploadDate": format_date(v.get('upload_date')),
+            "thumbnail": f"https://i.ytimg.com/vi/{v.get('id')}/mqdefault.jpg"
+        }
+        if udata and is_blocked(item, udata):
+            continue
+        items.append(item)
+    return items
+
+
 class CustomHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, format, *args):
-        pass  # suppress default access logs
+        pass
+
+    def check_auth(self):
+        auth = self.headers.get('Authorization', '')
+        if auth.startswith('Bearer '):
+            return auth[7:] == make_token(AUTH_PASSWORD)
+        return False
+
+    def require_auth(self):
+        if not self.check_auth():
+            self.send_response(401)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": "Unauthorized"}).encode())
+            return False
+        return True
 
     def do_POST(self):
         try:
@@ -99,8 +150,21 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
             req = json.loads(self.rfile.read(length).decode('utf-8'))
             action = req.get('action')
             payload = req.get('payload')
-            data = load_data()
 
+            if action == 'login':
+                if payload == AUTH_PASSWORD:
+                    self.send_json({"status": True, "token": make_token(AUTH_PASSWORD)})
+                else:
+                    self.send_response(401)
+                    self.send_header('Content-type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"error": "Wrong password"}).encode())
+                return
+
+            if not self.require_auth():
+                return
+
+            data = load_data()
             if action == 'update_categories':
                 data['categories'] = payload
             elif action == 'block_channel':
@@ -124,27 +188,42 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(500, str(e))
 
     def do_GET(self):
-        if self.path == "/api/user_data":
-            self.send_json(load_data())
+        # Auth check (public)
+        if self.path == "/api/auth_check":
+            if self.check_auth():
+                self.send_json({"authenticated": True})
+            else:
+                self.send_response(401)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"authenticated": False}).encode())
             return
 
-        if self.path.startswith("/api_proxy/api/v1/search"):
-            self.handle_search()
+        # Static files (no auth)
+        if not self.path.startswith("/api") and not self.path.startswith("/downloads"):
+            super().do_GET()
             return
+
+        # All API/download endpoints require auth
+        if not self.require_auth():
+            return
+
+        if self.path == "/api/user_data":
+            self.send_json(load_data())
+        elif self.path.startswith("/api_proxy/api/v1/search"):
+            self.handle_search()
         elif self.path.startswith("/api_proxy/api/v1/channels/"):
             self.handle_channel()
-            return
         elif self.path.startswith("/api_proxy/api/v1/videos/"):
             self.handle_video_details()
-            return
         elif self.path.startswith("/api_proxy/api/v1/comments/"):
             self.handle_comments()
-            return
+        elif self.path.startswith("/api_proxy/api/v1/playlists/"):
+            self.handle_playlist()
         elif self.path.startswith("/downloads/"):
             self.serve_file(self.path.strip("/"))
-            return
         else:
-            super().do_GET()
+            self.send_error(404)
 
     def handle_search(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -152,6 +231,7 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
         query = params.get('q', [''])[0]
         stype = params.get('type', ['video'])[0]
         page = int(params.get('page', ['1'])[0])
+        live_filter = params.get('filter', [''])[0]
         udata = load_data()
 
         try:
@@ -159,16 +239,28 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
             start = (page - 1) * per_page + 1
             end = page * per_page
 
-            log.info(f"Search: '{query}', Page: {page}, Items: {start}-{end}")
+            log.info(f"Search: '{query}', type={stype}, filter={live_filter}, page={page}")
 
-            command = [
-                "yt-dlp",
-                f"ytsearch{end}:{query}",
-                "--playlist-start", str(start),
-                "--playlist-end", str(end),
-                "--dump-json", "--flat-playlist", "--no-playlist", "--skip-download"
-            ]
-            result = subprocess.run(command, capture_output=True, text=True, encoding='utf-8')
+            if live_filter == 'live':
+                # Live filter: skip flat-playlist to get live_status metadata
+                command = [
+                    "yt-dlp",
+                    f"ytsearch{end}:{query}",
+                    "--playlist-start", str(start),
+                    "--playlist-end", str(end),
+                    "--dump-json", "--no-playlist", "--skip-download",
+                    "--match-filter", "live_status = was_live"
+                ]
+            else:
+                command = [
+                    "yt-dlp",
+                    f"ytsearch{end}:{query}",
+                    "--playlist-start", str(start),
+                    "--playlist-end", str(end),
+                    "--dump-json", "--flat-playlist", "--no-playlist", "--skip-download"
+                ]
+
+            result = subprocess.run(command, capture_output=True, text=True, encoding='utf-8', timeout=120)
             items = []
             seen_channels = set()
 
@@ -191,7 +283,7 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
                             "type": "channel",
                             "channelId": cid,
                             "title": cname,
-                            "thumbnail": f"https://ui-avatars.com/api/?name={cname}&background=random"
+                            "thumbnail": f"https://ui-avatars.com/api/?name={urllib.parse.quote(str(cname))}&background=random"
                         }
                         if not is_blocked(item, udata):
                             items.append(item)
@@ -213,6 +305,9 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
                         items.append(item)
 
             self.send_json(items)
+        except subprocess.TimeoutExpired:
+            log.warning(f"Search timeout: {query}")
+            self.send_json([])
         except Exception as e:
             log.error(f"Search error: {e}")
             self.send_error(500, str(e))
@@ -221,19 +316,25 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         params = urllib.parse.parse_qs(parsed.query)
         page = int(params.get('page', ['1'])[0])
+        live_filter = params.get('filter', [''])[0]
         cid = self.path.split('/')[-1].split('?')[0]
         udata = load_data()
+
         try:
             per_page = 20
             start = (page - 1) * per_page + 1
             end = page * per_page
-            log.info(f"Channel: {cid}, Page: {page}, Items: {start}-{end}")
+            tab = "streams" if live_filter == "live" else "videos"
+
+            log.info(f"Channel: {cid}, tab={tab}, page={page}")
+
             cmd = [
-                "yt-dlp", f"https://www.youtube.com/channel/{cid}/videos",
+                "yt-dlp", f"https://www.youtube.com/channel/{cid}/{tab}",
                 "--playlist-start", str(start), "--playlist-end", str(end),
                 "--dump-json", "--flat-playlist", "--skip-download"
             ]
-            res = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
+            res = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', timeout=60)
+
             vids = []
             ctitle = "Unknown"
             for line in res.stdout.strip().split('\n'):
@@ -259,6 +360,9 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
                 if not is_blocked(item, udata):
                     vids.append(item)
             self.send_json({"channel": {"title": ctitle}, "videos": vids})
+        except subprocess.TimeoutExpired:
+            log.warning(f"Channel timeout: {cid}")
+            self.send_json({"channel": {"title": "Unknown"}, "videos": []})
         except Exception as e:
             log.error(f"Channel error: {e}")
             self.send_error(500, str(e))
@@ -322,6 +426,50 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
             log.error(f"Comments error: {e}")
             self.send_error(500, str(e))
 
+    def handle_playlist(self):
+        pid = self.path.split('/')[-1].split('?')[0]
+        try:
+            log.info(f"Playlist: {pid}")
+            cmd = [
+                "yt-dlp", f"https://www.youtube.com/playlist?list={pid}",
+                "--playlist-end", "200",
+                "--dump-json", "--flat-playlist", "--skip-download"
+            ]
+            res = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', timeout=60)
+
+            videos = []
+            ptitle = "Playlist"
+            for line in res.stdout.strip().split('\n'):
+                if not line:
+                    continue
+                try:
+                    v = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if ptitle == "Playlist":
+                    ptitle = v.get('playlist_title') or v.get('playlist') or "Playlist"
+                if not v.get('id'):
+                    continue
+                videos.append({
+                    "type": "video",
+                    "videoId": v.get('id'),
+                    "title": v.get('title'),
+                    "author": v.get('channel') or v.get('uploader') or '',
+                    "channelId": v.get('channel_id'),
+                    "lengthSeconds": v.get('duration'),
+                    "viewCount": v.get('view_count'),
+                    "uploadDate": format_date(v.get('upload_date')),
+                    "thumbnail": f"https://i.ytimg.com/vi/{v.get('id')}/mqdefault.jpg"
+                })
+
+            self.send_json({"title": ptitle, "videos": videos})
+        except subprocess.TimeoutExpired:
+            log.warning(f"Playlist timeout: {pid}")
+            self.send_json({"title": "Playlist", "videos": []})
+        except Exception as e:
+            log.error(f"Playlist error: {e}")
+            self.send_error(500, str(e))
+
     def send_json(self, data):
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
@@ -336,7 +484,6 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
         query = urllib.parse.parse_qs(parsed.query)
         is_download = query.get('dl', ['0'])[0] == '1'
 
-        # パストラバーサル防止
         real_path = os.path.realpath(path)
         allowed_dir = os.path.realpath(DOWNLOAD_DIR)
         if not real_path.startswith(allowed_dir):
@@ -378,7 +525,7 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Accept-Ranges', 'bytes')
             self.end_headers()
 
-            buffer_size = 4 * 1024 * 1024  # 4MB
+            buffer_size = 4 * 1024 * 1024
 
             with open(path, 'rb') as f:
                 f.seek(start)
@@ -404,5 +551,6 @@ class ThreadingHTTPServer(socketserver.ThreadingTCPServer):
     allow_reuse_address = True
 
 log.info(f"ShimaTube NEO server running on port {PORT}")
+log.info(f"Password: {'*' * len(AUTH_PASSWORD)} (set SHIMATUBE_PASS env to change)")
 with ThreadingHTTPServer(("", PORT), CustomHandler) as httpd:
     httpd.serve_forever()

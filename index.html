@@ -8,6 +8,12 @@
     <link rel="manifest" href="manifest.json">
 </head>
 <body>
+    <div id="login-overlay">
+        <h2>ShimaTube NEO</h2>
+        <input type="password" id="login-password" placeholder="Password" onkeydown="if(event.key==='Enter')app.doLogin()">
+        <button onclick="app.doLogin()">Login</button>
+    </div>
+
     <div id="header">
         <button id="back-btn" onclick="app.goBack()">←</button>
         <button class="btn-icon" onclick="app.toggleConfig()">⚙️</button>
@@ -15,7 +21,7 @@
             <option value="video">Vid</option>
             <option value="channel">Ch</option>
         </select>
-        <input type="text" id="search-input" placeholder="Search">
+        <input type="text" id="search-input" placeholder="Search or paste playlist URL">
         <button class="btn-go" onclick="app.search()">Go</button>
     </div>
 
@@ -25,8 +31,7 @@
 
     <div id="view-player" class="view-section">
         <div id="player-view">
-<video id="main-video" controls playsinline preload="metadata"></video>
-
+            <video id="main-video" controls playsinline preload="metadata"></video>
             <div class="info-area">
                 <div id="v-title" class="video-title"></div>
                 <div class="meta-row">
@@ -101,7 +106,10 @@
             <div id="bc-list" class="tag-list"></div>
         </div>
         <div class="config-section" style="border-bottom:none; margin-top:20px;">
-            <button class="btn" style="width:100%; background:#444; padding:12px;" onclick="if(confirm('Reload app?')){window.location.reload(true);}">↻ Update App (Reload)</button>
+            <button class="btn" style="width:100%; background:#444; padding:12px;" onclick="if(confirm('Reload app?')){window.location.reload(true);}">↻ Update App</button>
+        </div>
+        <div class="config-section" style="border-bottom:none;">
+            <button class="btn" style="width:100%; background:#c0392b; padding:12px; color:#fff;" onclick="app.logout()">Logout</button>
         </div>
     </div>
 
