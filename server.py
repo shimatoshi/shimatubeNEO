@@ -3,25 +3,25 @@ import socketserver
 import subprocess
 import json
 import urllib.parse
+import urllib.request
+import urllib.error
 import os
 import threading
 import re
 import logging
 import hashlib
+import time
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%H:%M:%S')
 log = logging.getLogger('shimatube')
 
 PORT = 8080
 DATA_FILE = "user_data.json"
-DOWNLOAD_DIR = "downloads"
 AUTH_PASSWORD = os.environ.get('SHIMATUBE_PASS', 'shimatube')
 
-download_lock = threading.Lock()
-download_states = {}
-
-if not os.path.exists(DOWNLOAD_DIR):
-    os.makedirs(DOWNLOAD_DIR)
+# URL cache: vid:qual -> {"url": str, "meta": dict, "expiry": float}
+url_cache = {}
+url_cache_lock = threading.Lock()
 
 def make_token(password):
     return hashlib.sha256(f"shimatube-neo:{password}".encode()).hexdigest()
@@ -69,60 +69,48 @@ def is_blocked(item, data):
             return True
     return False
 
-def download_worker(video_id, quality="720"):
-    target_path = os.path.join(DOWNLOAD_DIR, f"{video_id}.mp4")
-    if os.path.exists(target_path):
-        with download_lock:
-            download_states[video_id] = {"status": "ready"}
-        return
-    with download_lock:
-        download_states[video_id] = {"status": "downloading"}
+
+def get_video_url(vid, qual="720"):
+    """Extract direct YouTube CDN URL via yt-dlp, with 4h cache."""
+    cache_key = f"{vid}:{qual}"
+    with url_cache_lock:
+        cached = url_cache.get(cache_key)
+        if cached and time.time() < cached["expiry"]:
+            return cached["url"], cached["meta"]
+
     try:
-        fmt = f"bestvideo[ext=mp4][height<={quality}]+bestaudio[ext=m4a]/best[ext=mp4][height<={quality}]"
-        command = [
-            "yt-dlp", "--downloader", "aria2c", "--downloader-args", "aria2c:-x 16 -k 1M",
-            "--extractor-args", "youtube:player_client=android", "-f", fmt,
-            "--merge-output-format", "mp4", "-o", target_path,
-            f"https://www.youtube.com/watch?v={video_id}"
-        ]
-        subprocess.run(command, check=True)
-        with download_lock:
-            download_states[video_id] = {"status": "ready"}
-        log.info(f"Download complete: {video_id}")
-    except subprocess.CalledProcessError as e:
-        log.error(f"Download failed for {video_id}: {e}")
-        with download_lock:
-            download_states[video_id] = {"status": "error"}
+        fmt = f"best[ext=mp4][height<={qual}]/best[ext=mp4]/best"
+        cmd = ["yt-dlp", "--dump-json", "-f", fmt,
+               f"https://www.youtube.com/watch?v={vid}"]
+        r = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', timeout=20)
+        d = json.loads(r.stdout)
 
+        stream_url = d.get('url')
+        if not stream_url and d.get('requested_formats'):
+            stream_url = d['requested_formats'][0].get('url')
 
-def parse_video_items(stdout, udata=None):
-    """Parse yt-dlp JSON lines into video items."""
-    items = []
-    for line in stdout.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            v = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if not v.get('id'):
-            continue
-        item = {
-            "type": "video",
-            "videoId": v.get('id'),
-            "title": v.get('title'),
-            "author": v.get('channel') or v.get('uploader') or '',
-            "channelId": v.get('channel_id'),
-            "lengthSeconds": v.get('duration'),
-            "viewCount": v.get('view_count'),
-            "uploadDate": format_date(v.get('upload_date')),
-            "thumbnail": f"https://i.ytimg.com/vi/{v.get('id')}/mqdefault.jpg"
+        meta = {
+            "title": d.get('title'),
+            "description": d.get('description'),
+            "author": d.get('uploader'),
+            "channelId": d.get('channel_id'),
+            "viewCount": d.get('view_count'),
+            "uploadDate": format_date(d.get('upload_date')),
+            "thumbnail": d.get('thumbnail')
         }
-        if udata and is_blocked(item, udata):
-            continue
-        items.append(item)
-    return items
+
+        if stream_url:
+            with url_cache_lock:
+                url_cache[cache_key] = {
+                    "url": stream_url,
+                    "meta": meta,
+                    "expiry": time.time() + 14400  # 4 hours
+                }
+
+        return stream_url, meta
+    except Exception as e:
+        log.error(f"get_video_url error for {vid}: {e}")
+        return None, {}
 
 
 class CustomHandler(http.server.SimpleHTTPRequestHandler):
@@ -130,9 +118,17 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
         pass
 
     def check_auth(self):
+        # Header auth
         auth = self.headers.get('Authorization', '')
         if auth.startswith('Bearer '):
-            return auth[7:] == make_token(AUTH_PASSWORD)
+            if auth[7:] == make_token(AUTH_PASSWORD):
+                return True
+        # Query param auth (for <video> src and download links)
+        parsed = urllib.parse.urlparse(self.path)
+        params = urllib.parse.parse_qs(parsed.query)
+        token = params.get('token', [''])[0]
+        if token and token == make_token(AUTH_PASSWORD):
+            return True
         return False
 
     def require_auth(self):
@@ -188,7 +184,6 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(500, str(e))
 
     def do_GET(self):
-        # Auth check (public)
         if self.path == "/api/auth_check":
             if self.check_auth():
                 self.send_json({"authenticated": True})
@@ -200,11 +195,11 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         # Static files (no auth)
-        if not self.path.startswith("/api") and not self.path.startswith("/downloads"):
+        if not self.path.startswith("/api") and not self.path.startswith("/stream"):
             super().do_GET()
             return
 
-        # All API/download endpoints require auth
+        # All API/stream endpoints require auth
         if not self.require_auth():
             return
 
@@ -220,8 +215,8 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_comments()
         elif self.path.startswith("/api_proxy/api/v1/playlists/"):
             self.handle_playlist()
-        elif self.path.startswith("/downloads/"):
-            self.serve_file(self.path.strip("/"))
+        elif self.path.startswith("/stream/"):
+            self.handle_stream()
         else:
             self.send_error(404)
 
@@ -242,7 +237,6 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
             log.info(f"Search: '{query}', type={stype}, filter={live_filter}, page={page}")
 
             if live_filter == 'live':
-                # Live filter: skip flat-playlist to get live_status metadata
                 command = [
                     "yt-dlp",
                     f"ytsearch{end}:{query}",
@@ -371,32 +365,80 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
         vid = self.path.split('/')[-1].split('?')[0]
         parsed = urllib.parse.urlparse(self.path)
         qual = urllib.parse.parse_qs(parsed.query).get('quality', ['720'])[0]
-        meta = {}
+
+        stream_url, meta = get_video_url(vid, qual)
+
+        self.send_json({
+            "status": "ready" if stream_url else "error",
+            "url": f"/stream/{vid}" if stream_url else None,
+            "metadata": meta
+        })
+
+    def handle_stream(self):
+        """Proxy stream from YouTube CDN to client. No disk storage."""
+        parts = self.path.split('?')[0].strip('/').split('/')
+        vid = parts[-1] if parts else ''
+        parsed = urllib.parse.urlparse(self.path)
+        params = urllib.parse.parse_qs(parsed.query)
+        is_download = params.get('dl', ['0'])[0] == '1'
+        qual = params.get('quality', ['720'])[0]
+
+        stream_url, meta = get_video_url(vid, qual)
+        if not stream_url:
+            self.send_error(502, "Could not get stream URL")
+            return
+
         try:
-            cmd = ["yt-dlp", "--dump-json", "--skip-download", f"https://www.youtube.com/watch?v={vid}"]
-            r = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', timeout=15)
-            d = json.loads(r.stdout)
-            meta = {
-                "title": d.get('title'),
-                "description": d.get('description'),
-                "author": d.get('uploader'),
-                "channelId": d.get('channel_id'),
-                "viewCount": d.get('view_count'),
-                "uploadDate": format_date(d.get('upload_date')),
-                "thumbnail": d.get('thumbnail')
-            }
-        except subprocess.TimeoutExpired:
-            log.warning(f"Timeout fetching metadata for {vid}")
-        except (json.JSONDecodeError, subprocess.CalledProcessError) as e:
-            log.warning(f"Failed to get metadata for {vid}: {e}")
+            req = urllib.request.Request(stream_url)
+            req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)')
 
-        tpath = os.path.join(DOWNLOAD_DIR, f"{vid}.mp4")
-        st = "ready" if os.path.exists(tpath) else "downloading"
-        with download_lock:
-            if st == "downloading" and download_states.get(vid, {}).get("status") != "downloading":
-                threading.Thread(target=download_worker, args=(vid, qual), daemon=True).start()
+            # Forward Range header for seeking
+            range_header = self.headers.get('Range')
+            if range_header:
+                req.add_header('Range', range_header)
 
-        self.send_json({"status": st, "url": f"/downloads/{vid}.mp4" if st == "ready" else None, "metadata": meta})
+            resp = urllib.request.urlopen(req, timeout=10)
+
+            self.send_response(resp.status)
+            self.send_header('Content-Type', 'video/mp4')
+            self.send_header('Accept-Ranges', 'bytes')
+
+            if is_download:
+                title = re.sub(r'[<>:"/\\|?*\n]', '_', meta.get('title') or vid)
+                self.send_header('Content-Disposition', f'attachment; filename="{title}.mp4"')
+
+            for h in ['Content-Length', 'Content-Range']:
+                val = resp.headers.get(h)
+                if val:
+                    self.send_header(h, val)
+
+            self.end_headers()
+
+            while True:
+                chunk = resp.read(65536)
+                if not chunk:
+                    break
+                try:
+                    self.wfile.write(chunk)
+                except (BrokenPipeError, ConnectionResetError):
+                    break
+
+            resp.close()
+
+        except urllib.error.HTTPError as e:
+            if e.code == 403:
+                # URL expired, clear cache
+                with url_cache_lock:
+                    url_cache.pop(f"{vid}:{qual}", None)
+                log.warning(f"Stream URL expired for {vid}, cleared cache")
+                self.send_error(502, "Stream URL expired, please retry")
+            else:
+                log.error(f"Stream proxy HTTP error: {e.code}")
+                self.send_error(502, str(e))
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+        except Exception as e:
+            log.error(f"Stream error: {e}")
 
     def handle_comments(self):
         vid = self.path.split('/')[-1]
@@ -478,79 +520,12 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b)
 
-    def serve_file(self, path_with_query):
-        parsed = urllib.parse.urlparse(path_with_query)
-        path = parsed.path.strip("/")
-        query = urllib.parse.parse_qs(parsed.query)
-        is_download = query.get('dl', ['0'])[0] == '1'
-
-        real_path = os.path.realpath(path)
-        allowed_dir = os.path.realpath(DOWNLOAD_DIR)
-        if not real_path.startswith(allowed_dir):
-            self.send_error(403)
-            return
-
-        if not os.path.exists(path):
-            self.send_error(404)
-            return
-
-        try:
-            file_size = os.path.getsize(path)
-            range_header = self.headers.get('Range')
-
-            start, end, length = 0, file_size - 1, file_size
-            status_code = 200
-            headers = {}
-
-            if is_download:
-                filename = os.path.basename(path)
-                headers['Content-Disposition'] = f'attachment; filename="{filename}"'
-
-            if range_header:
-                byte_range = re.search(r'bytes=(\d+)-(\d*)', range_header)
-                if byte_range:
-                    start = int(byte_range.group(1))
-                    if byte_range.group(2):
-                        end = int(byte_range.group(2))
-                    length = end - start + 1
-                    status_code = 206
-                    headers['Content-Range'] = f'bytes {start}-{end}/{file_size}'
-
-            self.send_response(status_code)
-            for k, v in headers.items():
-                self.send_header(k, v)
-
-            self.send_header('Content-Length', str(length))
-            self.send_header('Content-Type', 'video/mp4')
-            self.send_header('Accept-Ranges', 'bytes')
-            self.end_headers()
-
-            buffer_size = 4 * 1024 * 1024
-
-            with open(path, 'rb') as f:
-                f.seek(start)
-                remaining = length
-                while remaining > 0:
-                    read_size = min(buffer_size, remaining)
-                    chunk = f.read(read_size)
-                    if not chunk:
-                        break
-                    try:
-                        self.wfile.write(chunk)
-                    except (BrokenPipeError, ConnectionResetError):
-                        break
-                    remaining -= len(chunk)
-
-        except (BrokenPipeError, ConnectionResetError):
-            pass
-        except Exception as e:
-            log.error(f"Stream error: {e}")
-
 
 class ThreadingHTTPServer(socketserver.ThreadingTCPServer):
     allow_reuse_address = True
 
 log.info(f"ShimaTube NEO server running on port {PORT}")
 log.info(f"Password: {'*' * len(AUTH_PASSWORD)} (set SHIMATUBE_PASS env to change)")
+log.info("Stream mode: proxy (no disk storage)")
 with ThreadingHTTPServer(("", PORT), CustomHandler) as httpd:
     httpd.serve_forever()

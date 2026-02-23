@@ -94,15 +94,15 @@ const UI = {
 
         const videoEl = document.getElementById('main-video');
         const currentSrc = videoEl.getAttribute('data-vid');
+        const token = Storage.getToken();
         if (currentSrc !== videoId) {
             videoEl.setAttribute('data-vid', videoId);
             if (data.status === 'ready' && data.url) {
-                videoEl.src = data.url;
+                videoEl.src = data.url + '?token=' + encodeURIComponent(token);
                 UI.updateDownloadButton(data.url, true);
             } else {
                 videoEl.src = '';
                 UI.updateDownloadButton(null, false);
-                UI.startPolling(videoId);
             }
             videoEl.play().catch(() => {});
         } else {
@@ -115,7 +115,8 @@ const UI = {
     updateDownloadButton: (url, isReady) => {
         const el = document.getElementById('dl-container');
         if (isReady && url) {
-            el.innerHTML = `<a href="${url}?dl=1" class="dl-ready" download>💾 DL</a>`;
+            const token = Storage.getToken();
+            el.innerHTML = `<a href="${url}?dl=1&token=${encodeURIComponent(token)}" class="dl-ready" download>💾 DL</a>`;
         } else {
             el.innerHTML = `<span class="dl-wait">Wait...</span>`;
         }
@@ -138,25 +139,6 @@ const UI = {
     },
     hideMiniPlayer: () => {
         document.getElementById('mini-player').style.display = 'none';
-    },
-
-    startPolling: (videoId) => {
-        if (window.pollInterval) clearInterval(window.pollInterval);
-        window.pollInterval = setInterval(async () => {
-            try {
-                const data = await API.getVideo(videoId);
-                if (data.status === 'ready') {
-                    clearInterval(window.pollInterval);
-                    const videoEl = document.getElementById('main-video');
-                    if (!videoEl.src || videoEl.src === window.location.href) {
-                        videoEl.src = data.url;
-                    }
-                    UI.updateDownloadButton(data.url, true);
-                }
-            } catch {
-                clearInterval(window.pollInterval);
-            }
-        }, 3000);
     },
 
     formatDuration: (sec) => {
