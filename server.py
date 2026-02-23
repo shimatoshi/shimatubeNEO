@@ -231,31 +231,26 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
 
         try:
             per_page = 20
-            start = (page - 1) * per_page + 1
-            end = page * per_page
+            fetch_count = page * per_page
 
             log.info(f"Search: '{query}', type={stype}, filter={live_filter}, page={page}")
 
             if live_filter == 'live':
                 command = [
                     "yt-dlp",
-                    f"ytsearch{end}:{query}",
-                    "--playlist-start", str(start),
-                    "--playlist-end", str(end),
-                    "--dump-json", "--no-playlist", "--skip-download",
+                    f"ytsearch{fetch_count}:{query}",
+                    "--dump-json", "--skip-download",
                     "--match-filter", "live_status = was_live"
                 ]
             else:
                 command = [
                     "yt-dlp",
-                    f"ytsearch{end}:{query}",
-                    "--playlist-start", str(start),
-                    "--playlist-end", str(end),
-                    "--dump-json", "--flat-playlist", "--no-playlist", "--skip-download"
+                    f"ytsearch{fetch_count}:{query}",
+                    "--dump-json", "--flat-playlist", "--skip-download"
                 ]
 
             result = subprocess.run(command, capture_output=True, text=True, encoding='utf-8', timeout=120)
-            items = []
+            all_items = []
             seen_channels = set()
 
             for line in result.stdout.splitlines():
@@ -280,7 +275,7 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
                             "thumbnail": f"https://ui-avatars.com/api/?name={urllib.parse.quote(str(cname))}&background=random"
                         }
                         if not is_blocked(item, udata):
-                            items.append(item)
+                            all_items.append(item)
                 else:
                     if not v.get('id'):
                         continue
@@ -296,8 +291,11 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
                         "thumbnail": f"https://i.ytimg.com/vi/{v.get('id')}/mqdefault.jpg"
                     }
                     if not is_blocked(item, udata):
-                        items.append(item)
+                        all_items.append(item)
 
+            # Slice for the requested page
+            start_idx = (page - 1) * per_page
+            items = all_items[start_idx:start_idx + per_page]
             self.send_json(items)
         except subprocess.TimeoutExpired:
             log.warning(f"Search timeout: {query}")
