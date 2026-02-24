@@ -30,6 +30,21 @@ const UI = {
                     <button class="${btnClass}" onclick="app.toggleSubUniversal('${esc(v.channelId)}', ${JSON.stringify(v.title || '')}, ${JSON.stringify(v.thumbnail || '')})">${btnText}</button>
                 `;
                 container.appendChild(div);
+            } else if (v.type === 'playlist') {
+                const div = document.createElement('div');
+                div.className = 'video-item playlist-item';
+                div.onclick = () => app.openPlaylist(v.playlistId);
+                div.innerHTML = `
+                    <div class="thumb">
+                        <img src="${esc(v.thumbnail)}" loading="lazy" onerror="this.style.display='none'">
+                        <span class="duration">LIST</span>
+                    </div>
+                    <div class="details">
+                        <div class="v-title">${esc(v.title)}</div>
+                        <div class="v-meta">Playlist</div>
+                    </div>
+                `;
+                container.appendChild(div);
             } else {
                 const div = document.createElement('div');
                 div.className = 'video-item';

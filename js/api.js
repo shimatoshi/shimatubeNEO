@@ -17,8 +17,8 @@ async function apiFetch(url, opts = {}) {
 }
 
 const API = {
-    search: async (query, type = 'video', page = 1, filter = '') => {
-        let url = `${API_BASE}/search?q=${encodeURIComponent(query)}&type=${type}&page=${page}`;
+    search: async (query, page = 1, filter = '') => {
+        let url = `${API_BASE}/search?q=${encodeURIComponent(query)}&page=${page}`;
         if (filter) url += `&filter=${filter}`;
         const res = await apiFetch(url);
         return await res.json();

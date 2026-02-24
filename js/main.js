@@ -14,7 +14,6 @@ const app = {
     homeState: 'feed',
     currentSearchPage: 1,
     currentSearchQuery: '',
-    currentSearchType: 'video',
     currentChannelPage: 1,
     currentFilter: '',
     isLoadingMore: false,
@@ -117,7 +116,7 @@ const app = {
 
             if (index > 0) app.toggleCategory(index);
 
-            API.search(cat, 'video').then(res => {
+            API.search(cat).then(res => {
                 UI.renderVideoList(res, listId);
             }).catch(() => {
                 const el = document.getElementById(listId);
@@ -228,7 +227,6 @@ const app = {
 
     search: async (page = 1, append = false) => {
         const query = document.getElementById('search-input').value || app.currentSearchQuery;
-        const type = document.getElementById('search-type').value;
         if (!query) return;
 
         const plId = app.extractPlaylistId(query);
@@ -239,7 +237,6 @@ const app = {
         app.homeState = 'search';
         app.currentSearchPage = page;
         app.currentSearchQuery = query;
-        app.currentSearchType = type;
         app.currentPlaylist = null;
 
         const container = document.getElementById('home-list');
@@ -257,7 +254,7 @@ const app = {
 
         app.isLoadingMore = true;
         try {
-            const results = await API.search(query, type, page, app.currentFilter);
+            const results = await API.search(query, page, app.currentFilter);
             if (results.length < 20) {
                 app.hasMoreResults = false;
                 const s = document.getElementById('scroll-sentinel');

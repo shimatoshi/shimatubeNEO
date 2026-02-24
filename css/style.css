@@ -27,7 +27,6 @@ a { color: #3ea6ff; text-decoration: none; }
 }
 #back-btn { display: none; background: none; border: none; color: #fff; font-size: 18px; padding: 0 5px; }
 .btn-icon { background: none; border: none; color: #fff; font-size: 18px; padding: 0 5px; cursor: pointer; }
-.search-type-select { background: #333; color: #fff; border: none; border-radius: 4px; font-size: 11px; padding: 0 2px; height: 32px; max-width: 60px; }
 #search-input { flex: 1; padding: 0 8px; border-radius: 4px; border: none; background: #303030; color: #fff; font-size: 14px; height: 32px; min-width: 0; }
 .btn-go { padding: 0 10px; background: #3ea6ff; border: none; border-radius: 4px; color: #000; font-weight: bold; font-size: 13px; height: 32px; white-space: nowrap; }
 
@@ -92,6 +91,10 @@ video { width: 100%; max-height: 50vh; background: #000; }
 
 /* Now Playing highlight */
 .video-item.now-playing { background: #1a3a5c; border-radius: 8px; padding: 5px; }
+
+/* Playlist item in search results */
+.playlist-item .thumb { background: #2a1a3a; }
+.playlist-item .duration { background: #7b2ff2; font-weight: bold; }
 
 /* Channel Item */
 .channel-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #222; }

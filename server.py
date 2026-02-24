@@ -224,7 +224,6 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         params = urllib.parse.parse_qs(parsed.query)
         query = params.get('q', [''])[0]
-        stype = params.get('type', ['video'])[0]
         page = int(params.get('page', ['1'])[0])
         live_filter = params.get('filter', [''])[0]
         udata = load_data()
@@ -233,25 +232,22 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
             per_page = 20
             fetch_count = page * per_page
 
-            log.info(f"Search: '{query}', type={stype}, filter={live_filter}, page={page}")
+            log.info(f"Search: '{query}', filter={live_filter}, page={page}")
+
+            search_url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}"
 
             if live_filter == 'live':
-                command = [
-                    "yt-dlp",
-                    f"ytsearch{fetch_count}:{query}",
-                    "--dump-json", "--skip-download",
-                    "--match-filter", "live_status = was_live"
-                ]
-            else:
-                command = [
-                    "yt-dlp",
-                    f"ytsearch{fetch_count}:{query}",
-                    "--dump-json", "--flat-playlist", "--skip-download"
-                ]
+                # YouTube sp param: EgJAAQ== = Live
+                search_url += "&sp=EgJAAQ%3D%3D"
+
+            command = [
+                "yt-dlp", search_url,
+                "--playlist-end", str(fetch_count),
+                "--dump-json", "--flat-playlist", "--skip-download"
+            ]
 
             result = subprocess.run(command, capture_output=True, text=True, encoding='utf-8', timeout=120)
             all_items = []
-            seen_channels = set()
 
             for line in result.stdout.splitlines():
                 line = line.strip()
@@ -262,33 +258,44 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
                 except json.JSONDecodeError:
                     continue
 
-                cid = v.get('channel_id') or v.get('id')
-                cname = v.get('channel') or v.get('uploader') or v.get('title')
+                ie_key = v.get('ie_key', '')
+                url = v.get('url', '')
+                cname = v.get('channel') or v.get('uploader') or v.get('title') or ''
 
-                if stype == 'channel':
-                    if cid and cid not in seen_channels:
-                        seen_channels.add(cid)
-                        item = {
-                            "type": "channel",
-                            "channelId": cid,
-                            "title": cname,
-                            "thumbnail": f"https://ui-avatars.com/api/?name={urllib.parse.quote(str(cname))}&background=random"
-                        }
-                        if not is_blocked(item, udata):
-                            all_items.append(item)
-                else:
-                    if not v.get('id'):
+                if ie_key == 'YoutubeTab' and '/playlist?list=' in url:
+                    # Playlist result
+                    item = {
+                        "type": "playlist",
+                        "playlistId": v.get('id'),
+                        "title": v.get('title'),
+                        "thumbnail": f"https://i.ytimg.com/vi/{v.get('id', '')}/mqdefault.jpg"
+                    }
+                    all_items.append(item)
+                elif ie_key == 'YoutubeTab' and '/channel/' in url:
+                    # Channel result
+                    item = {
+                        "type": "channel",
+                        "channelId": v.get('id'),
+                        "title": cname,
+                        "thumbnail": f"https://ui-avatars.com/api/?name={urllib.parse.quote(str(cname))}&background=random"
+                    }
+                    if not is_blocked(item, udata):
+                        all_items.append(item)
+                elif ie_key == 'Youtube' or v.get('id'):
+                    # Video result
+                    vid = v.get('id')
+                    if not vid:
                         continue
                     item = {
                         "type": "video",
-                        "videoId": v.get('id'),
+                        "videoId": vid,
                         "title": v.get('title'),
                         "author": cname,
                         "channelId": v.get('channel_id'),
                         "lengthSeconds": v.get('duration'),
                         "viewCount": v.get('view_count'),
                         "uploadDate": format_date(v.get('upload_date')),
-                        "thumbnail": f"https://i.ytimg.com/vi/{v.get('id')}/mqdefault.jpg"
+                        "thumbnail": f"https://i.ytimg.com/vi/{vid}/mqdefault.jpg"
                     }
                     if not is_blocked(item, udata):
                         all_items.append(item)
