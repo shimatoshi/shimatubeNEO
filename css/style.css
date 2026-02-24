@@ -3,22 +3,6 @@ body { margin: 0; padding-bottom: 60px; font-family: -apple-system, BlinkMacSyst
 a { color: #3ea6ff; text-decoration: none; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-/* Login */
-#login-overlay {
-    display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: #121212; z-index: 500; align-items: center; justify-content: center;
-    flex-direction: column; gap: 15px;
-}
-#login-overlay h2 { color: #3ea6ff; margin: 0; font-size: 22px; }
-#login-overlay input {
-    padding: 12px; background: #222; border: 1px solid #444; color: #fff;
-    border-radius: 8px; font-size: 16px; width: 250px; text-align: center;
-}
-#login-overlay button {
-    padding: 12px 40px; background: #3ea6ff; border: none; border-radius: 8px;
-    color: #000; font-weight: bold; font-size: 16px; cursor: pointer;
-}
-
 /* Header */
 #header {
     position: sticky; top: 0; background: #202020; padding: 8px 5px;

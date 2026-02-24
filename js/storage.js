@@ -1,8 +1,4 @@
 const Storage = {
-    getToken: () => localStorage.getItem('shimatube_token'),
-    setToken: (token) => localStorage.setItem('shimatube_token', token),
-    clearToken: () => localStorage.removeItem('shimatube_token'),
-
     getHistory: () => {
         const raw = localStorage.getItem('shimatube_history');
         return raw ? JSON.parse(raw) : [];

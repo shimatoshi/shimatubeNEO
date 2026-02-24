@@ -23,14 +23,6 @@ const app = {
     playlistIndex: -1,
 
     init: async () => {
-        const token = Storage.getToken();
-        if (!token) { app.showLogin(); return; }
-        try {
-            const res = await fetch('/api/auth_check', { headers: authHeaders() });
-            if (!res.ok) { Storage.clearToken(); app.showLogin(); return; }
-        } catch { /* network error, try anyway */ }
-
-        document.getElementById('login-overlay').style.display = 'none';
         app.navStack = ['home'];
         app.updateBackBtn();
         app.switchTab('home', false);
@@ -50,37 +42,9 @@ const app = {
         });
     },
 
-    showLogin: () => {
-        document.getElementById('login-overlay').style.display = 'flex';
-    },
-
-    doLogin: async () => {
-        const pw = document.getElementById('login-password').value;
-        if (!pw) return;
-        try {
-            const res = await fetch('/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'login', payload: pw })
-            });
-            if (res.ok) {
-                const data = await res.json();
-                Storage.setToken(data.token);
-                app.init();
-            } else {
-                toast('Wrong password');
-            }
-        } catch { toast('Connection error'); }
-    },
-
-    logout: () => {
-        Storage.clearToken();
-        app.showLogin();
-    },
-
     loadUserData: async () => {
         try {
-            const res = await apiFetch('/api/user_data');
+            const res = await fetch('/api/user_data');
             app.userData = await res.json();
         } catch (e) { console.error(e); }
     },
@@ -503,7 +467,7 @@ const app = {
         });
     },
     updateServer: async (action, payload) => {
-        await apiFetch('/', { method: 'POST', body: JSON.stringify({ action, payload }) });
+        await fetch('/', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ action, payload }) });
         await app.loadUserData();
     },
     addCategory: async () => {

@@ -8,12 +8,6 @@
     <link rel="manifest" href="manifest.json">
 </head>
 <body>
-    <div id="login-overlay">
-        <h2>ShimaTube NEO</h2>
-        <input type="password" id="login-password" placeholder="Password" onkeydown="if(event.key==='Enter')app.doLogin()">
-        <button onclick="app.doLogin()">Login</button>
-    </div>
-
     <div id="header">
         <button id="back-btn" onclick="app.goBack()">←</button>
         <button class="btn-icon" onclick="app.toggleConfig()">⚙️</button>
@@ -103,9 +97,6 @@
         </div>
         <div class="config-section" style="border-bottom:none; margin-top:20px;">
             <button class="btn" style="width:100%; background:#444; padding:12px;" onclick="if(confirm('Reload app?')){window.location.reload(true);}">↻ Update App</button>
-        </div>
-        <div class="config-section" style="border-bottom:none;">
-            <button class="btn" style="width:100%; background:#c0392b; padding:12px; color:#fff;" onclick="app.logout()">Logout</button>
         </div>
     </div>
 

@@ -109,11 +109,10 @@ const UI = {
 
         const videoEl = document.getElementById('main-video');
         const currentSrc = videoEl.getAttribute('data-vid');
-        const token = Storage.getToken();
         if (currentSrc !== videoId) {
             videoEl.setAttribute('data-vid', videoId);
             if (data.status === 'ready' && data.url) {
-                videoEl.src = data.url + '?token=' + encodeURIComponent(token);
+                videoEl.src = data.url;
                 UI.updateDownloadButton(data.url, true);
             } else {
                 videoEl.src = '';
@@ -130,8 +129,7 @@ const UI = {
     updateDownloadButton: (url, isReady) => {
         const el = document.getElementById('dl-container');
         if (isReady && url) {
-            const token = Storage.getToken();
-            el.innerHTML = `<a href="${url}?dl=1&token=${encodeURIComponent(token)}" class="dl-ready" download>💾 DL</a>`;
+            el.innerHTML = `<a href="${url}?dl=1" class="dl-ready" download>💾 DL</a>`;
         } else {
             el.innerHTML = `<span class="dl-wait">Wait...</span>`;
         }

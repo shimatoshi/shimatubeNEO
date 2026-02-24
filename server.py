@@ -9,7 +9,6 @@ import os
 import threading
 import re
 import logging
-import hashlib
 import time
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%H:%M:%S')
@@ -17,14 +16,10 @@ log = logging.getLogger('shimatube')
 
 PORT = 8080
 DATA_FILE = "user_data.json"
-AUTH_PASSWORD = os.environ.get('SHIMATUBE_PASS', 'shimatube')
 
 # URL cache: vid:qual -> {"url": str, "meta": dict, "expiry": float}
 url_cache = {}
 url_cache_lock = threading.Lock()
-
-def make_token(password):
-    return hashlib.sha256(f"shimatube-neo:{password}".encode()).hexdigest()
 
 def format_date(date_str):
     if not date_str:
@@ -117,48 +112,12 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
 
-    def check_auth(self):
-        # Header auth
-        auth = self.headers.get('Authorization', '')
-        if auth.startswith('Bearer '):
-            if auth[7:] == make_token(AUTH_PASSWORD):
-                return True
-        # Query param auth (for <video> src and download links)
-        parsed = urllib.parse.urlparse(self.path)
-        params = urllib.parse.parse_qs(parsed.query)
-        token = params.get('token', [''])[0]
-        if token and token == make_token(AUTH_PASSWORD):
-            return True
-        return False
-
-    def require_auth(self):
-        if not self.check_auth():
-            self.send_response(401)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps({"error": "Unauthorized"}).encode())
-            return False
-        return True
-
     def do_POST(self):
         try:
             length = int(self.headers['Content-Length'])
             req = json.loads(self.rfile.read(length).decode('utf-8'))
             action = req.get('action')
             payload = req.get('payload')
-
-            if action == 'login':
-                if payload == AUTH_PASSWORD:
-                    self.send_json({"status": True, "token": make_token(AUTH_PASSWORD)})
-                else:
-                    self.send_response(401)
-                    self.send_header('Content-type', 'application/json')
-                    self.end_headers()
-                    self.wfile.write(json.dumps({"error": "Wrong password"}).encode())
-                return
-
-            if not self.require_auth():
-                return
 
             data = load_data()
             if action == 'update_categories':
@@ -184,23 +143,9 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(500, str(e))
 
     def do_GET(self):
-        if self.path == "/api/auth_check":
-            if self.check_auth():
-                self.send_json({"authenticated": True})
-            else:
-                self.send_response(401)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({"authenticated": False}).encode())
-            return
-
-        # Static files (no auth)
+        # Static files
         if not self.path.startswith("/api") and not self.path.startswith("/stream"):
             super().do_GET()
-            return
-
-        # All API/stream endpoints require auth
-        if not self.require_auth():
             return
 
         if self.path == "/api/user_data":
@@ -530,7 +475,6 @@ class ThreadingHTTPServer(socketserver.ThreadingTCPServer):
     allow_reuse_address = True
 
 log.info(f"ShimaTube NEO server running on port {PORT}")
-log.info(f"Password: {'*' * len(AUTH_PASSWORD)} (set SHIMATUBE_PASS env to change)")
 log.info("Stream mode: proxy (no disk storage)")
 with ThreadingHTTPServer(("", PORT), CustomHandler) as httpd:
     httpd.serve_forever()
