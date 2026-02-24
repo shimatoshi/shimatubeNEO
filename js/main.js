@@ -40,6 +40,22 @@ const app = {
                 app.playVideo(next.videoId);
             }
         });
+
+        const verEl = document.getElementById('app-version');
+        if (verEl) verEl.textContent = 'ShimaTube NEO ' + APP_VERSION;
+    },
+
+    forceUpdate: async () => {
+        toast('Updating...');
+        if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+        }
+        if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(r => r.unregister()));
+        }
+        window.location.href = window.location.pathname + '?t=' + Date.now();
     },
 
     loadUserData: async () => {

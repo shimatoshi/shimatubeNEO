@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ShimaTube NEO</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=13">
     <link rel="manifest" href="manifest.json">
 </head>
 <body>
@@ -96,8 +96,9 @@
             <div id="bc-list" class="tag-list"></div>
         </div>
         <div class="config-section" style="border-bottom:none; margin-top:20px;">
-            <button class="btn" style="width:100%; background:#444; padding:12px;" onclick="if(confirm('Reload app?')){window.location.reload(true);}">↻ Update App</button>
+            <button class="btn" style="width:100%; background:#3ea6ff; padding:12px;" onclick="app.forceUpdate()">↻ Update App</button>
         </div>
+        <div style="text-align:center; color:#555; font-size:11px; margin-top:15px;" id="app-version"></div>
     </div>
 
     <div id="toast"></div>
@@ -114,9 +115,10 @@
         </div>
     </div>
 
-    <script src="js/storage.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/main.js"></script>
+    <script>const APP_VERSION = 'v13.0';</script>
+    <script src="js/storage.js?v=13"></script>
+    <script src="js/api.js?v=13"></script>
+    <script src="js/ui.js?v=13"></script>
+    <script src="js/main.js?v=13"></script>
 </body>
 </html>
