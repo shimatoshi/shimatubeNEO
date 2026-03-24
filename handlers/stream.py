@@ -39,7 +39,9 @@ def handle_stream(handler):
 
         if is_download:
             title = re.sub(r'[<>:"/\\|?*\n]', '_', meta.get('title') or vid)
-            handler.send_header('Content-Disposition', f'attachment; filename="{title}.mp4"')
+            safe_title = urllib.parse.quote(title)
+            handler.send_header('Content-Disposition',
+                f"attachment; filename=\"{vid}.mp4\"; filename*=UTF-8''{safe_title}.mp4")
 
         for h in ['Content-Length', 'Content-Range']:
             val = resp.headers.get(h)
