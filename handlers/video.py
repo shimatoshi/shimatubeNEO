@@ -7,7 +7,7 @@ def handle_video_details(handler):
     parsed = urllib.parse.urlparse(handler.path)
     qual = urllib.parse.parse_qs(parsed.query).get('quality', ['720'])[0]
 
-    stream_url, meta = get_video_url(vid, qual)
+    stream_url, _, meta = get_video_url(vid, qual)
 
     handler.send_json({
         "status": "ready" if stream_url else "error",

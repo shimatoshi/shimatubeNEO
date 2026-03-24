@@ -17,14 +17,15 @@ def handle_stream(handler):
     is_download = params.get('dl', ['0'])[0] == '1'
     qual = params.get('quality', ['720'])[0]
 
-    stream_url, meta = get_video_url(vid, qual)
+    stream_url, cdn_headers, meta = get_video_url(vid, qual)
     if not stream_url:
         handler.send_error(502, "Could not get stream URL")
         return
 
     try:
         req = urllib.request.Request(stream_url)
-        req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)')
+        for k, v in cdn_headers.items():
+            req.add_header(k, v)
 
         range_header = handler.headers.get('Range')
         if range_header:
