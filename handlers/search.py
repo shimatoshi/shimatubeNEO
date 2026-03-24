@@ -29,7 +29,6 @@ def handle_search(handler):
             "yt-dlp", search_url,
             "--playlist-end", str(fetch_count),
             "--dump-json", "--flat-playlist", "--skip-download",
-            "--cookies-from-browser", "chrome"
         ]
 
         result = subprocess.run(command, capture_output=True, text=True, encoding='utf-8', timeout=120)

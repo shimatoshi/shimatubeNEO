@@ -22,7 +22,6 @@ def get_video_url(vid, qual="720"):
     try:
         fmt = f"best[ext=mp4][height<={qual}]/best[ext=mp4]/best"
         cmd = ["yt-dlp", "--dump-json", "-f", fmt,
-               "--cookies-from-browser", "chrome",
                f"https://www.youtube.com/watch?v={vid}"]
         r = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', timeout=20)
         d = json.loads(r.stdout)
