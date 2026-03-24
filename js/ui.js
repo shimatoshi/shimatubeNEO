@@ -164,21 +164,14 @@ const UI = {
         if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         return `${m}:${s.toString().padStart(2, '0')}`;
     },
-    startDownload: async (videoId) => {
-        toast('Preparing download...');
-        try {
-            const res = await fetch(`/api_proxy/api/v1/videos/${videoId}?quality=720`);
-            const data = await res.json();
-            if (data.status !== 'ready' || !data.url) {
-                toast('Download failed: this video is unavailable');
-                return;
-            }
-            // Open in new window - browser handles the download natively
-            window.open(data.url + '?dl=1', '_blank');
-            toast('Download started');
-        } catch (e) {
-            toast('Download error');
-        }
+    startDownload: (videoId) => {
+        toast('Download started');
+        const a = document.createElement('a');
+        a.href = `/stream/${videoId}?dl=1`;
+        a.download = '';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
     },
 
     addLongPress: (el, videoId) => {
