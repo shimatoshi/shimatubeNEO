@@ -167,24 +167,15 @@ const UI = {
     startDownload: async (videoId) => {
         toast('Preparing download...');
         try {
-            const res = await fetch(`/stream/${videoId}?dl=1`);
-            const ct = res.headers.get('Content-Type') || '';
-            if (!res.ok || !ct.includes('video')) {
+            const res = await fetch(`/api_proxy/api/v1/videos/${videoId}?quality=720`);
+            const data = await res.json();
+            if (data.status !== 'ready' || !data.url) {
                 toast('Download failed: this video is unavailable');
                 return;
             }
-            const blob = await res.blob();
-            const disp = res.headers.get('Content-Disposition') || '';
-            const m = disp.match(/filename="(.+?)"/);
-            const fname = m ? m[1] : videoId + '.mp4';
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = fname;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            URL.revokeObjectURL(a.href);
-            toast('Download complete');
+            // Open in new window - browser handles the download natively
+            window.open(data.url + '?dl=1', '_blank');
+            toast('Download started');
         } catch (e) {
             toast('Download error');
         }

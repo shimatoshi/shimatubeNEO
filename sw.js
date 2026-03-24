@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shimatube-app-v17';
+const CACHE_NAME = 'shimatube-app-v18';
 
 const APP_ASSETS = [
     '/',
