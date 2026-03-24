@@ -1,28 +1,28 @@
 const API_BASE = '/api_proxy/api/v1';
 
 const API = {
-    search: async (query, page = 1, filter = '') => {
+    _fetch: async (url) => {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+        return res.json();
+    },
+    search: (query, page = 1, filter = '') => {
         let url = `${API_BASE}/search?q=${encodeURIComponent(query)}&page=${page}`;
         if (filter) url += `&filter=${filter}`;
-        const res = await fetch(url);
-        return await res.json();
+        return API._fetch(url);
     },
-    getVideo: async (videoId) => {
-        const res = await fetch(`${API_BASE}/videos/${videoId}?quality=720`);
-        return await res.json();
+    getVideo: (videoId) => {
+        return API._fetch(`${API_BASE}/videos/${videoId}?quality=720`);
     },
-    getComments: async (videoId) => {
-        const res = await fetch(`${API_BASE}/comments/${videoId}`);
-        return await res.json();
+    getComments: (videoId) => {
+        return API._fetch(`${API_BASE}/comments/${videoId}`);
     },
-    getChannelVideos: async (channelId, page = 1, filter = '') => {
+    getChannelVideos: (channelId, page = 1, filter = '') => {
         let url = `${API_BASE}/channels/${channelId}?page=${page}`;
         if (filter) url += `&filter=${filter}`;
-        const res = await fetch(url);
-        return await res.json();
+        return API._fetch(url);
     },
-    getPlaylist: async (playlistId) => {
-        const res = await fetch(`${API_BASE}/playlists/${playlistId}`);
-        return await res.json();
+    getPlaylist: (playlistId) => {
+        return API._fetch(`${API_BASE}/playlists/${playlistId}`);
     }
 };
