@@ -64,7 +64,7 @@ const UI = {
                             ${v.channelId ? `<span class="block-btn" onclick="app.blockChannel('${esc(v.channelId)}', ${JSON.stringify(v.author || '')})">Block</span>` : ''}
                         </div>
                     </div>
-                    <a class="dl-btn" href="/stream/${esc(v.videoId)}?dl=1" onclick="event.stopPropagation()" download>💾</a>
+                    <div class="dl-btn" onclick="event.stopPropagation(); UI.startDownload('${esc(v.videoId)}')">💾</div>
                 `;
                 UI.addLongPress(div, v.videoId);
                 container.appendChild(div);
@@ -164,18 +164,33 @@ const UI = {
         if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         return `${m}:${s.toString().padStart(2, '0')}`;
     },
-    addLongPress: (el, videoId) => {
-        let timer = null;
-        const start = (e) => {
-            timer = setTimeout(() => {
-                timer = null;
+    startDownload: async (videoId) => {
+        toast('Preparing download...');
+        try {
+            const res = await fetch(`/api_proxy/api/v1/videos/${videoId}?quality=720`);
+            const data = await res.json();
+            if (data.status === 'ready' && data.url) {
                 const a = document.createElement('a');
-                a.href = `/stream/${videoId}?dl=1`;
+                a.href = data.url + '?dl=1';
                 a.download = '';
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
                 toast('Download started');
+            } else {
+                toast('Download failed: video unavailable');
+            }
+        } catch (e) {
+            toast('Download error');
+        }
+    },
+
+    addLongPress: (el, videoId) => {
+        let timer = null;
+        const start = () => {
+            timer = setTimeout(() => {
+                timer = null;
+                UI.startDownload(videoId);
             }, 600);
         };
         const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
