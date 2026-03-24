@@ -64,7 +64,9 @@ const UI = {
                             ${v.channelId ? `<span class="block-btn" onclick="app.blockChannel('${esc(v.channelId)}', ${JSON.stringify(v.author || '')})">Block</span>` : ''}
                         </div>
                     </div>
+                    <a class="dl-btn" href="/stream/${esc(v.videoId)}?dl=1" onclick="event.stopPropagation()" download>💾</a>
                 `;
+                UI.addLongPress(div, v.videoId);
                 container.appendChild(div);
             }
         });
@@ -162,6 +164,29 @@ const UI = {
         if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         return `${m}:${s.toString().padStart(2, '0')}`;
     },
+    addLongPress: (el, videoId) => {
+        let timer = null;
+        const start = (e) => {
+            timer = setTimeout(() => {
+                timer = null;
+                const a = document.createElement('a');
+                a.href = `/stream/${videoId}?dl=1`;
+                a.download = '';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                toast('Download started');
+            }, 600);
+        };
+        const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+        el.addEventListener('touchstart', start, { passive: true });
+        el.addEventListener('touchend', cancel);
+        el.addEventListener('touchmove', cancel);
+        el.addEventListener('mousedown', start);
+        el.addEventListener('mouseup', cancel);
+        el.addEventListener('mouseleave', cancel);
+    },
+
     formatViews: (num) => {
         if (!num) return '';
         if (num > 1000000) return (num / 1000000).toFixed(1) + 'M';

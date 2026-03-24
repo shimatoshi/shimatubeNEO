@@ -72,6 +72,8 @@ video { width: 100%; max-height: 50vh; background: #000; }
 .v-title { font-size: 13px; font-weight: 500; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .v-meta { font-size: 11px; color: #aaa; margin-top: 4px; }
 .block-btn { color: #ff4444; border: 1px solid #ff4444; padding: 2px 4px; border-radius: 4px; font-size: 10px; margin-left: 8px; cursor: pointer; display: inline-block; }
+.dl-btn { display: flex; align-items: center; justify-content: center; width: 36px; flex-shrink: 0; font-size: 18px; text-decoration: none; color: #2ecc71; opacity: 0.7; transition: opacity 0.2s; }
+.dl-btn:active { opacity: 1; }
 
 /* Now Playing highlight */
 .video-item.now-playing { background: #1a3a5c; border-radius: 8px; padding: 5px; }
