@@ -1,29 +1,40 @@
 const Storage = {
     getHistory: () => {
-        const raw = localStorage.getItem('shimatube_history');
-        return raw ? JSON.parse(raw) : [];
+        return (app.userData && app.userData.history) ? app.userData.history : [];
     },
-    addToHistory: (video) => {
-        let list = Storage.getHistory();
-        list = list.filter(v => v.videoId !== video.videoId);
-        list.unshift(video);
-        if (list.length > 50) list.pop();
-        localStorage.setItem('shimatube_history', JSON.stringify(list));
+    addToHistory: async (video) => {
+        try {
+            await fetch('/api/history', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(video)
+            });
+            if (app.userData) {
+                app.userData.history = app.userData.history.filter(v => v.videoId !== video.videoId);
+                app.userData.history.unshift(video);
+                if (app.userData.history.length > 50) app.userData.history.pop();
+            }
+        } catch (e) { console.error(e); }
     },
     getSubs: () => {
-        const raw = localStorage.getItem('shimatube_subs');
-        return raw ? JSON.parse(raw) : [];
+        return (app.userData && app.userData.subscriptions) ? app.userData.subscriptions : [];
     },
-    toggleSub: (channel) => {
-        let list = Storage.getSubs();
-        const exists = list.find(c => c.channelId === channel.channelId);
-        if (exists) {
-            list = list.filter(c => c.channelId !== channel.channelId);
-        } else {
-            list.push(channel);
-        }
-        localStorage.setItem('shimatube_subs', JSON.stringify(list));
-        return !exists;
+    toggleSub: async (channel) => {
+        try {
+            const res = await fetch('/api/subscribe', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(channel)
+            });
+            const data = await res.json();
+            if (data.subscribed) {
+                app.userData.subscriptions.push(channel);
+            } else {
+                app.userData.subscriptions = app.userData.subscriptions.filter(
+                    c => c.channelId !== channel.channelId);
+            }
+            return data.subscribed;
+        } catch (e) { console.error(e); return false; }
     },
     isSubscribed: (channelId) => {
         return Storage.getSubs().some(c => c.channelId === channelId);

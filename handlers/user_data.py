@@ -1,12 +1,15 @@
 import json
 import logging
 
-from utils.data_file import load_data, save_data
+from utils.db import (get_user_data, update_categories, block_channel,
+                       unblock_channel, block_keyword, unblock_keyword,
+                       add_subscription, remove_subscription, is_subscribed,
+                       add_history)
 
 log = logging.getLogger('shimatube')
 
 def handle_user_data_get(handler):
-    handler.send_json(load_data())
+    handler.send_json(get_user_data(handler.user_id))
 
 def handle_user_data_post(handler):
     try:
@@ -14,26 +17,47 @@ def handle_user_data_post(handler):
         req = json.loads(handler.rfile.read(length).decode('utf-8'))
         action = req.get('action')
         payload = req.get('payload')
+        uid = handler.user_id
 
-        data = load_data()
         if action == 'update_categories':
-            data['categories'] = payload
+            update_categories(uid, payload)
         elif action == 'block_channel':
-            if not any(x['id'] == payload['id'] for x in data['blocked_channels']):
-                data['blocked_channels'].append(payload)
+            block_channel(uid, payload['id'], payload.get('name', ''))
         elif action == 'unblock_channel':
-            data['blocked_channels'] = [x for x in data['blocked_channels'] if x['id'] != payload['id']]
+            unblock_channel(uid, payload['id'])
         elif action == 'block_keyword':
-            if payload not in data['blocked_keywords']:
-                data['blocked_keywords'].append(payload)
+            block_keyword(uid, payload)
         elif action == 'unblock_keyword':
-            data['blocked_keywords'] = [x for x in data['blocked_keywords'] if x != payload]
+            unblock_keyword(uid, payload)
 
-        save_data(data)
-        handler.send_json({"status": True, "data": data})
-    except (json.JSONDecodeError, KeyError, TypeError) as e:
+        handler.send_json({"status": True, "data": get_user_data(uid)})
+    except Exception as e:
         log.error(f"POST error: {e}")
         handler.send_error(400, str(e))
+
+def handle_subscribe(handler):
+    try:
+        length = int(handler.headers['Content-Length'])
+        req = json.loads(handler.rfile.read(length).decode('utf-8'))
+        uid = handler.user_id
+        channel_id = req['channelId']
+
+        if is_subscribed(uid, channel_id):
+            remove_subscription(uid, channel_id)
+            handler.send_json({"subscribed": False})
+        else:
+            add_subscription(uid, channel_id, req.get('title', ''), req.get('thumbnail', ''))
+            handler.send_json({"subscribed": True})
     except Exception as e:
-        log.error(f"POST internal error: {e}")
-        handler.send_error(500, str(e))
+        log.error(f"Subscribe error: {e}")
+        handler.send_error(400, str(e))
+
+def handle_history(handler):
+    try:
+        length = int(handler.headers['Content-Length'])
+        req = json.loads(handler.rfile.read(length).decode('utf-8'))
+        add_history(handler.user_id, req)
+        handler.send_json({"status": True})
+    except Exception as e:
+        log.error(f"History error: {e}")
+        handler.send_error(400, str(e))

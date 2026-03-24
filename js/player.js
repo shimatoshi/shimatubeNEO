@@ -7,7 +7,7 @@ Object.assign(app, {
             app.currentVideoMeta = data.metadata;
             app.currentChannelId = data.metadata.channelId;
             UI.setupPlayer(data, videoId);
-            Storage.addToHistory({
+            await Storage.addToHistory({
                 videoId, title: data.metadata.title,
                 thumbnail: data.metadata.thumbnail, lengthSeconds: 0,
                 viewCount: data.metadata.viewCount, type: 'video'
@@ -102,15 +102,15 @@ Object.assign(app, {
         else if (v && v.webkitSetPresentationMode) v.webkitSetPresentationMode('picture-in-picture');
     },
 
-    toggleSub: () => {
+    toggleSub: async () => {
         if (!app.currentChannelId || !app.currentVideoMeta) return;
-        app.toggleSubUniversal(app.currentChannelId, app.currentVideoMeta.author, app.currentVideoMeta.thumbnail);
+        await app.toggleSubUniversal(app.currentChannelId, app.currentVideoMeta.author, app.currentVideoMeta.thumbnail);
         UI.updateSubButtonInPlayer(app.currentChannelId);
     },
     toggleSubFromPlayer: () => { app.toggleSub(); },
 
-    toggleSubUniversal: (cid, title, thumb) => {
-        const isSub = Storage.toggleSub({ channelId: cid, title, thumbnail: thumb });
+    toggleSubUniversal: async (cid, title, thumb) => {
+        const isSub = await Storage.toggleSub({ channelId: cid, title, thumbnail: thumb });
         if (app.navStack[app.navStack.length - 1] === 'subs') {
             UI.renderChannelList(Storage.getSubs(), 'subs-list');
         } else {

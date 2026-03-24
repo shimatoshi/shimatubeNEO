@@ -3,6 +3,33 @@ app.init = async () => {
     app.updateBackBtn();
     app.switchTab('home', false);
     await app.loadUserData();
+
+    // Migrate localStorage → server (one-time)
+    if (!localStorage.getItem('shimatube_migrated')) {
+        const oldSubs = localStorage.getItem('shimatube_subs');
+        if (oldSubs) {
+            for (const ch of JSON.parse(oldSubs)) {
+                await fetch('/api/subscribe', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(ch)
+                });
+            }
+        }
+        const oldHist = localStorage.getItem('shimatube_history');
+        if (oldHist) {
+            for (const v of JSON.parse(oldHist).reverse()) {
+                await fetch('/api/history', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(v)
+                });
+            }
+        }
+        localStorage.setItem('shimatube_migrated', '1');
+        await app.loadUserData();
+    }
+
     app.renderHome();
 
     document.getElementById('search-input').addEventListener('keydown', e => {

@@ -5,6 +5,8 @@ venv/
 .DS_Store
 downloads/
 user_data.json
+user_data.json.bak
+shimatube.db
 *.bat
 *.log
 node_modules/

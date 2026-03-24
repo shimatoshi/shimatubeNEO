@@ -3,7 +3,7 @@ import subprocess
 import json
 import logging
 
-from utils.data_file import load_data, is_blocked
+from utils.db import is_blocked
 from utils.formatting import format_date
 
 log = logging.getLogger('shimatube')
@@ -14,8 +14,6 @@ def handle_search(handler):
     query = params.get('q', [''])[0]
     page = int(params.get('page', ['1'])[0])
     live_filter = params.get('filter', [''])[0]
-    udata = load_data()
-
     try:
         per_page = 20
         fetch_count = page * per_page
@@ -64,7 +62,7 @@ def handle_search(handler):
                     "title": cname,
                     "thumbnail": f"https://ui-avatars.com/api/?name={urllib.parse.quote(str(cname))}&background=random"
                 }
-                if not is_blocked(item, udata):
+                if not is_blocked(item, handler.user_id):
                     all_items.append(item)
             elif ie_key == 'Youtube' or v.get('id'):
                 vid = v.get('id')
@@ -81,7 +79,7 @@ def handle_search(handler):
                     "uploadDate": format_date(v.get('upload_date')),
                     "thumbnail": f"https://i.ytimg.com/vi/{vid}/mqdefault.jpg"
                 }
-                if not is_blocked(item, udata):
+                if not is_blocked(item, handler.user_id):
                     all_items.append(item)
 
         start_idx = (page - 1) * per_page

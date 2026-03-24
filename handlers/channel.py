@@ -3,7 +3,7 @@ import subprocess
 import json
 import logging
 
-from utils.data_file import load_data, is_blocked
+from utils.db import is_blocked
 from utils.formatting import format_date
 
 log = logging.getLogger('shimatube')
@@ -14,8 +14,6 @@ def handle_channel(handler):
     page = int(params.get('page', ['1'])[0])
     live_filter = params.get('filter', [''])[0]
     cid = handler.path.split('/')[-1].split('?')[0]
-    udata = load_data()
-
     try:
         per_page = 20
         start = (page - 1) * per_page + 1
@@ -53,7 +51,7 @@ def handle_channel(handler):
                 "thumbnail": f"https://i.ytimg.com/vi/{v.get('id')}/mqdefault.jpg",
                 "author": ctitle
             }
-            if not is_blocked(item, udata):
+            if not is_blocked(item, handler.user_id):
                 vids.append(item)
         handler.send_json({"channel": {"title": ctitle}, "videos": vids})
     except subprocess.TimeoutExpired:
