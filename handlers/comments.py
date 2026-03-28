@@ -1,11 +1,17 @@
 import subprocess
 import json
+import re
 import logging
 
 log = logging.getLogger('shimatube')
 
+_VALID_VID = re.compile(r'^[a-zA-Z0-9_-]{6,20}$')
+
 def handle_comments(handler):
     vid = handler.path.split('/')[-1]
+    if not _VALID_VID.match(vid):
+        handler.send_error(400, "Invalid video ID")
+        return
     try:
         cmd = [
             "yt-dlp", "--write-comments", "--extractor-args",

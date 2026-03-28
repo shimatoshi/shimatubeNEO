@@ -3,7 +3,7 @@ import subprocess
 import json
 import logging
 
-from utils.db import is_blocked
+from utils.db import filter_blocked
 from utils.formatting import format_date
 
 log = logging.getLogger('shimatube')
@@ -40,7 +40,7 @@ def handle_channel(handler):
                 continue
             if ctitle == "Unknown":
                 ctitle = v.get('uploader') or "Unknown"
-            item = {
+            vids.append({
                 "type": "video",
                 "videoId": v.get('id'),
                 "title": v.get('title'),
@@ -50,9 +50,8 @@ def handle_channel(handler):
                 "channelId": cid,
                 "thumbnail": f"https://i.ytimg.com/vi/{v.get('id')}/mqdefault.jpg",
                 "author": ctitle
-            }
-            if not is_blocked(item, handler.user_id):
-                vids.append(item)
+            })
+        vids = filter_blocked(vids, handler.user_id)
         handler.send_json({"channel": {"title": ctitle}, "videos": vids})
     except subprocess.TimeoutExpired:
         log.warning(f"Channel timeout: {cid}")

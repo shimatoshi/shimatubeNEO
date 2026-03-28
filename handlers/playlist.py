@@ -1,13 +1,19 @@
 import subprocess
 import json
+import re
 import logging
 
 from utils.formatting import format_date
 
 log = logging.getLogger('shimatube')
 
+_VALID_PID = re.compile(r'^[a-zA-Z0-9_-]{10,60}$')
+
 def handle_playlist(handler):
     pid = handler.path.split('/')[-1].split('?')[0]
+    if not _VALID_PID.match(pid):
+        handler.send_error(400, "Invalid playlist ID")
+        return
     try:
         log.info(f"Playlist: {pid}")
         cmd = [

@@ -102,12 +102,11 @@ Object.assign(app, {
         else if (v && v.webkitSetPresentationMode) v.webkitSetPresentationMode('picture-in-picture');
     },
 
-    toggleSub: async () => {
+    toggleSubFromPlayer: async () => {
         if (!app.currentChannelId || !app.currentVideoMeta) return;
         await app.toggleSubUniversal(app.currentChannelId, app.currentVideoMeta.author, app.currentVideoMeta.thumbnail);
         UI.updateSubButtonInPlayer(app.currentChannelId);
     },
-    toggleSubFromPlayer: () => { app.toggleSub(); },
 
     toggleSubUniversal: async (cid, title, thumb) => {
         const isSub = await Storage.toggleSub({ channelId: cid, title, thumbnail: thumb });

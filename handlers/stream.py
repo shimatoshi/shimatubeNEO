@@ -8,10 +8,16 @@ from utils.ytdlp import get_video_url, url_cache, url_cache_lock
 
 log = logging.getLogger('shimatube')
 
+_VALID_VID = re.compile(r'^[a-zA-Z0-9_-]{6,20}$')
+
 def handle_stream(handler):
     """Proxy stream from YouTube CDN to client. No disk storage."""
     parts = handler.path.split('?')[0].strip('/').split('/')
     vid = parts[-1] if parts else ''
+    if not _VALID_VID.match(vid):
+        handler.send_error(400, "Invalid video ID")
+        return
+
     parsed = urllib.parse.urlparse(handler.path)
     params = urllib.parse.parse_qs(parsed.query)
     is_download = params.get('dl', ['0'])[0] == '1'

@@ -1,9 +1,10 @@
 import urllib.parse
 import subprocess
 import json
+import re
 import logging
 
-from utils.db import is_blocked
+from utils.db import filter_blocked
 from utils.formatting import format_date
 
 log = logging.getLogger('shimatube')
@@ -16,7 +17,8 @@ def handle_search(handler):
     live_filter = params.get('filter', [''])[0]
     try:
         per_page = 20
-        fetch_count = page * per_page
+        start = (page - 1) * per_page + 1
+        end = page * per_page
 
         log.info(f"Search: '{query}', filter={live_filter}, page={page}")
 
@@ -27,7 +29,8 @@ def handle_search(handler):
 
         command = [
             "yt-dlp", search_url,
-            "--playlist-end", str(fetch_count),
+            "--playlist-start", str(start),
+            "--playlist-end", str(end),
             "--dump-json", "--flat-playlist", "--skip-download",
         ]
 
@@ -62,8 +65,7 @@ def handle_search(handler):
                     "title": cname,
                     "thumbnail": f"https://ui-avatars.com/api/?name={urllib.parse.quote(str(cname))}&background=random"
                 }
-                if not is_blocked(item, handler.user_id):
-                    all_items.append(item)
+                all_items.append(item)
             elif ie_key == 'Youtube' or v.get('id'):
                 vid = v.get('id')
                 if not vid:
@@ -79,11 +81,9 @@ def handle_search(handler):
                     "uploadDate": format_date(v.get('upload_date')),
                     "thumbnail": f"https://i.ytimg.com/vi/{vid}/mqdefault.jpg"
                 }
-                if not is_blocked(item, handler.user_id):
-                    all_items.append(item)
+                all_items.append(item)
 
-        start_idx = (page - 1) * per_page
-        items = all_items[start_idx:start_idx + per_page]
+        items = filter_blocked(all_items, handler.user_id)
         handler.send_json(items)
     except subprocess.TimeoutExpired:
         log.warning(f"Search timeout: {query}")

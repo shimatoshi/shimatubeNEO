@@ -3,8 +3,8 @@ import logging
 
 from utils.db import (get_user_data, update_categories, block_channel,
                        unblock_channel, block_keyword, unblock_keyword,
-                       add_subscription, remove_subscription, is_subscribed,
-                       add_history)
+                       add_subscription, remove_subscription,
+                       is_subscribed, add_history)
 
 log = logging.getLogger('shimatube')
 

@@ -71,7 +71,10 @@ class CustomHandler(JsonResponseMixin, http.server.SimpleHTTPRequestHandler):
             if self.path == prefix:
                 handler_fn(self)
                 return
-        handle_user_data_post(self)
+        if self.path == '/':
+            handle_user_data_post(self)
+        else:
+            self.send_error(404)
 
 
 class ThreadingHTTPServer(socketserver.ThreadingTCPServer):
