@@ -1,8 +1,8 @@
-import subprocess
-import json
 import threading
 import time
 import logging
+
+import yt_dlp
 
 from utils.formatting import format_date
 
@@ -12,7 +12,7 @@ url_cache = {}
 url_cache_lock = threading.Lock()
 
 def get_video_url(vid, qual="720"):
-    """Extract direct YouTube CDN URL via yt-dlp, with 4h cache."""
+    """Extract direct YouTube CDN URL via yt-dlp library, with 4h cache."""
     cache_key = f"{vid}:{qual}"
     with url_cache_lock:
         cached = url_cache.get(cache_key)
@@ -21,10 +21,13 @@ def get_video_url(vid, qual="720"):
 
     try:
         fmt = f"best[ext=mp4][height<={qual}]/best[ext=mp4]/best"
-        cmd = ["yt-dlp", "--dump-json", "-f", fmt,
-               f"https://www.youtube.com/watch?v={vid}"]
-        r = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', timeout=20)
-        d = json.loads(r.stdout)
+        ydl_opts = {
+            'format': fmt,
+            'quiet': True,
+            'no_warnings': True,
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            d = ydl.extract_info(f"https://www.youtube.com/watch?v={vid}", download=False)
 
         source = d
         stream_url = d.get('url')

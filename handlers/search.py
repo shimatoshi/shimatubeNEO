@@ -1,8 +1,7 @@
 import urllib.parse
-import subprocess
-import json
-import re
 import logging
+
+import yt_dlp
 
 from utils.db import filter_blocked
 from utils.formatting import format_date
@@ -23,30 +22,28 @@ def handle_search(handler):
         log.info(f"Search: '{query}', filter={live_filter}, page={page}")
 
         search_url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}"
-
         if live_filter == 'live':
             search_url += "&sp=EgJAAQ%3D%3D"
 
-        command = [
-            "yt-dlp", search_url,
-            "--playlist-start", str(start),
-            "--playlist-end", str(end),
-            "--dump-json", "--flat-playlist", "--skip-download",
-        ]
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'extract_flat': True,
+            'skip_download': True,
+            'playliststart': start,
+            'playlistend': end,
+        }
 
-        result = subprocess.run(command, capture_output=True, text=True, encoding='utf-8', timeout=120)
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            result = ydl.extract_info(search_url, download=False)
+
         all_items = []
+        entries = result.get('entries', []) if result else []
 
-        for line in result.stdout.splitlines():
-            line = line.strip()
-            if not line:
+        for v in entries:
+            if v is None:
                 continue
-            try:
-                v = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-
-            ie_key = v.get('ie_key', '')
+            ie_key = v.get('ie_key', '') or v.get('_type', '')
             url = v.get('url', '')
             cname = v.get('channel') or v.get('uploader') or v.get('title') or ''
 
@@ -66,7 +63,7 @@ def handle_search(handler):
                     "thumbnail": f"https://ui-avatars.com/api/?name={urllib.parse.quote(str(cname))}&background=random"
                 }
                 all_items.append(item)
-            elif ie_key == 'Youtube' or v.get('id'):
+            elif ie_key in ('Youtube', '') or v.get('id'):
                 vid = v.get('id')
                 if not vid:
                     continue
@@ -85,9 +82,6 @@ def handle_search(handler):
 
         items = filter_blocked(all_items, handler.user_id)
         handler.send_json(items)
-    except subprocess.TimeoutExpired:
-        log.warning(f"Search timeout: {query}")
-        handler.send_json([])
     except Exception as e:
         log.error(f"Search error: {e}")
         handler.send_error(500, str(e))

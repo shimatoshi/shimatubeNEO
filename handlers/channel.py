@@ -1,7 +1,7 @@
 import urllib.parse
-import subprocess
-import json
 import logging
+
+import yt_dlp
 
 from utils.db import filter_blocked
 from utils.formatting import format_date
@@ -22,24 +22,28 @@ def handle_channel(handler):
 
         log.info(f"Channel: {cid}, tab={tab}, page={page}")
 
-        cmd = [
-            "yt-dlp", f"https://www.youtube.com/channel/{cid}/{tab}",
-            "--playlist-start", str(start), "--playlist-end", str(end),
-            "--dump-json", "--flat-playlist", "--skip-download"
-        ]
-        res = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', timeout=60)
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'extract_flat': True,
+            'skip_download': True,
+            'playliststart': start,
+            'playlistend': end,
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            result = ydl.extract_info(
+                f"https://www.youtube.com/channel/{cid}/{tab}", download=False)
 
         vids = []
         ctitle = "Unknown"
-        for line in res.stdout.strip().split('\n'):
-            if not line:
-                continue
-            try:
-                v = json.loads(line)
-            except json.JSONDecodeError:
+        entries = result.get('entries', []) if result else []
+
+        for v in entries:
+            if v is None:
                 continue
             if ctitle == "Unknown":
-                ctitle = v.get('uploader') or "Unknown"
+                ctitle = v.get('uploader') or v.get('channel') or "Unknown"
             vids.append({
                 "type": "video",
                 "videoId": v.get('id'),
@@ -51,11 +55,12 @@ def handle_channel(handler):
                 "thumbnail": f"https://i.ytimg.com/vi/{v.get('id')}/mqdefault.jpg",
                 "author": ctitle
             })
+
+        if ctitle == "Unknown" and result:
+            ctitle = result.get('uploader') or result.get('channel') or "Unknown"
+
         vids = filter_blocked(vids, handler.user_id)
         handler.send_json({"channel": {"title": ctitle}, "videos": vids})
-    except subprocess.TimeoutExpired:
-        log.warning(f"Channel timeout: {cid}")
-        handler.send_json({"channel": {"title": "Unknown"}, "videos": []})
     except Exception as e:
         log.error(f"Channel error: {e}")
         handler.send_error(500, str(e))

@@ -1,7 +1,7 @@
-import subprocess
-import json
 import re
 import logging
+
+import yt_dlp
 
 from utils.formatting import format_date
 
@@ -16,25 +16,25 @@ def handle_playlist(handler):
         return
     try:
         log.info(f"Playlist: {pid}")
-        cmd = [
-            "yt-dlp", f"https://www.youtube.com/playlist?list={pid}",
-            "--playlist-end", "200",
-            "--dump-json", "--flat-playlist", "--skip-download"
-        ]
-        res = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', timeout=60)
+
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'extract_flat': True,
+            'skip_download': True,
+            'playlistend': 200,
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            result = ydl.extract_info(
+                f"https://www.youtube.com/playlist?list={pid}", download=False)
 
         videos = []
-        ptitle = "Playlist"
-        for line in res.stdout.strip().split('\n'):
-            if not line:
-                continue
-            try:
-                v = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if ptitle == "Playlist":
-                ptitle = v.get('playlist_title') or v.get('playlist') or "Playlist"
-            if not v.get('id'):
+        ptitle = result.get('title') or "Playlist" if result else "Playlist"
+        entries = result.get('entries', []) if result else []
+
+        for v in entries:
+            if v is None or not v.get('id'):
                 continue
             videos.append({
                 "type": "video",
@@ -49,9 +49,6 @@ def handle_playlist(handler):
             })
 
         handler.send_json({"title": ptitle, "videos": videos})
-    except subprocess.TimeoutExpired:
-        log.warning(f"Playlist timeout: {pid}")
-        handler.send_json({"title": "Playlist", "videos": []})
     except Exception as e:
         log.error(f"Playlist error: {e}")
         handler.send_error(500, str(e))
