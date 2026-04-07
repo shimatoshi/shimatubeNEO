@@ -11,3 +11,5 @@ shimatube.db
 *.log
 node_modules/
 deploy.zip
+.buildozer/
+bin/
