@@ -42,7 +42,8 @@ jobs:
             libffi-dev \
             libssl-dev \
             automake \
-            lld
+            lld \
+            libltdl-dev
 
       - name: Install buildozer & deps
         run: |
