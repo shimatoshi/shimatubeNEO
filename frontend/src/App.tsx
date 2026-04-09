@@ -80,8 +80,12 @@ export default function App() {
 
   const handlePlay = useCallback((videoId: string) => {
     setCurrentVideoId(videoId)
-    push({ type: 'player', videoId })
-  }, [push])
+    // player画面が既にスタックにある場合は置き換え、なければ追加
+    setViewStack(prev => {
+      const withoutPlayer = prev.filter(v => v.type !== 'player')
+      return [...withoutPlayer, { type: 'player' as const, videoId }]
+    })
+  }, [])
 
   const handleVideoLoaded = useCallback((meta: VideoDetails['metadata']) => {
     setCurrentVideoTitle(meta.title || 'Playing...')

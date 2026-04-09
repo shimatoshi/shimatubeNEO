@@ -11,16 +11,19 @@ log = logging.getLogger('shimatube')
 url_cache = {}
 url_cache_lock = threading.Lock()
 
-def get_video_url(vid, qual="720"):
+def get_video_url(vid, qual="720", audio_only=False):
     """Extract direct YouTube CDN URL via yt-dlp library, with 4h cache."""
-    cache_key = f"{vid}:{qual}"
+    cache_key = f"{vid}:{'audio' if audio_only else qual}"
     with url_cache_lock:
         cached = url_cache.get(cache_key)
         if cached and time.time() < cached["expiry"]:
             return cached["url"], cached.get("headers", {}), cached["meta"]
 
     try:
-        fmt = f"best[ext=mp4][height<={qual}]/best[ext=mp4]/best"
+        if audio_only:
+            fmt = "bestaudio[ext=m4a]/bestaudio"
+        else:
+            fmt = f"best[ext=mp4][height<={qual}]/best[ext=mp4]/best"
         ydl_opts = {
             'format': fmt,
             'quiet': True,

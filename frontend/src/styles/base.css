@@ -72,6 +72,19 @@ video { width: 100%; max-height: 50vh; background: #000; }
 .block-btn { color: #ff4444; border: 1px solid #ff4444; padding: 2px 4px; border-radius: 4px; font-size: 10px; margin-left: 8px; cursor: pointer; display: inline-block; }
 .dl-btn { display: flex; align-items: center; justify-content: center; width: 36px; flex-shrink: 0; font-size: 18px; text-decoration: none; color: #2ecc71; opacity: 0.7; transition: opacity 0.2s; }
 .dl-btn:active { opacity: 1; }
+.dl-btn-wrap { position: relative; display: flex; align-items: center; flex-shrink: 0; }
+.dl-menu {
+  position: absolute; right: 0; bottom: 100%; background: #333; border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 50; overflow: hidden; min-width: 90px;
+}
+.dl-menu-item {
+  padding: 10px 14px; font-size: 13px; color: #fff; cursor: pointer;
+  white-space: nowrap; border-bottom: 1px solid #444;
+}
+.dl-menu-item:last-child { border-bottom: none; }
+.dl-menu-item:active { background: #444; }
+.dl-player-wrap { display: flex; gap: 6px; }
+.dl-audio { border-color: #e67e22 !important; color: #e67e22 !important; }
 
 /* Now Playing highlight */
 .video-item.now-playing { background: #1a3a5c; border-radius: 8px; padding: 5px; }

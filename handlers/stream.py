@@ -22,11 +22,16 @@ def handle_stream(handler):
     params = urllib.parse.parse_qs(parsed.query)
     is_download = params.get('dl', ['0'])[0] == '1'
     qual = params.get('quality', ['720'])[0]
+    fmt = params.get('format', ['video'])[0]  # 'video' or 'audio'
+    audio_only = fmt == 'audio'
 
-    stream_url, cdn_headers, meta = get_video_url(vid, qual)
+    stream_url, cdn_headers, meta = get_video_url(vid, qual, audio_only=audio_only)
     if not stream_url:
         handler.send_error(502, "Could not get stream URL")
         return
+
+    content_type = 'audio/mp4' if audio_only else 'video/mp4'
+    file_ext = 'm4a' if audio_only else 'mp4'
 
     try:
         req = urllib.request.Request(stream_url)
@@ -40,14 +45,14 @@ def handle_stream(handler):
         resp = urllib.request.urlopen(req, timeout=10)
 
         handler.send_response(resp.status)
-        handler.send_header('Content-Type', 'video/mp4')
+        handler.send_header('Content-Type', content_type)
         handler.send_header('Accept-Ranges', 'bytes')
 
         if is_download:
             title = re.sub(r'[<>:"/\\|?*\n]', '_', meta.get('title') or vid)
             safe_title = urllib.parse.quote(title)
             handler.send_header('Content-Disposition',
-                f"attachment; filename=\"{vid}.mp4\"; filename*=UTF-8''{safe_title}.mp4")
+                f"attachment; filename=\"{vid}.{file_ext}\"; filename*=UTF-8''{safe_title}.{file_ext}")
 
         for h in ['Content-Length', 'Content-Range']:
             val = resp.headers.get(h)
@@ -69,8 +74,9 @@ def handle_stream(handler):
 
     except urllib.error.HTTPError as e:
         if e.code == 403:
+            cache_key = f"{vid}:{'audio' if audio_only else qual}"
             with url_cache_lock:
-                url_cache.pop(f"{vid}:{qual}", None)
+                url_cache.pop(cache_key, None)
             log.warning(f"Stream URL expired for {vid}, cleared cache")
             handler.send_error(502, "Stream URL expired, please retry")
         else:

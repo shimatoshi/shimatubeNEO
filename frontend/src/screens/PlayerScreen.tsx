@@ -41,11 +41,13 @@ export default function PlayerScreen({
   const [showDesc, setShowDesc] = useState(false)
   const [loadingComments, setLoadingComments] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const lastVidRef = useRef('')
 
   useEffect(() => {
-    if (!videoId || videoId === lastVidRef.current) return
-    lastVidRef.current = videoId
+    if (!videoId) return
+
+    setStreamUrl(null)
+    setComments([])
+    setShowDesc(false)
 
     api.getVideo(videoId).then(data => {
       setMeta(data.metadata)
@@ -137,7 +139,10 @@ export default function PlayerScreen({
         <div className="action-bar">
           <div className="action-item">
             {streamUrl ? (
-              <a href={`${streamUrl}?dl=1`} className="dl-ready" download>💾 DL</a>
+              <div className="dl-player-wrap">
+                <a href={`${streamUrl}?dl=1`} className="dl-ready" download>🎬 MP4</a>
+                <a href={`${streamUrl}?dl=1&format=audio`} className="dl-ready dl-audio" download>🎵 MP3</a>
+              </div>
             ) : (
               <span className="dl-wait">Wait...</span>
             )}

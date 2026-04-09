@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ShimaTube NEO</title>
+    <link rel="manifest" href="/assets/manifest-Bjz9pXhu.json">
+  <link rel="stylesheet" crossorigin href="/assets/index-vTNrIkXB.css">
+</head>
+<body>
+    <div id="header">
+        <button id="back-btn" onclick="app.goBack()">←</button>
+        <button class="btn-icon" onclick="app.toggleConfig()">⚙️</button>
+        <input type="text" id="search-input" placeholder="Search or paste playlist URL">
+        <button class="btn-go" onclick="app.search()">Go</button>
+    </div>
+
+    <div id="view-home" class="view-section active">
+        <div id="home-list" class="list-container"></div>
+    </div>
+
+    <div id="view-player" class="view-section">
+        <div id="player-view">
+            <video id="main-video" controls playsinline preload="metadata"></video>
+            <div class="info-area">
+                <div id="v-title" class="video-title"></div>
+                <div class="meta-row">
+                    <span id="v-views"></span>
+                    <span id="v-date"></span>
+                </div>
+                <div class="action-bar">
+                    <div class="action-item" id="dl-container"><span class="dl-wait">Wait</span></div>
+                    <div class="action-item" onclick="app.shareVideo()">
+                        <span class="action-icon">📤</span><span>Share</span>
+                    </div>
+                    <div class="action-item" onclick="app.toggleDesc()">
+                        <span class="action-icon">📝</span><span>Desc</span>
+                    </div>
+                    <div class="action-item" onclick="app.togglePip()">
+                        <span class="action-icon">📺</span><span>PiP</span>
+                    </div>
+                    <div class="action-item" onclick="app.toggleSubFromPlayer()">
+                        <span class="action-icon" id="sub-icon">☆</span><span id="sub-text">Sub</span>
+                    </div>
+                </div>
+                <div class="channel-item" onclick="app.openChannelFromPlayer()">
+                    <img id="c-icon" class="c-thumb" src="">
+                    <div id="c-name" class="c-name"></div>
+                </div>
+                <div id="desc-content" class="desc-box"></div>
+                <div class="tabs">
+                    <div class="tab active" onclick="app.showRelated()">Related</div>
+                    <div class="tab" onclick="app.loadComments()">Comments</div>
+                </div>
+                <div id="player-list" class="list-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-subs" class="view-section">
+        <div style="padding:10px;font-weight:bold;border-bottom:1px solid #333;">Subscribed Channels</div>
+        <div id="subs-list" class="list-container"></div>
+    </div>
+
+    <div id="view-history" class="view-section">
+        <div style="padding:10px;font-weight:bold;border-bottom:1px solid #333;">Watch History</div>
+        <div id="history-list" class="list-container"></div>
+    </div>
+
+    <div id="mini-player" onclick="app.restorePlayer()">
+        <div style="margin-right:10px;">▶</div>
+        <div id="mini-info">Playing...</div>
+        <div id="mini-close" onclick="event.stopPropagation(); app.closeMiniPlayer()">✕</div>
+    </div>
+
+    <div id="config-modal">
+        <div style="text-align:right;margin-bottom:10px;"><button onclick="app.toggleConfig()" style="background:none;border:none;color:#fff;font-size:20px;">✕</button></div>
+        <div class="config-section">
+            <div class="config-title">Categories</div>
+            <div id="cat-list" class="tag-list"></div>
+            <div class="input-row">
+                <input type="text" id="cat-input" placeholder="Add Category">
+                <button class="btn" onclick="app.addCategory()">Add</button>
+            </div>
+        </div>
+        <div class="config-section">
+            <div class="config-title">Blocked Keywords</div>
+            <div id="kw-list" class="tag-list"></div>
+            <div class="input-row">
+                <input type="text" id="kw-input" placeholder="Block Keyword">
+                <button class="btn" onclick="app.addBlockKeyword()">Block</button>
+            </div>
+        </div>
+        <div class="config-section">
+            <div class="config-title">Blocked Channels</div>
+            <div id="bc-list" class="tag-list"></div>
+        </div>
+        <div class="config-section" style="border-bottom:none; margin-top:20px;">
+            <button class="btn" style="width:100%; background:#3ea6ff; padding:12px;" onclick="app.forceUpdate()">↻ Update App</button>
+        </div>
+        <div style="text-align:center; color:#555; font-size:11px; margin-top:15px;" id="app-version"></div>
+    </div>
+
+    <div id="toast"></div>
+
+    <div id="bottom-nav">
+        <div class="nav-item active" onclick="app.handleHomeClick()">
+            <span class="nav-icon">🏠</span><span>Home</span>
+        </div>
+        <div class="nav-item" onclick="app.switchTab('subs')">
+            <span class="nav-icon">📺</span><span>Subs</span>
+        </div>
+        <div class="nav-item" onclick="app.switchTab('history')">
+            <span class="nav-icon">🕓</span><span>History</span>
+        </div>
+    </div>
+
+    <script>const APP_VERSION = 'v18.0';</script>
+    <script src="js/app.js?v=18"></script>
+    <script src="js/storage.js?v=18"></script>
+    <script src="js/api.js?v=18"></script>
+    <script src="js/ui.js?v=18"></script>
+    <script src="js/navigation.js?v=18"></script>
+    <script src="js/search.js?v=18"></script>
+    <script src="js/player.js?v=18"></script>
+    <script src="js/channel.js?v=18"></script>
+    <script src="js/playlist.js?v=18"></script>
+    <script src="js/config.js?v=18"></script>
+    <script src="js/main.js?v=18"></script>
+</body>
+</html>
