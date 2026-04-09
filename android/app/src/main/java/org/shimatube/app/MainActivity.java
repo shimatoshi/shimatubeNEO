@@ -1,6 +1,7 @@
 package org.shimatube.app;
 
 import android.app.Activity;
+import android.app.DownloadManager;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -12,11 +13,14 @@ import android.os.PowerManager;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
+import android.webkit.CookieManager;
+import android.webkit.URLUtil;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
@@ -35,7 +39,6 @@ public class MainActivity extends Activity {
 
         setupWebView();
         ensureStoragePermission();
-        requestBatteryOptimizationExemption();
 
         // Foreground Serviceを起動
         Intent serviceIntent = new Intent(this, ServerService.class);
@@ -66,6 +69,32 @@ public class MainActivity extends Activity {
 
         webView.setWebViewClient(new WebViewClient());
         webView.setWebChromeClient(new WebChromeClient());
+
+        // ダウンロード対応
+        webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
+            try {
+                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+                String filename = URLUtil.guessFileName(url, contentDisposition, mimetype);
+                request.setTitle(filename);
+                request.setDescription("ShimaTube NEO Download");
+                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename);
+
+                // Cookieを引き継ぐ
+                String cookies = CookieManager.getInstance().getCookie(url);
+                if (cookies != null) {
+                    request.addRequestHeader("Cookie", cookies);
+                }
+                request.addRequestHeader("User-Agent", userAgent);
+
+                DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+                dm.enqueue(request);
+                Toast.makeText(this, "Download: " + filename, Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                Log.e(TAG, "Download failed", e);
+                Toast.makeText(this, "Download failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void ensureStoragePermission() {
@@ -78,22 +107,6 @@ public class MainActivity extends Activity {
                 } catch (Exception e) {
                     Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
                     startActivity(intent);
-                }
-            }
-        }
-    }
-
-    /** 電池の最適化を無効化するリクエスト */
-    private void requestBatteryOptimizationExemption() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            PowerManager pm = getSystemService(PowerManager.class);
-            if (!pm.isIgnoringBatteryOptimizations(getPackageName())) {
-                try {
-                    Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-                    intent.setData(Uri.parse("package:" + getPackageName()));
-                    startActivity(intent);
-                } catch (Exception e) {
-                    Log.w(TAG, "Battery optimization request failed", e);
                 }
             }
         }
