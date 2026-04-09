@@ -1,0 +1,7 @@
+.gradle/
+app/build/
+app/.cxx/
+build/
+local.properties
+*.apk
+.playwright-cli/

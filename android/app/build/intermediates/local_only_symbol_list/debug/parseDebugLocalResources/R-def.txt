@@ -1,7 +1,0 @@
-R_DEF: Internal format may change without notice
-local
-id loading_text
-id webview
-layout activity_main
-mipmap ic_launcher
-style AppTheme
