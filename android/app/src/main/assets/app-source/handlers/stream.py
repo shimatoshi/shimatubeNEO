@@ -2,9 +2,17 @@ import urllib.parse
 import urllib.request
 import urllib.error
 import re
+import ssl
 import logging
 
 from utils.ytdlp import get_video_url, url_cache, url_cache_lock
+
+# SSL証明書設定（APK内ではcertifiを使用）
+try:
+    import certifi
+    _ssl_ctx = ssl.create_default_context(cafile=certifi.where())
+except ImportError:
+    _ssl_ctx = None
 
 log = logging.getLogger('shimatube')
 
@@ -42,7 +50,7 @@ def handle_stream(handler):
         if range_header:
             req.add_header('Range', range_header)
 
-        resp = urllib.request.urlopen(req, timeout=10)
+        resp = urllib.request.urlopen(req, timeout=10, context=_ssl_ctx)
 
         handler.send_response(resp.status)
         handler.send_header('Content-Type', content_type)
