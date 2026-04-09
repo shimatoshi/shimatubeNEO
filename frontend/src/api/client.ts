@@ -77,6 +77,19 @@ export interface UserData {
   history: VideoItem[]
 }
 
+export interface ChannelFeed {
+  channelId: string
+  title: string
+  thumbnail: string
+  unwatched: VideoItem[]
+  watched: VideoItem[]
+  totalFetched: number
+}
+
+export interface FeedResponse {
+  channels: ChannelFeed[]
+}
+
 export const api = {
   search: (query: string, page = 1, filter = '') => {
     let url = `${API_BASE}/search?q=${encodeURIComponent(query)}&page=${page}`
@@ -99,7 +112,10 @@ export const api = {
   getPlaylist: (playlistId: string) =>
     apiFetch<PlaylistResponse>(`${API_BASE}/playlists/${playlistId}`),
 
-  getFeed: () => apiFetch<VideoItem[]>('/api/feed'),
+  getFeed: () => apiFetch<FeedResponse>('/api/feed'),
+
+  refreshChannelFeed: (channelId: string) =>
+    apiFetch<ChannelFeed>(`/api/feed/refresh/${channelId}`),
 
   getUserData: () => apiFetch<UserData>('/api/user_data'),
 

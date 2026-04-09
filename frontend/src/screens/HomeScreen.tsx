@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { api } from '../api/client'
-import type { SearchItem, VideoItem } from '../api/client'
+import type { SearchItem, VideoItem, ChannelFeed } from '../api/client'
 import VideoList from '../components/VideoList'
 
 interface Props {
@@ -21,6 +21,64 @@ interface CategoryData {
   collapsed: boolean
 }
 
+const ITEMS_PER_PAGE = 5
+
+interface ChannelState {
+  feed: ChannelFeed
+  page: number        // 現在のページ（0始まり）
+  phase: 'unwatched' | 'watched' | 'loop'
+  collapsed: boolean
+  refreshing: boolean
+}
+
+function getPageItems(state: ChannelState): VideoItem[] {
+  const { feed, page, phase } = state
+  const start = page * ITEMS_PER_PAGE
+
+  if (phase === 'unwatched') {
+    return feed.unwatched.slice(start, start + ITEMS_PER_PAGE)
+  } else if (phase === 'watched') {
+    return feed.watched.slice(start, start + ITEMS_PER_PAGE)
+  } else {
+    // loop: 全動画を結合して循環
+    const all = [...feed.unwatched, ...feed.watched]
+    if (all.length === 0) return []
+    const loopStart = (start % all.length)
+    // 端を超える場合はラップ
+    const items: VideoItem[] = []
+    for (let i = 0; i < ITEMS_PER_PAGE; i++) {
+      items.push(all[(loopStart + i) % all.length])
+    }
+    return items
+  }
+}
+
+function advancePage(state: ChannelState): ChannelState {
+  const { feed, page, phase } = state
+  const nextStart = (page + 1) * ITEMS_PER_PAGE
+
+  if (phase === 'unwatched') {
+    if (nextStart < feed.unwatched.length) {
+      return { ...state, page: page + 1 }
+    }
+    // 未視聴が尽きた → 視聴済みへ
+    if (feed.watched.length > 0) {
+      return { ...state, phase: 'watched', page: 0 }
+    }
+    // 視聴済みもない → ループ
+    return { ...state, phase: 'loop', page: page + 1 }
+  } else if (phase === 'watched') {
+    if (nextStart < feed.watched.length) {
+      return { ...state, page: page + 1 }
+    }
+    // 視聴済みも尽きた → ループ
+    return { ...state, phase: 'loop', page: 0 }
+  } else {
+    // loop: 常にページ進行
+    return { ...state, page: page + 1 }
+  }
+}
+
 export default function HomeScreen({
   categories,
   hasSubs,
@@ -31,17 +89,22 @@ export default function HomeScreen({
   onToggleSub,
   onBlockChannel,
 }: Props) {
-  const [feed, setFeed] = useState<VideoItem[]>([])
+  const [channels, setChannels] = useState<ChannelState[]>([])
   const [feedLoading, setFeedLoading] = useState(false)
-  const [feedCollapsed, setFeedCollapsed] = useState(false)
   const [catData, setCatData] = useState<CategoryData[]>([])
 
   // 購読フィード取得
   useEffect(() => {
     if (!hasSubs) return
     setFeedLoading(true)
-    api.getFeed().then(items => {
-      setFeed(items)
+    api.getFeed().then(res => {
+      setChannels(res.channels.map(feed => ({
+        feed,
+        page: 0,
+        phase: feed.unwatched.length > 0 ? 'unwatched' as const : 'watched' as const,
+        collapsed: false,
+        refreshing: false,
+      })))
       setFeedLoading(false)
     }).catch(() => setFeedLoading(false))
   }, [hasSubs])
@@ -70,11 +133,46 @@ export default function HomeScreen({
     })
   }, [categories])
 
-  const toggleCollapse = (index: number) => {
+  const toggleChannelCollapse = useCallback((index: number) => {
+    setChannels(prev =>
+      prev.map((c, i) => (i === index ? { ...c, collapsed: !c.collapsed } : c))
+    )
+  }, [])
+
+  const refreshChannel = useCallback((index: number) => {
+    setChannels(prev =>
+      prev.map((c, i) => (i === index ? advancePage({ ...c, refreshing: false }) : c))
+    )
+  }, [])
+
+  const hardRefreshChannel = useCallback((index: number) => {
+    const ch = channels[index]
+    if (!ch) return
+    setChannels(prev =>
+      prev.map((c, i) => (i === index ? { ...c, refreshing: true } : c))
+    )
+    api.refreshChannelFeed(ch.feed.channelId).then(feed => {
+      setChannels(prev =>
+        prev.map((c, i) => (i === index ? {
+          feed,
+          page: 0,
+          phase: feed.unwatched.length > 0 ? 'unwatched' as const : 'watched' as const,
+          collapsed: false,
+          refreshing: false,
+        } : c))
+      )
+    }).catch(() => {
+      setChannels(prev =>
+        prev.map((c, i) => (i === index ? { ...c, refreshing: false } : c))
+      )
+    })
+  }, [channels])
+
+  const toggleCatCollapse = useCallback((index: number) => {
     setCatData(prev =>
       prev.map((c, i) => (i === index ? { ...c, collapsed: !c.collapsed } : c))
     )
-  }
+  }, [])
 
   if (!categories.length && !hasSubs) {
     return <div style={{ padding: 20 }}>Loading settings...</div>
@@ -82,36 +180,76 @@ export default function HomeScreen({
 
   return (
     <div className="list-container">
-      {/* 購読チャンネルの新着フィード */}
-      {hasSubs && (
-        <div>
-          <div className="cat-header feed-header" onClick={() => setFeedCollapsed(p => !p)}>
-            <span>New from Subscriptions</span>
-            <span className={`cat-toggle ${feedCollapsed ? 'closed' : ''}`}>▼</span>
-          </div>
-          {!feedCollapsed && (
-            <div className="cat-content">
-              {feedLoading ? (
-                <div className="scroll-sentinel"><div className="loader" /></div>
-              ) : feed.length === 0 ? (
-                <div style={{ padding: 15, fontSize: 13, color: '#666' }}>No new videos</div>
-              ) : (
-                <VideoList
-                  items={feed}
-                  onPlay={onPlay}
-                  onOpenChannel={onOpenChannel}
-                  onBlockChannel={onBlockChannel}
-                />
-              )}
-            </div>
-          )}
-        </div>
+      {/* 購読チャンネル別フィード */}
+      {feedLoading && (
+        <div className="scroll-sentinel"><div className="loader" /></div>
       )}
+
+      {channels.map((ch, i) => {
+        const items = getPageItems(ch)
+        const phaseLabel = ch.phase === 'unwatched' ? 'NEW'
+          : ch.phase === 'watched' ? 'WATCHED' : 'LOOP'
+
+        return (
+          <div key={ch.feed.channelId}>
+            <div
+              className="cat-header feed-header"
+              onClick={() => toggleChannelCollapse(i)}
+            >
+              <div className="feed-ch-info">
+                <img
+                  src={ch.feed.thumbnail}
+                  className="feed-ch-thumb"
+                  onError={e => {
+                    (e.target as HTMLImageElement).src =
+                      `https://ui-avatars.com/api/?name=${encodeURIComponent(ch.feed.title)}`
+                  }}
+                />
+                <span>{ch.feed.title}</span>
+                <span className={`feed-phase ${ch.phase}`}>{phaseLabel}</span>
+              </div>
+              <span className={`cat-toggle ${ch.collapsed ? 'closed' : ''}`}>▼</span>
+            </div>
+            {!ch.collapsed && (
+              <div className="cat-content">
+                <div className="feed-actions">
+                  <button
+                    className="feed-refresh-btn"
+                    onClick={e => { e.stopPropagation(); refreshChannel(i) }}
+                  >
+                    ↻ Next
+                  </button>
+                  <button
+                    className="feed-refresh-btn hard"
+                    onClick={e => { e.stopPropagation(); hardRefreshChannel(i) }}
+                    disabled={ch.refreshing}
+                  >
+                    {ch.refreshing ? '...' : '🔄 Reload'}
+                  </button>
+                  <span className="feed-count">
+                    {ch.feed.unwatched.length} new / {ch.feed.totalFetched} total
+                  </span>
+                </div>
+                {items.length === 0 ? (
+                  <div style={{ padding: 15, fontSize: 13, color: '#666' }}>No videos</div>
+                ) : (
+                  <VideoList
+                    items={items}
+                    onPlay={onPlay}
+                    onOpenChannel={onOpenChannel}
+                    onBlockChannel={onBlockChannel}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        )
+      })}
 
       {/* カテゴリ別 */}
       {catData.map((cat, i) => (
         <div key={cat.name}>
-          <div className="cat-header" onClick={() => toggleCollapse(i)}>
+          <div className="cat-header" onClick={() => toggleCatCollapse(i)}>
             <span>{cat.name}</span>
             <span className={`cat-toggle ${cat.collapsed ? 'closed' : ''}`}>▼</span>
           </div>
