@@ -1,5 +1,6 @@
 """共通HTTPハンドラー: server.pyとmain.pyで共有"""
 import http.server
+import os
 import uuid
 
 from utils.response import JsonResponseMixin
@@ -28,8 +29,16 @@ POST_ROUTES = [
     ("/api/history",   handle_history),
 ]
 
+# 静的ファイル配信ディレクトリ: frontend/dist/ があればそちら、なければプロジェクトルート
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_DIST_DIR = os.path.join(_PROJECT_ROOT, 'frontend', 'dist')
+STATIC_DIR = _DIST_DIR if os.path.isdir(_DIST_DIR) else _PROJECT_ROOT
+
 
 class CustomHandler(JsonResponseMixin, http.server.SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory=STATIC_DIR, **kwargs)
+
     def log_message(self, fmt, *args):
         pass
 
@@ -53,7 +62,13 @@ class CustomHandler(JsonResponseMixin, http.server.SimpleHTTPRequestHandler):
 
     def do_GET(self):
         self.ensure_user_id()
+        # API/ストリーム以外は静的ファイル配信
         if not self.path.startswith("/api") and not self.path.startswith("/stream"):
+            # SPAフォールバック: 存在しないパスはindex.htmlを返す
+            clean_path = self.path.split('?')[0]
+            file_path = os.path.join(STATIC_DIR, clean_path.lstrip('/'))
+            if not os.path.isfile(file_path) and not clean_path.startswith('/assets'):
+                self.path = '/index.html'
             super().do_GET()
             return
         for prefix, handler_fn in GET_ROUTES:
