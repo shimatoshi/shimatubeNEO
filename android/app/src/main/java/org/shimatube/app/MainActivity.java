@@ -2,23 +2,28 @@ package org.shimatube.app;
 
 import android.app.Activity;
 import android.app.DownloadManager;
+import android.app.PictureInPictureParams;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.PowerManager;
 import android.provider.Settings;
 import android.util.Log;
+import android.util.Rational;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.URLUtil;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,6 +33,9 @@ public class MainActivity extends Activity {
     private static final int PORT = 8080;
     private WebView webView;
     private TextView loadingText;
+    private FrameLayout fullscreenContainer;
+    private View customView;
+    private WebChromeClient.CustomViewCallback customViewCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +44,7 @@ public class MainActivity extends Activity {
 
         webView = findViewById(R.id.webview);
         loadingText = findViewById(R.id.loading_text);
+        fullscreenContainer = findViewById(R.id.fullscreen_container);
 
         setupWebView();
         ensureStoragePermission();
@@ -66,9 +75,40 @@ public class MainActivity extends Activity {
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setAllowFileAccess(true);
         settings.setDatabaseEnabled(true);
+        settings.setMediaPlaybackRequiresUserGesture(false);
 
         webView.setWebViewClient(new WebViewClient());
-        webView.setWebChromeClient(new WebChromeClient());
+
+        // フルスクリーン対応WebChromeClient
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onShowCustomView(View view, CustomViewCallback callback) {
+                if (customView != null) {
+                    callback.onCustomViewHidden();
+                    return;
+                }
+                customView = view;
+                customViewCallback = callback;
+                fullscreenContainer.addView(view, new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT));
+                fullscreenContainer.setVisibility(View.VISIBLE);
+                webView.setVisibility(View.GONE);
+                getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            }
+
+            @Override
+            public void onHideCustomView() {
+                if (customView == null) return;
+                fullscreenContainer.removeView(customView);
+                fullscreenContainer.setVisibility(View.GONE);
+                webView.setVisibility(View.VISIBLE);
+                customViewCallback.onCustomViewHidden();
+                customView = null;
+                customViewCallback = null;
+                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            }
+        });
 
         // ダウンロード対応
         webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
@@ -80,7 +120,6 @@ public class MainActivity extends Activity {
                 request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
                 request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename);
 
-                // Cookieを引き継ぐ
                 String cookies = CookieManager.getInstance().getCookie(url);
                 if (cookies != null) {
                     request.addRequestHeader("Cookie", cookies);
@@ -95,6 +134,41 @@ public class MainActivity extends Activity {
                 Toast.makeText(this, "Download failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    /** PiP対応 */
+    public void enterPiP() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PictureInPictureParams params = new PictureInPictureParams.Builder()
+                    .setAspectRatio(new Rational(16, 9))
+                    .build();
+            enterPictureInPictureMode(params);
+        }
+    }
+
+    @Override
+    public void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        // ホームボタン押下時に動画再生中ならPiPに入る
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            webView.evaluateJavascript(
+                "(function() { var v = document.querySelector('video'); return v && !v.paused ? 'playing' : 'idle'; })()",
+                value -> {
+                    if ("\"playing\"".equals(value)) {
+                        enterPiP();
+                    }
+                }
+            );
+        }
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPiP, Configuration newConfig) {
+        super.onPictureInPictureModeChanged(isInPiP, newConfig);
+        // PiPモード時はUIを非表示にして動画だけ見せる
+        if (isInPiP) {
+            loadingText.setVisibility(View.GONE);
+        }
     }
 
     private void ensureStoragePermission() {
@@ -129,6 +203,19 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
+        // フルスクリーン中はまずそれを閉じる
+        if (customView != null) {
+            webView.getWebChromeClient();
+            customViewCallback.onCustomViewHidden();
+            fullscreenContainer.removeView(customView);
+            fullscreenContainer.setVisibility(View.GONE);
+            webView.setVisibility(View.VISIBLE);
+            customView = null;
+            customViewCallback = null;
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            return;
+        }
+
         webView.evaluateJavascript(
             "if(window.history.length > 1) { window.history.back(); 'ok'; } else { 'exit'; }",
             value -> {
