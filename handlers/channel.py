@@ -1,4 +1,5 @@
 import urllib.parse
+import re
 import logging
 
 import yt_dlp
@@ -8,12 +9,17 @@ from utils.formatting import format_date
 
 log = logging.getLogger('shimatube')
 
+_VALID_CID = re.compile(r'^[a-zA-Z0-9_@-]{2,60}$')
+
 def handle_channel(handler):
     parsed = urllib.parse.urlparse(handler.path)
     params = urllib.parse.parse_qs(parsed.query)
     page = int(params.get('page', ['1'])[0])
     live_filter = params.get('filter', [''])[0]
     cid = handler.path.split('/')[-1].split('?')[0]
+    if not _VALID_CID.match(cid):
+        handler.send_error(400, "Invalid channel ID")
+        return
     try:
         per_page = 20
         start = (page - 1) * per_page + 1

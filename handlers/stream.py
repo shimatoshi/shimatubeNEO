@@ -80,3 +80,7 @@ def handle_stream(handler):
         pass
     except Exception as e:
         log.error(f"Stream error: {e}")
+        try:
+            handler.send_error(503, "Stream unavailable")
+        except Exception:
+            pass

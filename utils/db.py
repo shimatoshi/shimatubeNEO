@@ -2,20 +2,25 @@ import sqlite3
 import os
 import json
 import logging
+import threading
 from contextlib import contextmanager
 
 log = logging.getLogger('shimatube')
 
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'shimatube.db')
 
+_db_lock = threading.Lock()
+
 @contextmanager
 def get_conn():
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    try:
-        yield conn
-    finally:
-        conn.close()
+    with _db_lock:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        try:
+            yield conn
+        finally:
+            conn.close()
 
 def init_db():
     with get_conn() as conn:
