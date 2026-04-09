@@ -13,8 +13,10 @@ from handlers.stream import handle_stream
 from handlers.playlist import handle_playlist
 from handlers.comments import handle_comments
 from handlers.user_data import handle_user_data_get, handle_user_data_post, handle_subscribe, handle_history
+from handlers.feed import handle_feed
 
 GET_ROUTES = [
+    ("/api/feed",                   handle_feed),
     ("/api/user_data",              handle_user_data_get),
     ("/api_proxy/api/v1/search",    handle_search),
     ("/api_proxy/api/v1/channels/", handle_channel),

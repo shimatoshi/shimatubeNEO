@@ -99,6 +99,8 @@ export const api = {
   getPlaylist: (playlistId: string) =>
     apiFetch<PlaylistResponse>(`${API_BASE}/playlists/${playlistId}`),
 
+  getFeed: () => apiFetch<VideoItem[]>('/api/feed'),
+
   getUserData: () => apiFetch<UserData>('/api/user_data'),
 
   postUserAction: async (action: string, payload: unknown) => {

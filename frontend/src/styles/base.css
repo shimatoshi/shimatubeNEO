@@ -35,6 +35,7 @@ a { color: #3ea6ff; text-decoration: none; }
   font-size: 13px; border-bottom: 1px solid #333;
   display: flex; justify-content: space-between; align-items: center; cursor: pointer;
 }
+.feed-header { background: #1a2a1a; color: #4caf50; }
 .cat-toggle { font-size: 16px; color: #aaa; transform: rotate(0deg); transition: transform 0.2s; }
 .cat-toggle.closed { transform: rotate(-90deg); }
 .cat-content { display: block; }

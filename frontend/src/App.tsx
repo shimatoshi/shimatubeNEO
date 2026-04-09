@@ -171,6 +171,7 @@ export default function App() {
         {currentView.type === 'home' && (
           <HomeScreen
             categories={userData?.categories || []}
+            hasSubs={(userData?.subscriptions.length ?? 0) > 0}
             onPlay={handlePlay}
             onOpenChannel={handleOpenChannel}
             onOpenPlaylist={handleOpenPlaylist}
