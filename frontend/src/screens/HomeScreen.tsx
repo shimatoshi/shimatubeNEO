@@ -19,13 +19,14 @@ interface CategoryData {
   items: SearchItem[]
   loading: boolean
   collapsed: boolean
+  page: number
 }
 
 const ITEMS_PER_PAGE = 5
 
 interface ChannelState {
   feed: ChannelFeed
-  page: number        // 現在のページ（0始まり）
+  page: number
   phase: 'unwatched' | 'watched' | 'loop'
   collapsed: boolean
   refreshing: boolean
@@ -40,11 +41,9 @@ function getPageItems(state: ChannelState): VideoItem[] {
   } else if (phase === 'watched') {
     return feed.watched.slice(start, start + ITEMS_PER_PAGE)
   } else {
-    // loop: 全動画を結合して循環
     const all = [...feed.unwatched, ...feed.watched]
     if (all.length === 0) return []
     const loopStart = (start % all.length)
-    // 端を超える場合はラップ
     const items: VideoItem[] = []
     for (let i = 0; i < ITEMS_PER_PAGE; i++) {
       items.push(all[(loopStart + i) % all.length])
@@ -58,25 +57,29 @@ function advancePage(state: ChannelState): ChannelState {
   const nextStart = (page + 1) * ITEMS_PER_PAGE
 
   if (phase === 'unwatched') {
-    if (nextStart < feed.unwatched.length) {
-      return { ...state, page: page + 1 }
-    }
-    // 未視聴が尽きた → 視聴済みへ
-    if (feed.watched.length > 0) {
-      return { ...state, phase: 'watched', page: 0 }
-    }
-    // 視聴済みもない → ループ
+    if (nextStart < feed.unwatched.length) return { ...state, page: page + 1 }
+    if (feed.watched.length > 0) return { ...state, phase: 'watched', page: 0 }
     return { ...state, phase: 'loop', page: page + 1 }
   } else if (phase === 'watched') {
-    if (nextStart < feed.watched.length) {
-      return { ...state, page: page + 1 }
-    }
-    // 視聴済みも尽きた → ループ
+    if (nextStart < feed.watched.length) return { ...state, page: page + 1 }
     return { ...state, phase: 'loop', page: 0 }
   } else {
-    // loop: 常にページ進行
     return { ...state, page: page + 1 }
   }
+}
+
+function getCatPageItems(cat: CategoryData): SearchItem[] {
+  const start = cat.page * ITEMS_PER_PAGE
+  return cat.items.slice(start, start + ITEMS_PER_PAGE)
+}
+
+function advanceCatPage(cat: CategoryData): CategoryData {
+  const nextStart = (cat.page + 1) * ITEMS_PER_PAGE
+  if (nextStart >= cat.items.length) {
+    // ループ: 最初に戻る
+    return { ...cat, page: 0 }
+  }
+  return { ...cat, page: cat.page + 1 }
 }
 
 export default function HomeScreen({
@@ -116,7 +119,8 @@ export default function HomeScreen({
       name,
       items: [] as SearchItem[],
       loading: true,
-      collapsed: true,
+      collapsed: false,
+      page: 0,
     }))
     setCatData(initial)
 
@@ -133,6 +137,7 @@ export default function HomeScreen({
     })
   }, [categories])
 
+  // === Channel feed handlers ===
   const toggleChannelCollapse = useCallback((index: number) => {
     setChannels(prev =>
       prev.map((c, i) => (i === index ? { ...c, collapsed: !c.collapsed } : c))
@@ -168,9 +173,16 @@ export default function HomeScreen({
     })
   }, [channels])
 
+  // === Category handlers ===
   const toggleCatCollapse = useCallback((index: number) => {
     setCatData(prev =>
       prev.map((c, i) => (i === index ? { ...c, collapsed: !c.collapsed } : c))
+    )
+  }, [])
+
+  const nextCatPage = useCallback((index: number) => {
+    setCatData(prev =>
+      prev.map((c, i) => (i === index ? advanceCatPage(c) : c))
     )
   }, [])
 
@@ -192,10 +204,7 @@ export default function HomeScreen({
 
         return (
           <div key={ch.feed.channelId}>
-            <div
-              className="cat-header feed-header"
-              onClick={() => toggleChannelCollapse(i)}
-            >
+            <div className="cat-header feed-header" onClick={() => toggleChannelCollapse(i)}>
               <div className="feed-ch-info">
                 <img
                   src={ch.feed.thumbnail}
@@ -213,15 +222,12 @@ export default function HomeScreen({
             {!ch.collapsed && (
               <div className="cat-content">
                 <div className="feed-actions">
-                  <button
-                    className="feed-refresh-btn"
-                    onClick={e => { e.stopPropagation(); refreshChannel(i) }}
-                  >
+                  <button className="feed-refresh-btn" onClick={() => refreshChannel(i)}>
                     ↻ Next
                   </button>
                   <button
                     className="feed-refresh-btn hard"
-                    onClick={e => { e.stopPropagation(); hardRefreshChannel(i) }}
+                    onClick={() => hardRefreshChannel(i)}
                     disabled={ch.refreshing}
                   >
                     {ch.refreshing ? '...' : '🔄 Reload'}
@@ -246,32 +252,45 @@ export default function HomeScreen({
         )
       })}
 
-      {/* カテゴリ別 */}
-      {catData.map((cat, i) => (
-        <div key={cat.name}>
-          <div className="cat-header" onClick={() => toggleCatCollapse(i)}>
-            <span>{cat.name}</span>
-            <span className={`cat-toggle ${cat.collapsed ? 'closed' : ''}`}>▼</span>
-          </div>
-          {!cat.collapsed && (
-            <div className="cat-content">
-              {cat.loading ? (
-                <div style={{ padding: 10, fontSize: 12, color: '#666' }}>Loading...</div>
-              ) : (
-                <VideoList
-                  items={cat.items}
-                  onPlay={onPlay}
-                  onOpenChannel={onOpenChannel}
-                  onOpenPlaylist={onOpenPlaylist}
-                  isSubscribed={isSubscribed}
-                  onToggleSub={onToggleSub}
-                  onBlockChannel={onBlockChannel}
-                />
-              )}
+      {/* カテゴリ別（Nextボタン付き） */}
+      {catData.map((cat, i) => {
+        const pageItems = getCatPageItems(cat)
+        return (
+          <div key={cat.name}>
+            <div className="cat-header" onClick={() => toggleCatCollapse(i)}>
+              <span>{cat.name}</span>
+              <span className={`cat-toggle ${cat.collapsed ? 'closed' : ''}`}>▼</span>
             </div>
-          )}
-        </div>
-      ))}
+            {!cat.collapsed && (
+              <div className="cat-content">
+                {cat.loading ? (
+                  <div className="scroll-sentinel"><div className="loader" /></div>
+                ) : (
+                  <>
+                    <div className="feed-actions">
+                      <button className="feed-refresh-btn" onClick={() => nextCatPage(i)}>
+                        ↻ Next
+                      </button>
+                      <span className="feed-count">
+                        {cat.page * ITEMS_PER_PAGE + 1}-{Math.min((cat.page + 1) * ITEMS_PER_PAGE, cat.items.length)} / {cat.items.length}
+                      </span>
+                    </div>
+                    <VideoList
+                      items={pageItems}
+                      onPlay={onPlay}
+                      onOpenChannel={onOpenChannel}
+                      onOpenPlaylist={onOpenPlaylist}
+                      isSubscribed={isSubscribed}
+                      onToggleSub={onToggleSub}
+                      onBlockChannel={onBlockChannel}
+                    />
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
