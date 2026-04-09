@@ -71,18 +71,9 @@ video { width: 100%; max-height: 50vh; background: #000; }
 .v-meta { font-size: 11px; color: #aaa; margin-top: 4px; }
 .block-btn { color: #ff4444; border: 1px solid #ff4444; padding: 2px 4px; border-radius: 4px; font-size: 10px; margin-left: 8px; cursor: pointer; display: inline-block; }
 .dl-btn { display: flex; align-items: center; justify-content: center; width: 36px; flex-shrink: 0; font-size: 18px; text-decoration: none; color: #2ecc71; opacity: 0.7; transition: opacity 0.2s; }
-.dl-btn:active { opacity: 1; }
-.dl-btn-wrap { position: relative; display: flex; align-items: center; flex-shrink: 0; }
-.dl-menu {
-  position: absolute; right: 0; bottom: 100%; background: #333; border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 50; overflow: hidden; min-width: 90px;
-}
-.dl-menu-item {
-  padding: 10px 14px; font-size: 13px; color: #fff; cursor: pointer;
-  white-space: nowrap; border-bottom: 1px solid #444;
-}
-.dl-menu-item:last-child { border-bottom: none; }
-.dl-menu-item:active { background: #444; }
+.dl-btns { display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; flex-shrink: 0; padding: 0 2px; }
+.dl-btn-mp4, .dl-btn-m4a { font-size: 16px; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; line-height: 1; }
+.dl-btn-mp4:active, .dl-btn-m4a:active { opacity: 1; }
 .dl-player-wrap { display: flex; gap: 6px; }
 .dl-audio { border-color: #e67e22 !important; color: #e67e22 !important; }
 

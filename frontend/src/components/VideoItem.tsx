@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useCallback } from 'react'
 import type { VideoItem as VideoItemType, ChannelItem, PlaylistItem, SearchItem } from '../api/client'
 import { formatDuration, formatViews } from '../utils'
 
@@ -23,9 +23,6 @@ export default function VideoItemComponent({
   onToggleSub,
   onBlockChannel,
 }: Props) {
-  const [showDlMenu, setShowDlMenu] = useState(false)
-  const timerRef = useRef<number>(0)
-
   const download = useCallback((videoId: string, format: 'video' | 'audio') => {
     const a = document.createElement('a')
     a.href = `/stream/${videoId}?dl=1&format=${format}`
@@ -33,7 +30,6 @@ export default function VideoItemComponent({
     document.body.appendChild(a)
     a.click()
     a.remove()
-    setShowDlMenu(false)
   }, [])
 
   if (item.type === 'channel') {
@@ -74,12 +70,7 @@ export default function VideoItemComponent({
 
   const v = item as VideoItemType
   return (
-    <div
-      className={`video-item ${isPlaying ? 'now-playing' : ''}`}
-      onTouchStart={() => { timerRef.current = window.setTimeout(() => setShowDlMenu(true), 600) }}
-      onTouchEnd={() => clearTimeout(timerRef.current)}
-      onTouchMove={() => { clearTimeout(timerRef.current); setShowDlMenu(false) }}
-    >
+    <div className={`video-item ${isPlaying ? 'now-playing' : ''}`}>
       <div className="thumb" onClick={() => onPlay?.(v.videoId)}>
         <img src={v.thumbnail} loading="lazy" />
         <span className="duration">{formatDuration(v.lengthSeconds)}</span>
@@ -98,18 +89,9 @@ export default function VideoItemComponent({
           )}
         </div>
       </div>
-      <div className="dl-btn-wrap" onClick={e => e.stopPropagation()}>
-        <div className="dl-btn" onClick={() => setShowDlMenu(prev => !prev)}>💾</div>
-        {showDlMenu && (
-          <div className="dl-menu">
-            <div className="dl-menu-item" onClick={() => download(v.videoId, 'video')}>
-              🎬 MP4
-            </div>
-            <div className="dl-menu-item" onClick={() => download(v.videoId, 'audio')}>
-              🎵 MP3
-            </div>
-          </div>
-        )}
+      <div className="dl-btns" onClick={e => e.stopPropagation()}>
+        <div className="dl-btn-mp4" onClick={() => download(v.videoId, 'video')}>🎬</div>
+        <div className="dl-btn-m4a" onClick={() => download(v.videoId, 'audio')}>🎵</div>
       </div>
     </div>
   )

@@ -141,7 +141,7 @@ export default function PlayerScreen({
             {streamUrl ? (
               <div className="dl-player-wrap">
                 <a href={`${streamUrl}?dl=1`} className="dl-ready" download>🎬 MP4</a>
-                <a href={`${streamUrl}?dl=1&format=audio`} className="dl-ready dl-audio" download>🎵 MP3</a>
+                <a href={`${streamUrl}?dl=1&format=audio`} className="dl-ready dl-audio" download>🎵 M4A</a>
               </div>
             ) : (
               <span className="dl-wait">Wait...</span>
