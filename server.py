@@ -51,6 +51,10 @@ class CustomHandler(JsonResponseMixin, http.server.SimpleHTTPRequestHandler):
         if hasattr(self, '_set_user_cookie') and self._set_user_cookie:
             set_user_cookie(self, self._set_user_cookie)
             self._set_user_cookie = None
+        # キャッシュ無効化: 古いキャッシュによるアップデート未反映を防止
+        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
         super().end_headers()
 
     def do_GET(self):

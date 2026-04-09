@@ -1,48 +1,14 @@
-const CACHE_NAME = 'shimatube-app-v18';
-
-const APP_ASSETS = [
-    '/',
-    '/index.html',
-    '/css/style.css',
-    '/js/app.js',
-    '/js/storage.js',
-    '/js/api.js',
-    '/js/ui.js',
-    '/js/navigation.js',
-    '/js/search.js',
-    '/js/player.js',
-    '/js/channel.js',
-    '/js/playlist.js',
-    '/js/config.js',
-    '/js/main.js',
-    '/manifest.json',
-    '/icon.png'
-];
-
-self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_ASSETS))
-    );
-    self.skipWaiting();
-});
+// Service Worker無効化: キャッシュを全削除して自己登録解除
+self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then(keys =>
-            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-        )
+            Promise.all(keys.map(k => caches.delete(k)))
+        ).then(() => self.registration.unregister())
     );
 });
 
 self.addEventListener('fetch', (event) => {
-    const url = new URL(event.request.url);
-
-    if (url.pathname.startsWith('/stream/') || url.pathname.startsWith('/api')) {
-        event.respondWith(fetch(event.request));
-        return;
-    }
-
-    event.respondWith(
-        caches.match(event.request).then(cached => cached || fetch(event.request))
-    );
+    event.respondWith(fetch(event.request));
 });
