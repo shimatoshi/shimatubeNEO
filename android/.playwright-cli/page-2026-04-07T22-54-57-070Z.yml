@@ -1,0 +1,907 @@
+- generic [active]:
+  - generic [ref=e1]:
+    - iframe [ref=e3]:
+      - iframe [ref=f37e2]:
+        - iframe [ref=f38e3]:
+          - link [ref=f39e6] [cursor=pointer]:
+            - /url: https://asia.adform.net/C/?bn=88081874;C=1;crtbwp=0.017881;crtbdata=KyYxPOo7F-nqQiQjrRT_dNFTtcL0eECh4StOmQnFI6le8QBj3YWIUUYSUscSHu0AFP--auacOVFbKMJR8Gimg1XcWyur8zOzHS1AseNvbQcLaKbkdF5SPKqBzcdr45Uh7bmGTx3Di6SoaRgbruyC0HIwqkS1aY0nhIuT8YxzDB-BCN5HhU33v6oJq50NeVtaH2gUbmlZkGWcYnd8S0o2iq8vTXWz-V8pv-6hzR1ZzWIeeUPbiRFU6sslGd0xpdztthOykiMWQ8MrX4T7b8sW6LYvDbvzSJxjEYmy_rt2Dvo1;adfibeg=0;cdata=DABPMvAr2AwiaA6nHI1yCHpW99LhgL2kym_RNdAo0wUDOCHmJ16BglKupGIR1jb8v0P1y2dDUZPjhZJ81j3YGK4WrCE8ovGngNhqy2zKggZG96VJxCEjf7gqMsWQNhDLGRSKJrz0gGHWTHoUC7dGsKQdinQo8t36J7XqgkOCBJxCbALH8UwUQgm1vmaKaiqhHnlD24kRVOoDpUhauAQghDahDU8UAEAakOSKqPCjrbQ1;;CREFURL=https%3a%2f%2fwww.tapology.com%2f
+    - button "Close Ad" [ref=e4] [cursor=pointer]
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - generic:
+        - paragraph:
+          - link:
+            - /url: /
+            - img
+      - generic [ref=e38]:
+        - link "devices" [ref=e39] [cursor=pointer]:
+          - /url: "#"
+        - link "Tap In" [ref=e40] [cursor=pointer]:
+          - /url: /sign_in?main=true
+    - navigation:
+      - generic [ref=e41]:
+        - link "schedule":
+          - /url: /fightcenter
+          - img [ref=e43] [cursor=pointer]
+          - generic [ref=e44] [cursor=pointer]: schedule
+        - link "rankings":
+          - /url: /rankings/ufc
+          - img [ref=e46] [cursor=pointer]
+          - generic [ref=e48] [cursor=pointer]: rankings
+        - link "forum":
+          - /url: /forum/threads
+          - img [ref=e50] [cursor=pointer]
+          - generic [ref=e55] [cursor=pointer]: forum
+        - link "news":
+          - /url: /news
+          - img [ref=e57] [cursor=pointer]
+          - generic [ref=e68] [cursor=pointer]: news
+        - link "search":
+          - /url: /search
+          - img [ref=e70] [cursor=pointer]
+          - generic [ref=e77] [cursor=pointer]: search
+        - generic:
+          - img [ref=e79]
+          - generic [ref=e83]: more
+  - group [ref=e86]:
+    - generic [ref=e88]:
+      - generic [ref=e89]: pageview
+      - textbox [ref=e90]
+  - generic [ref=e92]:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - heading "Tenshin vs. Estrada" [level=1] [ref=e93]:
+                - link "Tenshin vs. Estrada" [ref=e94] [cursor=pointer]:
+                  - /url: /fightcenter/events/138864-estrada-vs-tenshin
+              - heading "Saturday 04.11.2026 at 3:00 AM ET No Broadcast" [level=2]:
+                - text: Saturday 04.11.2026 at 3:00 AM ET
+                - text: No Broadcast
+              - generic: Main Event
+              - generic [ref=e95]:
+                - generic:
+                  - img
+                  - generic [ref=e96]:
+                    - link "Juan F." [ref=e97] [cursor=pointer]:
+                      - /url: /fightcenter/fighters/203619-juan-francisco-estrada-el-gallo
+                    - link "Estrada" [ref=e98] [cursor=pointer]:
+                      - /url: /fightcenter/fighters/203619-juan-francisco-estrada-el-gallo
+                - generic:
+                  - generic [ref=e99]: vs.
+                  - link "Enter Prediction" [ref=e102] [cursor=pointer]:
+                    - /url: /signup
+                    - generic [ref=e103]:
+                      - text: Enter
+                      - text: Prediction
+                - generic:
+                  - img
+                  - generic [ref=e104]:
+                    - link "Tenshin" [ref=e105] [cursor=pointer]:
+                      - /url: /fightcenter/fighters/146669-tenshin-nasukawa
+                    - link "Nasukawa" [ref=e106] [cursor=pointer]:
+                      - /url: /fightcenter/fighters/146669-tenshin-nasukawa
+            - generic:
+              - heading "Cage Warriors 204" [level=1] [ref=e107]:
+                - link "Cage Warriors 204" [ref=e108] [cursor=pointer]:
+                  - /url: /fightcenter/events/140021-cage-warriors-204
+              - heading "Saturday 04.11.2026 at 12:00 PM ET UFC Fight Pass" [level=2]:
+                - text: Saturday 04.11.2026 at 12:00 PM ET
+                - text: UFC Fight Pass
+              - generic: Main Event
+              - generic [ref=e109]:
+                - generic:
+                  - img
+                  - generic [ref=e110]:
+                    - link "Francesco" [ref=e111] [cursor=pointer]:
+                      - /url: /fightcenter/fighters/134049-francesco-nuzzi
+                    - link "Nuzzi" [ref=e112] [cursor=pointer]:
+                      - /url: /fightcenter/fighters/134049-francesco-nuzzi
+                - generic:
+                  - generic [ref=e113]: vs.
+                  - link "Enter Prediction" [ref=e116] [cursor=pointer]:
+                    - /url: /signup
+                    - generic [ref=e117]:
+                      - text: Enter
+                      - text: Prediction
+                - generic:
+                  - img
+                  - generic [ref=e118]:
+                    - link "Manoel" [ref=e119] [cursor=pointer]:
+                      - /url: /fightcenter/fighters/226493-manoel-costa-da-silva-lorinho
+                    - link "Silva" [ref=e120] [cursor=pointer]:
+                      - /url: /fightcenter/fighters/226493-manoel-costa-da-silva-lorinho
+          - button "Previous" [ref=e121] [cursor=pointer]
+          - button "Next" [ref=e122] [cursor=pointer]
+        - generic [ref=e123]:
+          - link "UFC Rankings":
+            - /url: /rankings/ufc
+            - generic:
+              - img [ref=e126] [cursor=pointer]
+              - generic [ref=e158] [cursor=pointer]: UFC Rankings
+          - generic [ref=e159]:
+            - link "auto_graph Tresean Gore Up 17 Spots at 185 lbs View Rankings »" [ref=e161] [cursor=pointer]:
+              - /url: /rankings/ufc/ultimate-fighting-championship-mens-middleweight-185-pounds
+              - generic [ref=e162]:
+                - generic [ref=e163]:
+                  - generic [ref=e164]: auto_graph
+                  - generic [ref=e165]: Tresean Gore Up 17 Spots at 185 lbs
+                - generic [ref=e167]: View Rankings »
+            - generic [ref=e168]:
+              - generic [ref=e169]:
+                - generic [ref=e170]:
+                  - link "T. Gore" [ref=e172] [cursor=pointer]:
+                    - /url: /fightcenter/fighters/65776-tresean-gore
+                  - link "A. Bekoev" [ref=e174] [cursor=pointer]:
+                    - /url: /fightcenter/fighters/137588-azamat-bekoev
+                - generic [ref=e175]:
+                  - img "Tresean Gore" [ref=e176]
+                  - generic [ref=e177]: vs
+                  - img "Azamat Bekoev" [ref=e178]
+                - generic [ref=e180]: Win
+                - generic [ref=e181]: Technical (Guillotine Choke) · 3:27 · R3
+              - 'link "Middleweight Rankings #36 Zach Reese #37 Yousri Belgaroui #38 Tresean Gore ▲ 17 #39 Michel Pereira ▼ 1 #40 César Almeida ▼ 1" [ref=e183] [cursor=pointer]':
+                - /url: /rankings/ufc/ultimate-fighting-championship-mens-middleweight-185-pounds
+                - generic [ref=e184]:
+                  - generic [ref=e186]: Middleweight Rankings
+                  - generic [ref=e187]:
+                    - generic [ref=e188]: "#36"
+                    - generic [ref=e190]: Zach Reese
+                  - generic [ref=e191]:
+                    - generic [ref=e192]: "#37"
+                    - generic [ref=e194]: Yousri Belgaroui
+                  - generic [ref=e195]:
+                    - generic [ref=e196]: "#38"
+                    - generic [ref=e197]:
+                      - generic [ref=e198]: Tresean Gore
+                      - generic [ref=e199]: ▲ 17
+                  - generic [ref=e200]:
+                    - generic [ref=e201]: "#39"
+                    - generic [ref=e202]:
+                      - generic [ref=e203]: Michel Pereira
+                      - generic [ref=e204]: ▼ 1
+                  - generic [ref=e205]:
+                    - generic [ref=e206]: "#40"
+                    - generic [ref=e207]:
+                      - generic [ref=e208]: César Almeida
+                      - generic [ref=e209]: ▼ 1
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - generic [ref=e210]: UFC Rankings Divisions
+                  - generic [ref=e212]:
+                    - link "125" [ref=e213] [cursor=pointer]:
+                      - /url: /rankings/ufc/ultimate-fighting-championship-mens-flyweight-125-pounds
+                    - generic [ref=e214]: •
+                    - link "135" [ref=e215] [cursor=pointer]:
+                      - /url: /rankings/ufc/ultimate-fighting-championship-mens-bantamweight-135-pounds
+                    - generic [ref=e216]: •
+                    - link "145" [ref=e217] [cursor=pointer]:
+                      - /url: /rankings/ufc/ultimate-fighting-championship-mens-featherweight-145-pounds
+                    - generic [ref=e218]: •
+                    - link "155" [ref=e219] [cursor=pointer]:
+                      - /url: /rankings/ufc/ultimate-fighting-championship-mens-lightweight-155-pounds
+                    - generic [ref=e220]: •
+                    - link "170" [ref=e221] [cursor=pointer]:
+                      - /url: /rankings/ufc/ultimate-fighting-championship-mens-welterweight-170-pounds
+                    - generic [ref=e222]: •
+                    - link "185" [ref=e223] [cursor=pointer]:
+                      - /url: /rankings/ufc/ultimate-fighting-championship-mens-middleweight-185-pounds
+                    - generic [ref=e224]: •
+                    - link "205" [ref=e225] [cursor=pointer]:
+                      - /url: /rankings/ufc/ultimate-fighting-championship-mens-light-heavyweight-205-pounds
+                    - generic [ref=e226]: •
+                    - link "265" [ref=e227] [cursor=pointer]:
+                      - /url: /rankings/ufc/ultimate-fighting-championship-mens-heavyweight-265-pounds
+                  - generic [ref=e229]:
+                    - link "115" [ref=e230] [cursor=pointer]:
+                      - /url: /rankings/ufc/ultimate-fighting-championship-womens-strawweight-115-pounds
+                    - generic [ref=e231]: •
+                    - link "125" [ref=e232] [cursor=pointer]:
+                      - /url: /rankings/ufc/ultimate-fighting-championship-womens-flyweight-125-pounds
+                    - generic [ref=e233]: •
+                    - link "135" [ref=e234] [cursor=pointer]:
+                      - /url: /rankings/ufc/ultimate-fighting-championship-womens-bantamweight-135-pounds
+          - generic:
+            - generic [ref=e235]: verified
+            - generic [ref=e236]: These rankings use Tapology's proprietary scoring system. No fan votes or opinions are included.
+        - generic:
+          - heading "Tapology MMA Feed" [level=3] [ref=e237]
+          - generic:
+            - link "All" [ref=e239] [cursor=pointer]:
+              - /url: "#"
+            - link "Picks" [ref=e241] [cursor=pointer]:
+              - /url: "#"
+            - link "Rankings" [ref=e243] [cursor=pointer]:
+              - /url: "#"
+            - link "Forum" [ref=e245] [cursor=pointer]:
+              - /url: "#"
+            - link "Tapology" [ref=e247] [cursor=pointer]:
+              - /url: "#"
+          - list:
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e248]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e249] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Robert Dani vs. Enis Halitaj" [ref=e251] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121402-cage-warriors-academy-south-east-41-robert-dani-vs-enis-halitaj
+              - generic [ref=e252]:
+                - paragraph [ref=e253]: Update
+                - paragraph [ref=e254]: 6:52pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e255]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e256] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Liam Yeaman vs. Alfie Newman" [ref=e258] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121401-cage-warriors-academy-south-east-41-liam-the-flash-yeaman-vs-alfie-newman
+              - generic [ref=e259]:
+                - paragraph [ref=e260]: Update
+                - paragraph [ref=e261]: 6:51pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e262]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e263] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Davlatov Siyovush vs. Lorenzo Navarro" [ref=e265] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121400-cage-warriors-academy-south-east-41-davlatov-siyovush-vs-lorenzo-navarro
+              - generic [ref=e266]:
+                - paragraph [ref=e267]: Update
+                - paragraph [ref=e268]: 6:50pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e269]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e270] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Max Smith vs. Vivien Mottet" [ref=e272] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121399-cage-warriors-academy-south-east-41-max-smith-vs-vivien-hollywood-mottet
+              - generic [ref=e273]:
+                - paragraph [ref=e274]: Update
+                - paragraph [ref=e275]: 6:49pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e276]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e277] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Art Hasimi vs. Eli Da Silva" [ref=e279] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121398-cage-warriors-academy-south-east-41-art-illyrian-hasimi-vs-eli-dynamite-da-silva
+              - generic [ref=e280]:
+                - paragraph [ref=e281]: Update
+                - paragraph [ref=e282]: 6:47pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e283]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e284] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Robert Hardy vs. Mikolaj Ivanchuk" [ref=e286] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121397-cage-warriors-academy-south-east-41-robert-hardy-vs-mikolaj-ivanchuk
+              - generic [ref=e287]:
+                - paragraph [ref=e288]: Update
+                - paragraph [ref=e289]: 6:46pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e290]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e291] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Milán Móczó vs. Kyle Everitt" [ref=e293] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121396-cage-warriors-academy-south-east-41-milan-moczo-vs-kyle-king-everitt
+              - generic [ref=e294]:
+                - paragraph [ref=e295]: Update
+                - paragraph [ref=e296]: 6:44pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e297]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e298] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Klorenc Dedja vs. Gabriele Rovieri" [ref=e300] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121395-cage-warriors-academy-south-east-41-klorenc-dedja-vs-gabriele-rovieri
+              - generic [ref=e301]:
+                - paragraph [ref=e302]: Update
+                - paragraph [ref=e303]: 6:43pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e304]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e305] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Thomas Brahushi vs. Nathan Thompson" [ref=e307] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121394-cage-warriors-academy-south-east-41-thomas-brahushi-vs-nathan-thompson
+              - generic [ref=e308]:
+                - paragraph [ref=e309]: Update
+                - paragraph [ref=e310]: 6:42pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e311]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e312] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Jayden Wilkinson vs. Blake Young" [ref=e314] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121393-cage-warriors-academy-south-east-41-jayden-wilkinson-vs-blake-young
+              - generic [ref=e315]:
+                - paragraph [ref=e316]: Update
+                - paragraph [ref=e317]: 6:40pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e318]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e319] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Jack Williams vs. Yann Couraudon" [ref=e321] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121392-cage-warriors-academy-south-east-41-jack-williams-vs-yann-couraudon
+              - generic [ref=e322]:
+                - paragraph [ref=e323]: Update
+                - paragraph [ref=e324]: 6:37pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e325]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e326] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Vebjørn Aunet vs. Edvainer Injai" [ref=e328] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121391-cage-warriors-academy-south-east-41-vebjorn-aunet-vs-edvainer-the-fortune-soldier-injai
+              - generic [ref=e329]:
+                - paragraph [ref=e330]: Update
+                - paragraph [ref=e331]: 6:36pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e332]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e333] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Zakariya Njie Michaux vs. Ryan Zinga" [ref=e335] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121390-cage-warriors-academy-south-east-41-zakariya-njie-michaux-vs-ryan-zinga
+              - generic [ref=e336]:
+                - paragraph [ref=e337]: Update
+                - paragraph [ref=e338]: 6:35pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e339]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e340] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Roy Pugh vs. Evan Harrington" [ref=e342] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121389-cage-warriors-academy-south-east-41-roy-pugh-vs-evan-harrington
+              - generic [ref=e343]:
+                - paragraph [ref=e344]: Update
+                - paragraph [ref=e345]: 6:32pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e346]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e347] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Ibrahim Zadran vs. Mattia Miceli" [ref=e349] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121388-cage-warriors-academy-south-east-41-ibrahim-zadran-vs-mattia-miceli
+              - generic [ref=e350]:
+                - paragraph [ref=e351]: Update
+                - paragraph [ref=e352]: 6:30pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e353]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e354] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Alfie Newman vs. Sam Shaw" [ref=e356] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121387-cage-warriors-academy-south-east-41-alfie-newman-vs-sam-shaw
+              - generic [ref=e357]:
+                - paragraph [ref=e358]: Update
+                - paragraph [ref=e359]: 6:30pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e360]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e361] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Ben Edwards vs. Mikhael Bensimon" [ref=e363] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121386-cage-warriors-academy-south-east-41-ben-drago-edwards-vs-mikhael-the-golden-boy-bensimon
+              - generic [ref=e364]:
+                - paragraph [ref=e365]: Update
+                - paragraph [ref=e366]: 6:27pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e367]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e368] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Mitchell Kennedy vs. Elliot Osamuede" [ref=e370] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121384-cage-warriors-academy-south-east-41-mitchell-kennedy-vs-elliot-the-ruthless-osamuede
+              - generic [ref=e371]:
+                - paragraph [ref=e372]: Update
+                - paragraph [ref=e373]: 6:25pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e374]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e375] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Oliver Humphreys vs. Freddie Gant" [ref=e377] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121382-cage-warriors-academy-south-east-41-the-chemist-oliver-humphreys-vs-freddie-gant
+              - generic [ref=e378]:
+                - paragraph [ref=e379]: Update
+                - paragraph [ref=e380]: 6:24pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e381]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e382] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Ryder Hey vs. Tyquan Lee" [ref=e384] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121381-cage-warriors-academy-south-east-41-ryder-hey-vs-tyquan-lee
+              - generic [ref=e385]:
+                - paragraph [ref=e386]: Update
+                - paragraph [ref=e387]: 6:23pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e388]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e389] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Javid Uryakhel vs. Stanley Webb" [ref=e391] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121380-cage-warriors-academy-south-east-41-javid-uryakhel-vs-stanley-webb
+              - generic [ref=e392]:
+                - paragraph [ref=e393]: Update
+                - paragraph [ref=e394]: 6:22pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e395]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e396] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Mitchell Thorpe vs. Kristof Cornelius Hosey" [ref=e398] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121379-cage-warriors-academy-south-east-41-mitchell-thorpe-vs-kristof-cornelius-the-hun-hosey
+              - generic [ref=e399]:
+                - paragraph [ref=e400]: Update
+                - paragraph [ref=e401]: 6:21pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e402]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e403] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Marcin Kochel vs. Adam Zilio" [ref=e405] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121378-cage-warriors-academy-south-east-41-marcin-polish-power-kochel-vs-adam-zilio
+              - generic [ref=e406]:
+                - paragraph [ref=e407]: Update
+                - paragraph [ref=e408]: 6:20pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e409]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e410] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Aidan Bailey vs. Corentin Perrutel" [ref=e412] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121377-cage-warriors-academy-south-east-41-aidan-bailey-vs-corentin-perrutel
+              - generic [ref=e413]:
+                - paragraph [ref=e414]: Update
+                - paragraph [ref=e415]: 6:20pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e416]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e417] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Troy Sudbury vs. Oleksandr Horobchenko" [ref=e419] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121376-cage-warriors-academy-south-east-41-troy-sudbury-vs-oleksandr-horobchenko
+              - generic [ref=e420]:
+                - paragraph [ref=e421]: Update
+                - paragraph [ref=e422]: 6:18pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e423]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e424] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Liam Yeaman vs. Danyal Azam" [ref=e426] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121375-cage-warriors-academy-south-east-41-liam-the-flash-yeaman-vs-danyal-azam
+              - generic [ref=e427]:
+                - paragraph [ref=e428]: Update
+                - paragraph [ref=e429]: 6:18pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e430]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e431] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Toby Jackson vs. Divin Ntangu" [ref=e433] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121373-cage-warriors-academy-south-east-41-toby-jackson-vs-divin-ntangu
+              - generic [ref=e434]:
+                - paragraph [ref=e435]: Update
+                - paragraph [ref=e436]: 6:17pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e437]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e438] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Max Imlach vs. Brandon Dorrell" [ref=e440] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121364-cage-warriors-academy-south-east-41-max-imlach-vs-brandon-dorrell
+              - generic [ref=e441]:
+                - paragraph [ref=e442]: Update
+                - paragraph [ref=e443]: 6:16pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e444]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e445] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Mason Kinsella vs. Eddy Hourtal" [ref=e447] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121363-cage-warriors-academy-south-east-41-mason-the-wolf-kinsella-vs-eddy-hourtal
+              - generic [ref=e448]:
+                - paragraph [ref=e449]: Update
+                - paragraph [ref=e450]: 6:15pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e451]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e452] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Sam Hadley vs. Darnell Jackson" [ref=e454] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121362-cage-warriors-academy-south-east-41-sam-hadley-vs-darnell-action-jackson
+              - generic [ref=e455]:
+                - paragraph [ref=e456]: Update
+                - paragraph [ref=e457]: 6:15pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e458]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e459] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Jovan Majstorovic vs. Uri Fraser" [ref=e461] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121361-cage-warriors-academy-south-east-41-jovan-majstor-majstorovic-vs-uri-fraser
+              - generic [ref=e462]:
+                - paragraph [ref=e463]: Update
+                - paragraph [ref=e464]: 6:12pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e465]:
+                  - text: New Bout
+                  - link "Cage Warriors Academy South East 41" [ref=e466] [cursor=pointer]:
+                    - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+                  - text: on 2026.04.18
+                - link "Elias Fico vs. Ben Hodgson" [ref=e468] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121360-cage-warriors-academy-south-east-41-elias-fico-vs-ben-hodgson
+              - generic [ref=e469]:
+                - paragraph [ref=e470]: Update
+                - paragraph [ref=e471]: 6:11pm Apr 07
+            - listitem:
+              - img "CWSE"
+              - generic:
+                - generic [ref=e472]:
+                  - text: New event
+                  - text: Cage Warriors Academy South East 41
+                - link "Cage Warriors Academy South East 41 is confirmed for 2026.04.18, Charter Hall" [ref=e474] [cursor=pointer]:
+                  - /url: /fightcenter/events/142102-cage-warriors-academy-south-east-41
+              - generic [ref=e475]:
+                - paragraph [ref=e476]: Update
+                - paragraph [ref=e477]: 6:09pm Apr 07
+            - listitem:
+              - img "ALMMA"
+              - generic:
+                - generic [ref=e478]:
+                  - text: New event
+                  - text: ALMMA 257
+                - link "ALMMA 257 is confirmed for 2026.04.25, Hala Sportowa w Stroniu Śląskim" [ref=e480] [cursor=pointer]:
+                  - /url: /fightcenter/events/142101-almma-257-iii-mistrzostwa-dolnego-slaska
+              - generic [ref=e481]:
+                - paragraph [ref=e482]: Update
+                - paragraph [ref=e483]: 5:20pm Apr 07
+            - listitem:
+              - img "MMAP"
+              - generic:
+                - generic [ref=e484]:
+                  - text: New event
+                  - text: Mistrzostwa MMA Polska 17
+                - link "Mistrzostwa MMA Polska 17 is confirmed for 2026.06.27, Hala Sportowo - Widowiskowa MOSiR" [ref=e486] [cursor=pointer]:
+                  - /url: /fightcenter/events/142099-mistrzostwa-mma-polska-17
+              - generic [ref=e487]:
+                - paragraph [ref=e488]: Update
+                - paragraph [ref=e489]: 5:06pm Apr 07
+            - listitem:
+              - img "QFL"
+              - generic:
+                - generic [ref=e490]:
+                  - text: New Bout
+                  - link "Quest MMA 16" [ref=e491] [cursor=pointer]:
+                    - /url: /fightcenter/events/140151-quest-mma-16
+                  - text: on 2026.04.26
+                - link "Alexandros Tsirimokos vs. George Asmanidis" [ref=e493] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121356-quest-mma-16-alexandros-tsirimokos-vs-george-asmanidis
+              - generic [ref=e494]:
+                - paragraph [ref=e495]: Update
+                - paragraph [ref=e496]: 4:59pm Apr 07
+            - listitem:
+              - img "QFL"
+              - generic:
+                - generic [ref=e497]:
+                  - text: New Bout
+                  - link "Quest MMA 16" [ref=e498] [cursor=pointer]:
+                    - /url: /fightcenter/events/140151-quest-mma-16
+                  - text: on 2026.04.26
+                - link "Dimitris Paparizos vs. Besim Giakaloglou" [ref=e500] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121355-quest-mma-16-dimitris-paparizos-vs-besim-giakaloglou
+              - generic [ref=e501]:
+                - paragraph [ref=e502]: Update
+                - paragraph [ref=e503]: 4:58pm Apr 07
+            - listitem:
+              - img "QFL"
+              - generic:
+                - generic [ref=e504]:
+                  - text: New Bout
+                  - link "Quest MMA 16" [ref=e505] [cursor=pointer]:
+                    - /url: /fightcenter/events/140151-quest-mma-16
+                  - text: on 2026.04.26
+                - link "Stefanos Biroll vs. Thodoris Giagtatzidis" [ref=e507] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121354-quest-mma-16-stefanos-biroll-vs-thodoris-giagtatzidis
+              - generic [ref=e508]:
+                - paragraph [ref=e509]: Update
+                - paragraph [ref=e510]: 4:57pm Apr 07
+            - listitem:
+              - img "IFC"
+              - generic:
+                - generic [ref=e511]:
+                  - text: New Bout
+                  - link "Inka" [ref=e512] [cursor=pointer]:
+                    - /url: /fightcenter/events/142094-inka-warriors-6
+                  - text: on 2026.04.29
+                - link "Andy Garcia vs. Hollman Moreno" [ref=e514] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121353-inka-andy-garcia-vs-hollman-el-arrecho-moreno
+              - generic [ref=e515]:
+                - paragraph [ref=e516]: Update
+                - paragraph [ref=e517]: 4:57pm Apr 07
+            - listitem:
+              - img "QFL"
+              - generic:
+                - generic [ref=e518]:
+                  - text: New Bout
+                  - link "Quest MMA 16" [ref=e519] [cursor=pointer]:
+                    - /url: /fightcenter/events/140151-quest-mma-16
+                  - text: on 2026.04.26
+                - link "Sotiris Lambrogiannis vs. Giannis Kiakis" [ref=e521] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121352-quest-mma-16-sotiris-lambrogiannis-vs-giannis-kiakis
+              - generic [ref=e522]:
+                - paragraph [ref=e523]: Update
+                - paragraph [ref=e524]: 4:56pm Apr 07
+            - listitem:
+              - img "QFL"
+              - generic:
+                - generic [ref=e525]:
+                  - text: New Bout
+                  - link "Quest MMA 16" [ref=e526] [cursor=pointer]:
+                    - /url: /fightcenter/events/140151-quest-mma-16
+                  - text: on 2026.04.26
+                - link "Giorgos Theodoropoulos vs. Mohammad Zadran" [ref=e528] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121351-quest-mma-16-giorgos-theodoropoulos-vs-mohammad-zadran
+              - generic [ref=e529]:
+                - paragraph [ref=e530]: Update
+                - paragraph [ref=e531]: 4:54pm Apr 07
+            - listitem:
+              - img "QFL"
+              - generic:
+                - generic [ref=e532]:
+                  - text: New Bout
+                  - link "Quest MMA 16" [ref=e533] [cursor=pointer]:
+                    - /url: /fightcenter/events/140151-quest-mma-16
+                  - text: on 2026.04.26
+                - link "Petros Revelas vs. Ali Albazi" [ref=e535] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121350-quest-mma-16-petros-revelas-vs-ali-albazi
+              - generic [ref=e536]:
+                - paragraph [ref=e537]: Update
+                - paragraph [ref=e538]: 4:52pm Apr 07
+            - listitem:
+              - img "QFL"
+              - generic:
+                - generic [ref=e539]:
+                  - text: New Bout
+                  - link "Quest MMA 16" [ref=e540] [cursor=pointer]:
+                    - /url: /fightcenter/events/140151-quest-mma-16
+                  - text: on 2026.04.26
+                - link "Stelios Ziakas vs. Giannis Sotiriadis" [ref=e542] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121349-quest-mma-16-stelios-ziakas-vs-giannis-wukong-sotiriadis
+              - generic [ref=e543]:
+                - paragraph [ref=e544]: Update
+                - paragraph [ref=e545]: 4:50pm Apr 07
+            - listitem:
+              - img "QFL"
+              - generic:
+                - generic [ref=e546]:
+                  - text: New Bout
+                  - link "Quest MMA 16" [ref=e547] [cursor=pointer]:
+                    - /url: /fightcenter/events/140151-quest-mma-16
+                  - text: on 2026.04.26
+                - link "Agelos Giatras vs. Savvas Georgiadis" [ref=e549] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121348-quest-mma-16-agelos-giatras-vs-savvas-georgiadis
+              - generic [ref=e550]:
+                - paragraph [ref=e551]: Update
+                - paragraph [ref=e552]: 4:47pm Apr 07
+            - listitem:
+              - img "QFL"
+              - generic:
+                - generic [ref=e553]:
+                  - text: New Bout
+                  - link "Quest MMA 16" [ref=e554] [cursor=pointer]:
+                    - /url: /fightcenter/events/140151-quest-mma-16
+                  - text: on 2026.04.26
+                - link "Stelios Antonodimitrakis vs. Alexandros Bozić" [ref=e556] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121347-quest-mma-16-stelios-antonodimitrakis-vs-alexandros-bozic
+              - generic [ref=e557]:
+                - paragraph [ref=e558]: Update
+                - paragraph [ref=e559]: 4:46pm Apr 07
+            - listitem:
+              - img "DCS"
+              - generic:
+                - generic [ref=e560]:
+                  - text: New Bout
+                  - link "DCS 107" [ref=e561] [cursor=pointer]:
+                    - /url: /fightcenter/events/141080-dcs-107-ring-rivals-4
+                  - text: on 2026.04.17
+                - link "Leyton Tuma vs. Tucker Charron" [ref=e563] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121346-dcs-107-leyton-tuma-vs-tucker-too-good-charron
+              - generic [ref=e564]:
+                - paragraph [ref=e565]: Update
+                - paragraph [ref=e566]: 4:44pm Apr 07
+            - listitem:
+              - img "QFL"
+              - generic:
+                - generic [ref=e567]:
+                  - text: New Bout
+                  - link "Quest MMA 16" [ref=e568] [cursor=pointer]:
+                    - /url: /fightcenter/events/140151-quest-mma-16
+                  - text: on 2026.04.26
+                - link "Evangelos Zygomitros vs. Trdat Mirzakhanyan" [ref=e570] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121345-quest-mma-16-evangelos-zygomitros-vs-trdat-mirzakhanyan
+              - generic [ref=e571]:
+                - paragraph [ref=e572]: Update
+                - paragraph [ref=e573]: 4:44pm Apr 07
+            - listitem:
+              - img "DCS"
+              - generic:
+                - generic [ref=e574]:
+                  - text: New Bout
+                  - link "DCS 107" [ref=e575] [cursor=pointer]:
+                    - /url: /fightcenter/events/141080-dcs-107-ring-rivals-4
+                  - text: on 2026.04.17
+                - link "Darcie Bickel vs. Megan Weaver" [ref=e577] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121344-dcs-107-darcie-bickel-vs-megan-weaver
+              - generic [ref=e578]:
+                - paragraph [ref=e579]: Update
+                - paragraph [ref=e580]: 4:43pm Apr 07
+            - listitem:
+              - img "DCS"
+              - generic:
+                - generic [ref=e581]:
+                  - text: New Bout
+                  - link "DCS 107" [ref=e582] [cursor=pointer]:
+                    - /url: /fightcenter/events/141080-dcs-107-ring-rivals-4
+                  - text: on 2026.04.17
+                - link "Dalton Ariza vs. DJ Cotton" [ref=e584] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121343-dcs-107-dalton-ariza-vs-dj-cotton
+              - generic [ref=e585]:
+                - paragraph [ref=e586]: Update
+                - paragraph [ref=e587]: 4:42pm Apr 07
+            - listitem:
+              - img "DCS"
+              - generic:
+                - generic [ref=e588]:
+                  - text: New Bout
+                  - link "DCS 107" [ref=e589] [cursor=pointer]:
+                    - /url: /fightcenter/events/141080-dcs-107-ring-rivals-4
+                  - text: on 2026.04.17
+                - link "Zeke Castro vs. Paul Karns" [ref=e591] [cursor=pointer]:
+                  - /url: /fightcenter/bouts/1121342-dcs-107-zeke-castro-vs-paul-the-haitian-sensation-karns
+              - generic [ref=e592]:
+                - paragraph [ref=e593]: Update
+                - paragraph [ref=e594]: 4:41pm Apr 07
+            - generic [ref=e595]: Log in to view additional items.
+  - generic [ref=e596]:
+    - img [ref=e598]
+    - generic [ref=e612]:
+      - paragraph [ref=e613]:
+        - link "Tapology Team" [ref=e614] [cursor=pointer]:
+          - /url: /team
+        - text: ·
+        - link "Contact Us" [ref=e615] [cursor=pointer]:
+          - /url: /tickets/new
+        - text: ·
+        - link "Add Results" [ref=e616] [cursor=pointer]:
+          - /url: /tickets/new
+      - paragraph [ref=e617]:
+        - link "FAQ" [ref=e618] [cursor=pointer]:
+          - /url: /faq
+        - text: ·
+        - link "Terms of Use" [ref=e619] [cursor=pointer]:
+          - /url: /terms_of_use
+        - text: ·
+        - link "Privacy" [ref=e620] [cursor=pointer]:
+          - /url: /privacy
+      - paragraph [ref=e621]:
+        - link "Facebook" [ref=e622] [cursor=pointer]:
+          - /url: http://www.facebook.com/Tapologycom
+        - text: ·
+        - link "Twitter" [ref=e623] [cursor=pointer]:
+          - /url: http://www.twitter.com/tapology
+        - text: ·
+        - link "Instagram" [ref=e624] [cursor=pointer]:
+          - /url: http://www.instagram.com/tapologycom
+      - paragraph [ref=e625]: © 2026 Tapology.
+  - generic [ref=e626]:
+    - iframe [ref=e629]:
+      - iframe [ref=f46e2]:
+        - generic [active] [ref=f47e1]:
+          - img [ref=f47e6]
+          - img [ref=f47e7]
+    - button "Close Ad" [ref=e630] [cursor=pointer]
+    - img "Freestar" [ref=e633]

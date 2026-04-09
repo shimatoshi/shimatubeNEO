@@ -1,0 +1,24 @@
+- generic [active] [ref=e1]:
+  - generic:
+    - generic [ref=e2]:
+      - button "🌙" [ref=e3] [cursor=pointer]
+      - button "↻" [ref=e4] [cursor=pointer]
+      - generic [ref=e5]:
+        - heading "shimanet" [level=1] [ref=e6]
+        - searchbox "ウェブを検索、またはURLを入力" [ref=e9]
+    - navigation [ref=e10]:
+      - button "🔍 検索" [ref=e11] [cursor=pointer]:
+        - generic [ref=e12]: 🔍
+        - text: 検索
+      - button "📦 データ" [ref=e13] [cursor=pointer]:
+        - generic [ref=e14]: 📦
+        - text: データ
+      - button "🌐 クロール" [ref=e15] [cursor=pointer]:
+        - generic [ref=e16]: 🌐
+        - text: クロール
+      - button "🛠 管理" [ref=e17] [cursor=pointer]:
+        - generic [ref=e18]: 🛠
+        - text: 管理
+      - button "⏱ 履歴" [ref=e19] [cursor=pointer]:
+        - generic [ref=e20]: ⏱
+        - text: 履歴

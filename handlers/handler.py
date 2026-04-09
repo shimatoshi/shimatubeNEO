@@ -15,7 +15,11 @@ from handlers.comments import handle_comments
 from handlers.user_data import handle_user_data_get, handle_user_data_post, handle_subscribe, handle_history
 from handlers.feed import handle_feed, handle_feed_refresh
 
+def handle_version(handler):
+    handler.send_json({"version": "19.0", "app": "ShimaTube NEO"})
+
 GET_ROUTES = [
+    ("/api/version",                handle_version),
     ("/api/feed/refresh/",          handle_feed_refresh),
     ("/api/feed",                   handle_feed),
     ("/api/user_data",              handle_user_data_get),
@@ -32,10 +36,13 @@ POST_ROUTES = [
     ("/api/history",   handle_history),
 ]
 
-# 静的ファイル配信ディレクトリ: frontend/dist/ があればそちら、なければプロジェクトルート
+# 静的ファイル配信ディレクトリを検索
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_DIST_DIR = os.path.join(_PROJECT_ROOT, 'frontend', 'dist')
-STATIC_DIR = _DIST_DIR if os.path.isdir(_DIST_DIR) else _PROJECT_ROOT
+_CANDIDATES = [
+    os.path.join(_PROJECT_ROOT, 'frontend', 'dist'),  # 開発時
+    os.path.join(_PROJECT_ROOT, 'frontend'),           # APK内（app-source/frontend/）
+]
+STATIC_DIR = next((d for d in _CANDIDATES if os.path.isfile(os.path.join(d, 'index.html'))), _PROJECT_ROOT)
 
 
 class CustomHandler(JsonResponseMixin, http.server.SimpleHTTPRequestHandler):
