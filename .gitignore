@@ -13,3 +13,5 @@ node_modules/
 deploy.zip
 .buildozer/
 bin/
+python-bundle/
+*.apk
