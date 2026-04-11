@@ -36,6 +36,7 @@ public class ServerService extends Service {
     private boolean serverReady = false;
     private boolean monitoring = false;
     private String lastKnownJobId = null;
+    private Thread pythonThread = null;
 
     // ジョブ監視間隔
     private static final long POLL_INTERVAL_MS = 5000;
@@ -56,7 +57,7 @@ public class ServerService extends Service {
             if (serverReady) {
                 updateServiceNotification("サーバー稼働中");
             }
-            return START_STICKY;
+            return START_NOT_STICKY;
         }
         serverStarted = true;
 
@@ -78,7 +79,7 @@ public class ServerService extends Service {
             }
         }).start();
 
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
     @Override
@@ -87,9 +88,27 @@ public class ServerService extends Service {
     }
 
     @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        shutdown();
+        super.onTaskRemoved(rootIntent);
+    }
+
+    @Override
     public void onDestroy() {
-        monitoring = false;
+        shutdown();
         super.onDestroy();
+    }
+
+    private void shutdown() {
+        monitoring = false;
+        serverStarted = false;
+        serverReady = false;
+        if (pythonThread != null) {
+            pythonThread.interrupt();
+        }
+        // Pythonプロセスは同一プロセス内のネイティブスレッドなので
+        // サービスごとプロセスを殺して確実に止める
+        android.os.Process.killProcess(android.os.Process.myPid());
     }
 
     // === 通知チャンネル ===
@@ -338,7 +357,7 @@ public class ServerService extends Service {
         PythonLauncher.setEnv("SHIMATUBE_BASE", appDir.getAbsolutePath());
         PythonLauncher.setEnv("SHIMATUBE_PORT", String.valueOf(PORT));
 
-        new Thread(() -> {
+        pythonThread = new Thread(() -> {
             try {
                 int code = PythonLauncher.runPython(new String[]{
                         "python3", new File(appDir, "boot.py").getAbsolutePath()
@@ -347,7 +366,8 @@ public class ServerService extends Service {
             } catch (Exception e) {
                 Log.e(TAG, "Python crashed", e);
             }
-        }, "python-server").start();
+        }, "python-server");
+        pythonThread.start();
     }
 
     private void waitForServer() {
