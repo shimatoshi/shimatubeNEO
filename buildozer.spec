@@ -46,3 +46,6 @@ p4a.branch = develop
 [buildozer]
 log_level = 2
 warn_on_root = 0
+
+# Allow cleartext (HTTP) for localhost server
+p4a.extra_args = --allow-cleartext-traffic
