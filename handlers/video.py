@@ -16,8 +16,11 @@ def handle_video_details(handler):
 
     stream_url, _, meta = get_video_url(vid, qual)
 
+    is_live = meta.get('is_live', False)
     handler.send_json({
         "status": "ready" if stream_url else "error",
-        "url": f"/stream/{vid}" if stream_url else None,
+        "url": f"/stream/{vid}" if (stream_url and not is_live) else None,
+        "is_live": is_live,
+        "hls_url": meta.get('hls_url') if is_live else None,
         "metadata": meta
     })

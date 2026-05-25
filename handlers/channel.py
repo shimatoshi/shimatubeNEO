@@ -50,6 +50,7 @@ def handle_channel(handler):
                 continue
             if ctitle == "Unknown":
                 ctitle = v.get('uploader') or v.get('channel') or "Unknown"
+            entry_is_live = v.get('is_live') or v.get('live_status') == 'is_live'
             vids.append({
                 "type": "video",
                 "videoId": v.get('id'),
@@ -59,7 +60,8 @@ def handle_channel(handler):
                 "uploadDate": format_date(v.get('upload_date')),
                 "channelId": cid,
                 "thumbnail": f"https://i.ytimg.com/vi/{v.get('id')}/mqdefault.jpg",
-                "author": ctitle
+                "author": ctitle,
+                "is_live": entry_is_live,
             })
 
         if ctitle == "Unknown" and result:

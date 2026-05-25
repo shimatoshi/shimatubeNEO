@@ -51,11 +51,13 @@ const UI = {
                 if (app.currentPlaylist && app.currentVideoId === v.videoId) {
                     div.classList.add('now-playing');
                 }
-                const dur = UI.formatDuration(v.lengthSeconds);
+                const dur = v.is_live
+                    ? '<span class="live-badge">LIVE</span>'
+                    : `<span class="duration">${UI.formatDuration(v.lengthSeconds)}</span>`;
                 div.innerHTML = `
                     <div class="thumb" onclick="app.playVideo('${esc(v.videoId)}')">
                         <img src="${esc(v.thumbnail)}" loading="lazy">
-                        <span class="duration">${dur}</span>
+                        ${dur}
                     </div>
                     <div class="details">
                         <div class="v-title" onclick="app.playVideo('${esc(v.videoId)}')">${esc(v.title)}</div>
@@ -111,9 +113,18 @@ const UI = {
 
         const videoEl = document.getElementById('main-video');
         const currentSrc = videoEl.getAttribute('data-vid');
+
+        // LIVEバッジ表示
+        const liveEl = document.getElementById('live-badge');
+        if (liveEl) liveEl.style.display = data.is_live ? 'inline-block' : 'none';
+
         if (currentSrc !== videoId) {
             videoEl.setAttribute('data-vid', videoId);
-            if (data.status === 'ready' && data.url) {
+            if (data.is_live && data.hls_url) {
+                // 生放送: HLS URLを直接セット（Android WebViewはHLS対応）
+                videoEl.src = data.hls_url;
+                UI.updateDownloadButton(null, false);
+            } else if (data.status === 'ready' && data.url) {
                 videoEl.src = data.url;
                 UI.updateDownloadButton(data.url, true);
             } else {
@@ -122,7 +133,7 @@ const UI = {
             }
             videoEl.play().catch(() => {});
         } else {
-            if (data.status === 'ready') UI.updateDownloadButton(data.url, true);
+            if (data.status === 'ready' && !data.is_live) UI.updateDownloadButton(data.url, true);
         }
 
         app.showRelated(meta.channelId);

@@ -1,3 +1,4 @@
+import re
 import urllib.parse
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -8,6 +9,8 @@ from utils.db import get_user_data
 from utils.formatting import format_date
 
 log = logging.getLogger('shimatube')
+
+_VALID_CID = re.compile(r'^[a-zA-Z0-9_@-]{2,60}$')
 
 # チャンネルごとの動画キャッシュ（メモリ内、サーバー再起動でクリア）
 # { channelId: [video, ...] }  最大50件保持
@@ -97,6 +100,37 @@ def handle_feed(handler):
         })
 
     handler.send_json({"channels": channels})
+
+
+def handle_feed_channel(handler):
+    """ホーム画面の遅延ロード用: 1チャンネルの最新動画を返す（キャッシュ優先）"""
+    cid = handler.path.split('/')[-1].split('?')[0]
+    if not _VALID_CID.match(cid):
+        handler.send_error(400, "Invalid channel ID")
+        return
+
+    user_data = get_user_data(handler.user_id)
+    watched_ids = {v['videoId'] for v in user_data.get('history', [])}
+
+    # ホーム用は最大10件（キャッシュ済みなら即返す）
+    videos = _fetch_channel_videos(cid, limit=10)
+    unwatched = [v for v in videos if v['videoId'] not in watched_ids]
+    watched = [v for v in videos if v['videoId'] in watched_ids]
+
+    title, thumb = cid, ''
+    for s in user_data.get('subscriptions', []):
+        if s['channelId'] == cid:
+            title = s.get('title', cid)
+            thumb = s.get('thumbnail', '')
+            break
+
+    handler.send_json({
+        "channelId": cid,
+        "title": title,
+        "thumbnail": thumb,
+        "unwatched": unwatched[:5],
+        "watched": watched[:3],
+    })
 
 
 def handle_feed_refresh(handler):

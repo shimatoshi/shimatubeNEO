@@ -24,5 +24,8 @@ const API = {
     },
     getPlaylist: (playlistId) => {
         return API._fetch(`${API_BASE}/playlists/${playlistId}`);
+    },
+    getFeedChannel: (channelId) => {
+        return API._fetch(`/api/feed/channel/${channelId}`);
     }
 };
