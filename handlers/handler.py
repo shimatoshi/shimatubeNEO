@@ -16,7 +16,7 @@ from handlers.user_data import handle_user_data_get, handle_user_data_post, hand
 from handlers.feed import handle_feed, handle_feed_channel, handle_feed_refresh
 
 def handle_version(handler):
-    handler.send_json({"version": "19.0", "app": "ShimaTube NEO"})
+    handler.send_json({"version": "20.0", "app": "ShimaTube NEO"})
 
 GET_ROUTES = [
     ("/api/version",                handle_version),
@@ -65,11 +65,21 @@ class CustomHandler(JsonResponseMixin, http.server.SimpleHTTPRequestHandler):
         if hasattr(self, '_set_user_cookie') and self._set_user_cookie:
             set_user_cookie(self, self._set_user_cookie)
             self._set_user_cookie = None
+        # CORS
+        origin = self.headers.get('Origin', '')
+        self.send_header('Access-Control-Allow-Origin', origin or '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Allow-Credentials', 'true')
         # キャッシュ無効化
         self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
         self.send_header('Pragma', 'no-cache')
         self.send_header('Expires', '0')
         super().end_headers()
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.end_headers()
 
     def do_GET(self):
         self.ensure_user_id()
