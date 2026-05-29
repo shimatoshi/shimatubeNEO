@@ -38,10 +38,12 @@ POST_ROUTES = [
 ]
 
 # 静的ファイル配信ディレクトリを検索
+# ルート直下のindex.html（バニラJS版）を優先
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _CANDIDATES = [
-    os.path.join(_PROJECT_ROOT, 'frontend', 'dist'),  # 開発時
-    os.path.join(_PROJECT_ROOT, 'frontend'),           # APK内（app-source/frontend/）
+    _PROJECT_ROOT,                                     # バニラJS版（ルート直下）
+    os.path.join(_PROJECT_ROOT, 'frontend', 'dist'),   # React版（開発時）
+    os.path.join(_PROJECT_ROOT, 'frontend'),            # React版（APK内旧構成）
 ]
 STATIC_DIR = next((d for d in _CANDIDATES if os.path.isfile(os.path.join(d, 'index.html'))), _PROJECT_ROOT)
 
