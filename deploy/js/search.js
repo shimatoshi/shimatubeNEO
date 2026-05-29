@@ -75,17 +75,16 @@ Object.assign(app, {
             if (index > 0) app.toggleCategory(index);
         });
 
-        // カテゴリを並列ロード
-        await Promise.all(app.userData.categories.map(async (cat, index) => {
+        // カテゴリを並列ロード（fire-and-forget: 読み込めたものから即表示）
+        app.userData.categories.forEach((cat, index) => {
             const listId = `list-${index}`;
-            try {
-                const res = await API.search(cat);
+            API.search(cat).then(res => {
                 UI.renderVideoList(res, listId);
-            } catch {
+            }).catch(() => {
                 const el = document.getElementById(listId);
                 if (el) el.innerHTML = '<div style="padding:10px;color:#666;">Error</div>';
-            }
-        }));
+            });
+        });
     },
 
     loadFeedChannel: async (channelId) => {
