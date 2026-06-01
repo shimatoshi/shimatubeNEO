@@ -154,13 +154,21 @@ Object.assign(app, {
         app.currentSearchQuery = query;
         app.currentPlaylist = null;
 
+        const sort = app.currentSort || '';
         const container = document.getElementById('home-list');
         if (!append) {
+            const sortOpt = (val, label) =>
+                `<option value="${val}" ${sort === val ? 'selected' : ''}>${label}</option>`;
             container.innerHTML = `
                 <div class="cat-header">Search: ${esc(query)}</div>
                 <div class="filter-bar">
                     <button class="filter-btn ${app.currentFilter === '' ? 'active' : ''}" onclick="app.setFilter('')">All</button>
                     <button class="filter-btn ${app.currentFilter === 'live' ? 'active' : ''}" onclick="app.setFilter('live')">Live</button>
+                    <select class="sort-select" onchange="app.setSort(this.value)" ${app.currentFilter === 'live' ? 'disabled' : ''}>
+                        ${sortOpt('', '関連度')}
+                        ${sortOpt('date', '新しい順')}
+                        ${sortOpt('views', '視聴回数')}
+                    </select>
                 </div>
                 <div id="search-res-list"></div>
                 <div id="scroll-sentinel" class="scroll-sentinel"><div class="loader"></div></div>
@@ -169,7 +177,7 @@ Object.assign(app, {
 
         app.isLoadingMore = true;
         try {
-            const results = await API.search(query, page, app.currentFilter);
+            const results = await API.search(query, page, app.currentFilter, sort);
             if (results.length < 20) {
                 app.hasMoreResults = false;
                 const s = document.getElementById('scroll-sentinel');
@@ -187,5 +195,11 @@ Object.assign(app, {
             if (!append) toast('Search error');
         }
         app.isLoadingMore = false;
+    },
+
+    setSort: (sort) => {
+        if ((app.currentSort || '') === sort) return;
+        app.currentSort = sort;
+        if (app.homeState === 'search') app.search(1);
     }
 });
