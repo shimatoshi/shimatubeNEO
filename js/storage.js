@@ -4,7 +4,7 @@ const Storage = {
     },
     addToHistory: async (video) => {
         try {
-            await fetch('/api/history', {
+            await fetch(B('/api/history'), {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(video)
@@ -21,7 +21,7 @@ const Storage = {
     },
     toggleSub: async (channel) => {
         try {
-            const res = await fetch('/api/subscribe', {
+            const res = await fetch(B('/api/subscribe'), {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(channel)

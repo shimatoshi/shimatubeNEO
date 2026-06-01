@@ -13,14 +13,15 @@ from handlers.stream import handle_stream
 from handlers.playlist import handle_playlist
 from handlers.comments import handle_comments
 from handlers.user_data import handle_user_data_get, handle_user_data_post, handle_subscribe, handle_history
-from handlers.feed import handle_feed, handle_feed_refresh
+from handlers.feed import handle_feed, handle_feed_channel, handle_feed_refresh
 
 def handle_version(handler):
-    handler.send_json({"version": "19.0", "app": "ShimaTube NEO"})
+    handler.send_json({"version": "20.0", "app": "ShimaTube NEO"})
 
 GET_ROUTES = [
     ("/api/version",                handle_version),
     ("/api/feed/refresh/",          handle_feed_refresh),
+    ("/api/feed/channel/",          handle_feed_channel),
     ("/api/feed",                   handle_feed),
     ("/api/user_data",              handle_user_data_get),
     ("/api_proxy/api/v1/search",    handle_search),
@@ -37,10 +38,12 @@ POST_ROUTES = [
 ]
 
 # 静的ファイル配信ディレクトリを検索
+# ルート直下のindex.html（バニラJS版）を優先
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _CANDIDATES = [
-    os.path.join(_PROJECT_ROOT, 'frontend', 'dist'),  # 開発時
-    os.path.join(_PROJECT_ROOT, 'frontend'),           # APK内（app-source/frontend/）
+    _PROJECT_ROOT,                                     # バニラJS版（ルート直下）
+    os.path.join(_PROJECT_ROOT, 'frontend', 'dist'),   # React版（開発時）
+    os.path.join(_PROJECT_ROOT, 'frontend'),            # React版（APK内旧構成）
 ]
 STATIC_DIR = next((d for d in _CANDIDATES if os.path.isfile(os.path.join(d, 'index.html'))), _PROJECT_ROOT)
 
@@ -64,11 +67,26 @@ class CustomHandler(JsonResponseMixin, http.server.SimpleHTTPRequestHandler):
         if hasattr(self, '_set_user_cookie') and self._set_user_cookie:
             set_user_cookie(self, self._set_user_cookie)
             self._set_user_cookie = None
-        # キャッシュ無効化
-        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
-        self.send_header('Pragma', 'no-cache')
-        self.send_header('Expires', '0')
+        # CORS
+        origin = self.headers.get('Origin', '')
+        self.send_header('Access-Control-Allow-Origin', origin or '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Allow-Credentials', 'true')
+        # キャッシュ: 静的ファイルはキャッシュOK、APIはno-cache
+        path = self.path.split('?')[0] if hasattr(self, 'path') else ''
+        if path.startswith('/api') or path.startswith('/stream'):
+            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.send_header('Pragma', 'no-cache')
+            self.send_header('Expires', '0')
+        else:
+            # JS/CSS/画像: 1時間キャッシュ (ローカルサーバーなのでstale-while-revalidate付き)
+            self.send_header('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400')
         super().end_headers()
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.end_headers()
 
     def do_GET(self):
         self.ensure_user_id()

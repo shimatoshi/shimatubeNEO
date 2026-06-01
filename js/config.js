@@ -39,7 +39,7 @@ Object.assign(app, {
     },
 
     updateServer: async (action, payload) => {
-        await fetch('/', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ action, payload }) });
+        await fetch(B('/'), { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ action, payload }) });
         await app.loadUserData();
     },
 

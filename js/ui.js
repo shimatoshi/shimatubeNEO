@@ -125,15 +125,15 @@ const UI = {
                 videoEl.src = data.hls_url;
                 UI.updateDownloadButton(null, false);
             } else if (data.status === 'ready' && data.url) {
-                videoEl.src = data.url;
-                UI.updateDownloadButton(data.url, true);
+                videoEl.src = B(data.url);
+                UI.updateDownloadButton(B(data.url), true);
             } else {
                 videoEl.src = '';
                 UI.updateDownloadButton(null, false);
             }
             videoEl.play().catch(() => {});
         } else {
-            if (data.status === 'ready' && !data.is_live) UI.updateDownloadButton(data.url, true);
+            if (data.status === 'ready' && !data.is_live) UI.updateDownloadButton(B(data.url), true);
         }
 
         app.showRelated(meta.channelId);
@@ -178,7 +178,7 @@ const UI = {
     startDownload: (videoId) => {
         toast('Download started');
         const a = document.createElement('a');
-        a.href = `/stream/${videoId}?dl=1`;
+        a.href = B(`/stream/${videoId}?dl=1`);
         a.download = '';
         document.body.appendChild(a);
         a.click();

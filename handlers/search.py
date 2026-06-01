@@ -1,5 +1,7 @@
 import urllib.parse
 import logging
+import time
+import threading
 
 import yt_dlp
 
@@ -8,6 +10,14 @@ from utils.formatting import format_date
 
 log = logging.getLogger('shimatube')
 
+# 検索結果キャッシュ (5分TTL)
+_search_cache = {}
+_search_cache_lock = threading.Lock()
+_SEARCH_CACHE_TTL = 300
+
+def _cache_key(query, page, live_filter):
+    return f"{query}:{page}:{live_filter}"
+
 def handle_search(handler):
     parsed = urllib.parse.urlparse(handler.path)
     params = urllib.parse.parse_qs(parsed.query)
@@ -15,6 +25,16 @@ def handle_search(handler):
     page = int(params.get('page', ['1'])[0])
     live_filter = params.get('filter', [''])[0]
     try:
+        # キャッシュチェック
+        ck = _cache_key(query, page, live_filter)
+        with _search_cache_lock:
+            cached = _search_cache.get(ck)
+            if cached and time.time() < cached['expiry']:
+                log.info(f"Search cache hit: '{query}', page={page}")
+                items = filter_blocked(cached['items'], handler.user_id)
+                handler.send_json(items)
+                return
+
         per_page = 20
         start = (page - 1) * per_page + 1
         end = page * per_page
@@ -79,6 +99,16 @@ def handle_search(handler):
                     "thumbnail": f"https://i.ytimg.com/vi/{vid}/mqdefault.jpg"
                 }
                 all_items.append(item)
+
+        # キャッシュ保存 (ブロックフィルタ前のデータを保存)
+        with _search_cache_lock:
+            _search_cache[ck] = {'items': all_items, 'expiry': time.time() + _SEARCH_CACHE_TTL}
+            # 古いエントリ掃除 (100件超えたら期限切れ削除)
+            if len(_search_cache) > 100:
+                now = time.time()
+                expired = [k for k, v in _search_cache.items() if now >= v['expiry']]
+                for k in expired:
+                    del _search_cache[k]
 
         items = filter_blocked(all_items, handler.user_id)
         handler.send_json(items)

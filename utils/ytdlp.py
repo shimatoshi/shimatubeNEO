@@ -11,6 +11,16 @@ log = logging.getLogger('shimatube')
 url_cache = {}
 url_cache_lock = threading.Lock()
 
+def get_cached_meta(vid, qual="720"):
+    """キャッシュ済みメタデータがあれば返す (yt-dlp呼び出しなし)"""
+    cache_key = f"{vid}:{qual}"
+    with url_cache_lock:
+        cached = url_cache.get(cache_key)
+        if cached and time.time() < cached["expiry"]:
+            return cached["url"], cached.get("headers", {}), cached["meta"]
+    return None, None, None
+
+
 def get_video_url(vid, qual="720", audio_only=False):
     """Extract direct YouTube CDN URL via yt-dlp library, with 4h cache."""
     cache_key = f"{vid}:{'audio' if audio_only else qual}"

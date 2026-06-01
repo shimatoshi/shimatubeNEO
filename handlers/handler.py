@@ -73,10 +73,15 @@ class CustomHandler(JsonResponseMixin, http.server.SimpleHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.send_header('Access-Control-Allow-Credentials', 'true')
-        # キャッシュ無効化
-        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
-        self.send_header('Pragma', 'no-cache')
-        self.send_header('Expires', '0')
+        # キャッシュ: 静的ファイルはキャッシュOK、APIはno-cache
+        path = self.path.split('?')[0] if hasattr(self, 'path') else ''
+        if path.startswith('/api') or path.startswith('/stream'):
+            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.send_header('Pragma', 'no-cache')
+            self.send_header('Expires', '0')
+        else:
+            # JS/CSS/画像: 1時間キャッシュ (ローカルサーバーなのでstale-while-revalidate付き)
+            self.send_header('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400')
         super().end_headers()
 
     def do_OPTIONS(self):
