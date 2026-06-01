@@ -12,6 +12,8 @@ shimatube.db
 node_modules/
 deploy.zip
 .buildozer/
+build/
+.gradle/
 bin/
 python-bundle/
 *.apk
