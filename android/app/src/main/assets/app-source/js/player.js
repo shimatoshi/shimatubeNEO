@@ -115,11 +115,17 @@ Object.assign(app, {
                 v.webkitSetPresentationMode('inline');
                 return;
             }
-            // 再生が始まってないとPiP要求が弾かれるので保証
-            if (v.readyState < 1 || v.paused) {
-                try { await v.play(); } catch (_) {}
+            // メタデータ未ロードだとrequestPictureInPictureが弾かれるので待つ
+            if (v.readyState < 1) {
+                await new Promise((res) => {
+                    const done = () => { v.removeEventListener('loadedmetadata', done); res(); };
+                    v.addEventListener('loadedmetadata', done);
+                    setTimeout(done, 3000);
+                });
             }
-            if (document.pictureInPictureEnabled && v.requestPictureInPicture && !v.disablePictureInPicture) {
+            // standalone PWAでは pictureInPictureEnabled が false でもメソッドは使える事があるので、
+            // フラグには依存せずメソッドの有無で判定して実行する
+            if (typeof v.requestPictureInPicture === 'function' && !v.disablePictureInPicture) {
                 await v.requestPictureInPicture();
             } else if (v.webkitSupportsPresentationMode && v.webkitSupportsPresentationMode('picture-in-picture')) {
                 v.webkitSetPresentationMode('picture-in-picture');
