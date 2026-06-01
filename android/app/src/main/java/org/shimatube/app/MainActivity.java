@@ -18,6 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.URLUtil;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -77,6 +78,9 @@ public class MainActivity extends Activity {
         settings.setDatabaseEnabled(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
 
+        // WebViewはWeb PiP APIを公開しないので、JSからネイティブPiPを呼べるブリッジを渡す
+        webView.addJavascriptInterface(new PiPBridge(), "AndroidPiP");
+
         webView.setWebViewClient(new WebViewClient());
 
         // フルスクリーン対応WebChromeClient
@@ -134,6 +138,21 @@ public class MainActivity extends Activity {
                 Toast.makeText(this, "Download failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    /** WebView内JSからネイティブPiPを呼ぶためのブリッジ (window.AndroidPiP) */
+    public class PiPBridge {
+        @JavascriptInterface
+        public void enterPiP() {
+            runOnUiThread(MainActivity.this::enterPiP);
+        }
+
+        @JavascriptInterface
+        public boolean isSupported() {
+            return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                    && getPackageManager().hasSystemFeature(
+                            android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE);
+        }
     }
 
     /** PiP対応 */

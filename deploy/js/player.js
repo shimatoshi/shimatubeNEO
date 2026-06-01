@@ -100,6 +100,12 @@ Object.assign(app, {
         const v = document.getElementById('main-video');
         if (!v) return;
         try {
+            // Androidアプリ(WebView)はWeb PiP API非対応 → ネイティブPiPブリッジを使う
+            if (window.AndroidPiP && typeof window.AndroidPiP.enterPiP === 'function') {
+                if (v.readyState < 1 || v.paused) { try { await v.play(); } catch (_) {} }
+                window.AndroidPiP.enterPiP();
+                return;
+            }
             // 既にPiP中なら解除（トグル動作）
             if (document.pictureInPictureElement) {
                 await document.exitPictureInPicture();
