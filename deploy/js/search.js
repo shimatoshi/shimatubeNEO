@@ -80,6 +80,11 @@ Object.assign(app, {
             const listId = `list-${index}`;
             API.search(cat).then(res => {
                 UI.renderVideoList(res, listId);
+                // 最初のカテゴリの上位動画をプリフェッチ
+                if (index === 0) {
+                    const vids = res.filter(r => r.type === 'video').map(r => r.videoId);
+                    API.prefetchVideos(vids);
+                }
             }).catch(() => {
                 const el = document.getElementById(listId);
                 if (el) el.innerHTML = '<div style="padding:10px;color:#666;">Error</div>';
@@ -170,6 +175,9 @@ Object.assign(app, {
                 const s = document.getElementById('scroll-sentinel');
                 if (s) s.style.display = 'none';
             }
+            // 上位動画のストリームURLをプリフェッチ
+            const videoIds = results.filter(r => r.type === 'video').map(r => r.videoId);
+            API.prefetchVideos(videoIds);
             UI.renderVideoList(results, 'search-res-list', append);
             if (!append) {
                 app.setupInfiniteScroll(() => app.search(app.currentSearchPage + 1, true));

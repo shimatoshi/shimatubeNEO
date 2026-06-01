@@ -21,9 +21,10 @@ const API = {
         });
     },
 
-    search: (query, page = 1, filter = '') => {
+    search: (query, page = 1, filter = '', sort = '') => {
         let url = `${B(API_BASE_PATH)}/search?q=${encodeURIComponent(query)}&page=${page}`;
         if (filter) url += `&filter=${filter}`;
+        if (sort) url += `&sort=${sort}`;
         return API._fetch(url);
     },
     getVideo: async (videoId) => {
@@ -38,9 +39,9 @@ const API = {
     getComments: (videoId) => {
         return API._fetch(`${B(API_BASE_PATH)}/comments/${videoId}`);
     },
-    getChannelVideos: (channelId, page = 1, filter = '') => {
+    getChannelVideos: (channelId, page = 1, tab = '') => {
         let url = `${B(API_BASE_PATH)}/channels/${channelId}?page=${page}`;
-        if (filter) url += `&filter=${filter}`;
+        if (tab) url += `&tab=${tab}`;
         return API._fetch(url);
     },
     getPlaylist: (playlistId) => {

@@ -16,7 +16,7 @@ from handlers.user_data import handle_user_data_get, handle_user_data_post, hand
 from handlers.feed import handle_feed, handle_feed_channel, handle_feed_refresh
 
 def handle_version(handler):
-    handler.send_json({"version": "20.0", "app": "ShimaTube NEO"})
+    handler.send_json({"version": "21.0", "app": "ShimaTube NEO"})
 
 GET_ROUTES = [
     ("/api/version",                handle_version),

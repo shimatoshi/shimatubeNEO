@@ -15,8 +15,14 @@ _search_cache = {}
 _search_cache_lock = threading.Lock()
 _SEARCH_CACHE_TTL = 300
 
-def _cache_key(query, page, live_filter):
-    return f"{query}:{page}:{live_filter}"
+def _cache_key(query, page, live_filter, sort):
+    return f"{query}:{page}:{live_filter}:{sort}"
+
+# YouTube検索の sp パラメータ (sort=降順のみ)
+_SORT_SP = {
+    'date': 'CAI%3D',   # アップロード日(新しい順)
+    'views': 'CAM%3D',  # 視聴回数(多い順)
+}
 
 def handle_search(handler):
     parsed = urllib.parse.urlparse(handler.path)
@@ -24,9 +30,10 @@ def handle_search(handler):
     query = params.get('q', [''])[0]
     page = int(params.get('page', ['1'])[0])
     live_filter = params.get('filter', [''])[0]
+    sort = params.get('sort', [''])[0]
     try:
         # キャッシュチェック
-        ck = _cache_key(query, page, live_filter)
+        ck = _cache_key(query, page, live_filter, sort)
         with _search_cache_lock:
             cached = _search_cache.get(ck)
             if cached and time.time() < cached['expiry']:
@@ -39,11 +46,14 @@ def handle_search(handler):
         start = (page - 1) * per_page + 1
         end = page * per_page
 
-        log.info(f"Search: '{query}', filter={live_filter}, page={page}")
+        log.info(f"Search: '{query}', filter={live_filter}, sort={sort}, page={page}")
 
         search_url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}"
+        # sp は1つしか指定できないので live を優先、無ければ sort を適用
         if live_filter == 'live':
             search_url += "&sp=EgJAAQ%3D%3D"
+        elif sort in _SORT_SP:
+            search_url += f"&sp={_SORT_SP[sort]}"
 
         ydl_opts = {
             'quiet': True,

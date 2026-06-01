@@ -51,6 +51,11 @@ a { color: #3ea6ff; text-decoration: none; }
     background: #222; color: #aaa; font-size: 12px; cursor: pointer;
 }
 .filter-btn.active { background: #fff; color: #000; border-color: #fff; }
+.sort-select {
+    margin-left: auto; padding: 5px 8px; border-radius: 16px; border: 1px solid #444;
+    background: #222; color: #ddd; font-size: 12px; cursor: pointer;
+}
+.sort-select:disabled { opacity: .4; cursor: not-allowed; }
 
 /* Player */
 #player-view { background: #000; min-height: 100vh; }

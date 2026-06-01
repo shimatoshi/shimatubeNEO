@@ -96,10 +96,33 @@ Object.assign(app, {
         el.style.display = el.style.display === 'block' ? 'none' : 'block';
     },
 
-    togglePip: () => {
+    togglePip: async () => {
         const v = document.getElementById('main-video');
-        if (v && v.requestPictureInPicture) v.requestPictureInPicture();
-        else if (v && v.webkitSetPresentationMode) v.webkitSetPresentationMode('picture-in-picture');
+        if (!v) return;
+        try {
+            // 既にPiP中なら解除（トグル動作）
+            if (document.pictureInPictureElement) {
+                await document.exitPictureInPicture();
+                return;
+            }
+            if (v.webkitPresentationMode === 'picture-in-picture') {
+                v.webkitSetPresentationMode('inline');
+                return;
+            }
+            // 再生が始まってないとPiP要求が弾かれるので保証
+            if (v.readyState < 1 || v.paused) {
+                try { await v.play(); } catch (_) {}
+            }
+            if (document.pictureInPictureEnabled && v.requestPictureInPicture && !v.disablePictureInPicture) {
+                await v.requestPictureInPicture();
+            } else if (v.webkitSupportsPresentationMode && v.webkitSupportsPresentationMode('picture-in-picture')) {
+                v.webkitSetPresentationMode('picture-in-picture');
+            } else {
+                toast('この端末はPiP非対応');
+            }
+        } catch (e) {
+            toast('PiP不可: ' + (e && (e.message || e.name) || ''));
+        }
     },
 
     toggleSubFromPlayer: async () => {
