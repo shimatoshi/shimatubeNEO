@@ -228,6 +228,24 @@ Object.assign(UI, {
     _destroyHls() {
         if (UI._hls) { try { UI._hls.destroy(); } catch (e) {} UI._hls = null; }
     },
+    // タップ直後の即時フィードバック: 前の動画を止め、サムネをposterに出して「読み込み中」表示
+    showPlayerLoading(videoId) {
+        const v = document.getElementById('main-video');
+        if (v) {
+            try { v.pause(); } catch (e) {}
+            UI._destroyHls();
+            v.removeAttribute('src');
+            try { v.load(); } catch (e) {}
+            v.setAttribute('data-vid', '');   // setupPlayer に「新規」と認識させる
+            v.poster = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+        }
+        const t = document.getElementById('v-title'); if (t) t.textContent = '読み込み中…';
+        const vw = document.getElementById('v-views'); if (vw) vw.textContent = '';
+        const dt = document.getElementById('v-date'); if (dt) dt.textContent = '';
+        UI._hideQuality();
+        const dl = document.getElementById('dl-container');
+        if (dl) dl.innerHTML = '<span class="dl-wait">Wait</span>';
+    },
     _preferredQuality(heights) {
         const saved = parseInt(localStorage.getItem('shimatube_quality') || '720', 10);
         const le = heights.filter(h => h <= saved);

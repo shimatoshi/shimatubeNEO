@@ -5,6 +5,7 @@ Object.assign(app, {
         const container = document.getElementById('home-list');
         container.innerHTML = '';
         app.homeState = 'feed';
+        app.resetHomeStack({ type: 'feed', key: 'feed' });
 
         if (!app.userData || !app.userData.categories) {
             container.innerHTML = '<div style="padding:20px;">Loading settings...</div>';
@@ -140,7 +141,7 @@ Object.assign(app, {
         return null;
     },
 
-    search: async (page = 1, append = false) => {
+    search: async (page = 1, append = false, isBack = false) => {
         const query = document.getElementById('search-input').value || app.currentSearchQuery;
         if (!query) return;
 
@@ -153,6 +154,10 @@ Object.assign(app, {
         app.currentSearchPage = page;
         app.currentSearchQuery = query;
         app.currentPlaylist = null;
+        if (!append && !isBack) {
+            app.pushHomeState({ type: 'search', key: 'search:' + query, query,
+                                filter: app.currentFilter, sort: app.currentSort });
+        }
 
         const sort = app.currentSort || '';
         const container = document.getElementById('home-list');

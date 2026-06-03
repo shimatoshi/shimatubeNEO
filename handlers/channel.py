@@ -97,5 +97,7 @@ def handle_channel(handler):
 
         handler.send_json({"channel": {"title": ctitle}, "videos": items})
     except Exception as e:
-        log.error(f"Channel error: {e}")
-        handler.send_error(500, str(e))
+        # ライブ(streams)タブが無いチャンネル等は yt-dlp が例外を投げる。
+        # エラー画面にせず「該当なし(空)」として200で返し、UIはタブを保ったまま空表示にする。
+        log.info(f"Channel tab empty/err ({cid}, {yt_tab}): {e}")
+        handler.send_json({"channel": {"title": "Unknown"}, "videos": []})

@@ -29,7 +29,43 @@ Object.assign(app, {
         }
     },
 
+    // home ビュー内のサブ画面履歴 (feed/search/channel/playlist)
+    pushHomeState: (entry) => {
+        if (!app.homeStack) app.homeStack = [];
+        const top = app.homeStack[app.homeStack.length - 1];
+        if (top && top.key === entry.key) return;   // 同一ビューは積まない
+        app.homeStack.push(entry);
+        app.updateBackBtn();
+    },
+
+    resetHomeStack: (entry) => {
+        app.homeStack = [entry];
+        app.updateBackBtn();
+    },
+
+    renderHomeState: (e) => {
+        if (!e || e.type === 'feed') { app.renderHome(); return; }
+        if (e.type === 'search') {
+            document.getElementById('search-input').value = e.query || '';
+            app.currentFilter = e.filter || '';
+            app.currentSort = e.sort || '';
+            app.search(1, false, true);
+        } else if (e.type === 'channel') {
+            app.openChannel(e.channelId, 1, false, e.tab, true);
+        } else if (e.type === 'playlist') {
+            app.openPlaylist(e.playlistId, true);
+        }
+    },
+
     goBack: () => {
+        const curTab = app.navStack[app.navStack.length - 1];
+        // home 内のサブ画面を遡る
+        if (curTab === 'home' && app.homeStack && app.homeStack.length > 1) {
+            app.homeStack.pop();
+            app.renderHomeState(app.homeStack[app.homeStack.length - 1]);
+            app.updateBackBtn();
+            return;
+        }
         if (app.navStack.length > 1) {
             app.navStack.pop();
             app.switchTab(app.navStack[app.navStack.length - 1], false);
@@ -37,7 +73,8 @@ Object.assign(app, {
     },
 
     updateBackBtn: () => {
-        document.getElementById('back-btn').style.display = app.navStack.length > 1 ? 'block' : 'none';
+        const show = app.navStack.length > 1 || (app.homeStack && app.homeStack.length > 1);
+        document.getElementById('back-btn').style.display = show ? 'block' : 'none';
     },
 
     handleHomeClick: () => {

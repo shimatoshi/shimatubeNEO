@@ -2,8 +2,10 @@ Object.assign(app, {
     playVideo: async (videoId) => {
         app.currentVideoId = videoId;
         app.switchTab('player');
+        UI.showPlayerLoading(videoId);   // タップ直後に即フィードバック(サムネ+読み込み中)
         try {
             const data = await API.getVideo(videoId);
+            if (app.currentVideoId !== videoId) return;  // 待機中に別動画へ切替えられたら破棄
             app.currentVideoMeta = data.metadata;
             app.currentChannelId = data.metadata.channelId;
             UI.setupPlayer(data, videoId);
@@ -100,6 +102,12 @@ Object.assign(app, {
         const v = document.getElementById('main-video');
         if (!v) return;
         try {
+            // Androidアプリ(WebView)はWeb PiP API非対応 → ネイティブPiPブリッジを使う
+            if (window.AndroidPiP && typeof window.AndroidPiP.enterPiP === 'function') {
+                if (v.readyState < 1 || v.paused) { try { await v.play(); } catch (_) {} }
+                window.AndroidPiP.enterPiP();
+                return;
+            }
             // 既にPiP中なら解除（トグル動作）
             if (document.pictureInPictureElement) {
                 await document.exitPictureInPicture();
@@ -109,11 +117,17 @@ Object.assign(app, {
                 v.webkitSetPresentationMode('inline');
                 return;
             }
-            // 再生が始まってないとPiP要求が弾かれるので保証
-            if (v.readyState < 1 || v.paused) {
-                try { await v.play(); } catch (_) {}
+            // メタデータ未ロードだとrequestPictureInPictureが弾かれるので待つ
+            if (v.readyState < 1) {
+                await new Promise((res) => {
+                    const done = () => { v.removeEventListener('loadedmetadata', done); res(); };
+                    v.addEventListener('loadedmetadata', done);
+                    setTimeout(done, 3000);
+                });
             }
-            if (document.pictureInPictureEnabled && v.requestPictureInPicture && !v.disablePictureInPicture) {
+            // standalone PWAでは pictureInPictureEnabled が false でもメソッドは使える事があるので、
+            // フラグには依存せずメソッドの有無で判定して実行する
+            if (typeof v.requestPictureInPicture === 'function' && !v.disablePictureInPicture) {
                 await v.requestPictureInPicture();
             } else if (v.webkitSupportsPresentationMode && v.webkitSupportsPresentationMode('picture-in-picture')) {
                 v.webkitSetPresentationMode('picture-in-picture');

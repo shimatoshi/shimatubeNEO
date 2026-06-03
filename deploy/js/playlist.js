@@ -1,7 +1,8 @@
 Object.assign(app, {
-    openPlaylist: async (playlistId) => {
+    openPlaylist: async (playlistId, isBack = false) => {
         app.switchTab('home');
         app.homeState = 'playlist';
+        if (!isBack) app.pushHomeState({ type: 'playlist', key: 'pl:' + playlistId, playlistId });
         const container = document.getElementById('home-list');
         container.innerHTML = '<div style="padding:20px;">Loading Playlist...</div>';
 

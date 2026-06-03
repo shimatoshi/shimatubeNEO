@@ -2,8 +2,10 @@ Object.assign(app, {
     playVideo: async (videoId) => {
         app.currentVideoId = videoId;
         app.switchTab('player');
+        UI.showPlayerLoading(videoId);   // タップ直後に即フィードバック(サムネ+読み込み中)
         try {
             const data = await API.getVideo(videoId);
+            if (app.currentVideoId !== videoId) return;  // 待機中に別動画へ切替えられたら破棄
             app.currentVideoMeta = data.metadata;
             app.currentChannelId = data.metadata.channelId;
             UI.setupPlayer(data, videoId);
