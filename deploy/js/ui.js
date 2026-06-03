@@ -120,20 +120,32 @@ const UI = {
 
         if (currentSrc !== videoId) {
             videoEl.setAttribute('data-vid', videoId);
+            UI._destroyHls();
+            const hlsHeights = data.hls || [];
             if (data.is_live && data.hls_url) {
-                // 生放送: HLS URLを直接セット（Android WebViewはHLS対応）
-                videoEl.src = data.hls_url;
+                // 生放送: HLSを直接再生
+                UI._playHls(videoEl, data.hls_url, true);
                 UI.updateDownloadButton(null, false);
+                UI._hideQuality();
+            } else if (hlsHeights.length) {
+                // 公式画質: muxed HLS を hls.js で再生（720p等）+ 画質セレクタ
+                const q = UI._preferredQuality(hlsHeights);
+                UI._playHls(videoEl, B(`/hls/${videoId}?q=${q}`), false);
+                UI._buildQuality(videoId, hlsHeights, q);
+                UI.updateDownloadButton(data.url ? B(data.url) : null, !!data.url);
             } else if (data.status === 'ready' && data.url) {
+                // フォールバック: progressive(360p) 直
                 videoEl.src = B(data.url);
                 UI.updateDownloadButton(B(data.url), true);
+                UI._hideQuality();
             } else {
                 videoEl.src = '';
                 UI.updateDownloadButton(null, false);
+                UI._hideQuality();
             }
             videoEl.play().catch(() => {});
         } else {
-            if (data.status === 'ready' && !data.is_live) UI.updateDownloadButton(B(data.url), true);
+            if (data.status === 'ready' && !data.is_live && data.url) UI.updateDownloadButton(B(data.url), true);
         }
 
         app.showRelated(meta.channelId);
@@ -209,3 +221,61 @@ const UI = {
         return String(num);
     }
 };
+
+// --- HLS(公式画質) 再生まわり ---
+Object.assign(UI, {
+    _hls: null,
+    _destroyHls() {
+        if (UI._hls) { try { UI._hls.destroy(); } catch (e) {} UI._hls = null; }
+    },
+    _preferredQuality(heights) {
+        const saved = parseInt(localStorage.getItem('shimatube_quality') || '720', 10);
+        const le = heights.filter(h => h <= saved);
+        return le.length ? Math.max(...le) : Math.min(...heights);
+    },
+    _playHls(videoEl, url, isLive) {
+        UI._destroyHls();
+        if (window.Hls && Hls.isSupported()) {
+            const hls = new Hls({ enableWorker: true, maxBufferLength: isLive ? 10 : 30 });
+            UI._hls = hls;
+            hls.loadSource(url);
+            hls.attachMedia(videoEl);
+            hls.on(Hls.Events.ERROR, (evt, d) => {
+                if (!d || !d.fatal) return;
+                if (d.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
+                else if (d.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
+                else UI._destroyHls();
+            });
+        } else {
+            // Safari等ネイティブHLS / 最後の手段
+            videoEl.src = url;
+        }
+    },
+    _hideQuality() {
+        const c = document.getElementById('quality-container');
+        if (c) c.style.display = 'none';
+    },
+    _buildQuality(vid, heights, current) {
+        const c = document.getElementById('quality-container');
+        if (!c) return;
+        c.style.display = '';
+        const opts = heights.slice().sort((a, b) => b - a)
+            .map(h => `<option value="${h}" ${h === current ? 'selected' : ''}>${h}p</option>`).join('');
+        c.innerHTML = `<select id="quality-sel" onchange="UI.switchQuality('${vid}', this.value)" `
+            + `style="background:#222;color:#fff;border:1px solid #555;border-radius:4px;padding:3px 5px;font-size:12px;">${opts}</select>`;
+    },
+    switchQuality(vid, height) {
+        height = parseInt(height, 10);
+        localStorage.setItem('shimatube_quality', String(height));
+        const v = document.getElementById('main-video');
+        if (!v || v.getAttribute('data-vid') !== vid) return;
+        const t = v.currentTime, wasPlaying = !v.paused;
+        UI._playHls(v, B(`/hls/${vid}?q=${height}`), false);
+        const onMeta = () => {
+            v.removeEventListener('loadedmetadata', onMeta);
+            try { v.currentTime = t; } catch (e) {}
+            if (wasPlaying) v.play().catch(() => {});
+        };
+        v.addEventListener('loadedmetadata', onMeta);
+    }
+});
