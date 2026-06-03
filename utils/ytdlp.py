@@ -16,31 +16,33 @@ url_cache_lock = threading.Lock()
 # 撃たれると全抽出が遅延しスレッドが累積→サーバ全体(/api/version等)まで巻き添えで
 # 遅くなる。同時実行を絞り、待てない分は早期に諦めてスレッドを溜めない。
 _extract_sem = threading.BoundedSemaphore(2)
-_SEM_WAIT = 20  # この秒数 acquire できなければ503で即返す
+_SEM_WAIT = 20
 
-# cookies.txt でログイン認証している前提。サーバは単一の progressive URL を
-# 中継する方式（音声+映像が1本になった形式が必須）なので、progressive(itag 18/22)
-# を返す web/mweb を使う。tv 等は adaptive(分離) しか返さず "format not available" になる。
-PLAYER_CLIENTS = ['web', 'mweb']
-# ~/shimatube/cookies.txt があればログイン状態で抽出（最も確実な回避策）。
+# ~/shimatube/cookies.txt があればログイン状態で抽出（ボット検出回避）。
 COOKIES_FILE = os.path.expanduser('~/shimatube/cookies.txt')
 
-def get_hls_url(vid, height=720):
-    """muxed HLS(音声+映像結合, itag 91-96/300等)のm3u8 URLを取得。
-    web クライアントには無いので player_client を絞らずデフォルト集合を使う。
-    返り値: (m3u8_url, http_headers)。4hキャッシュ。"""
-    cache_key = f"hls:{vid}:{height}"
-    with url_cache_lock:
-        c = url_cache.get(cache_key)
-        if c and time.time() < c["expiry"]:
-            return c["url"], c.get("headers", {})
+# 1動画につき extract_info は1回だけ。1回の抽出から
+#   - metadata
+#   - progressive(itag18, 360p, /stream中継&DLフォールバック用)
+#   - muxed HLS {height: m3u8_url}（itag91-96/300等, 公式画質720p/1080p用）
+# を全部取り出し、共有キャッシュ(v:<vid>)に4h保存する。
+# player_client は絞らない（web には HLS muxed が無く default 集合に有るため）。
+_EXTRACT_FMT = "18/best[acodec!=none][vcodec!=none]"
 
-    fmt = (f"best[protocol*=m3u8][height<={height}][vcodec!=none][acodec!=none]/"
-           f"best[protocol*=m3u8][vcodec!=none][acodec!=none]")
+
+def _extract_video(vid):
+    """1動画を1回だけ抽出してキャッシュエントリ(dict)を返す。失敗時 None。"""
+    ckey = f"v:{vid}"
+    with url_cache_lock:
+        c = url_cache.get(ckey)
+        if c and time.time() < c["expiry"]:
+            return c
+
     ydl_opts = {
-        'format': fmt,
+        'format': _EXTRACT_FMT,
         'quiet': True,
         'no_warnings': True,
+        # n-signature チャレンジ解決に Node + EJS が必須（無いと formats 全ドロップ）
         'js_runtimes': {'node': {}},
         'remote_components': ['ejs:github'],
         'socket_timeout': 15,
@@ -48,122 +50,148 @@ def get_hls_url(vid, height=720):
     }
     if os.path.exists(COOKIES_FILE):
         ydl_opts['cookiefile'] = COOKIES_FILE
+
     if not _extract_sem.acquire(timeout=_SEM_WAIT):
-        log.warning(f"hls semaphore busy, skip {vid}")
-        return None, {}
+        log.warning(f"extract semaphore busy, skip {vid}")
+        return None
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             d = ydl.extract_info(f"https://www.youtube.com/watch?v={vid}", download=False)
     except Exception as e:
-        log.error(f"get_hls_url error for {vid}: {e}")
-        return None, {}
+        log.error(f"extract error for {vid}: {e}")
+        return None
     finally:
         _extract_sem.release()
 
-    url = d.get('url')
-    headers = d.get('http_headers', {})
-    if url:
+    is_live = bool(d.get('is_live') or d.get('live_status') == 'is_live')
+    meta = {
+        "title": d.get('title'),
+        "description": d.get('description'),
+        "author": d.get('uploader'),
+        "channelId": d.get('channel_id'),
+        "viewCount": d.get('view_count'),
+        "uploadDate": format_date(d.get('upload_date')),
+        "thumbnail": d.get('thumbnail'),
+        "is_live": is_live,
+    }
+
+    formats = d.get('formats', [])
+    prog_url, prog_headers = None, {}
+    hls = {}          # height -> m3u8 url（muxed のみ）
+    live_hls = None   # 生放送用の任意 m3u8
+    for f in formats:
+        url = f.get('url')
+        if not url:
+            continue
+        muxed = f.get('vcodec') not in (None, 'none') and f.get('acodec') not in (None, 'none')
+        proto = f.get('protocol', '')
+        if proto in ('m3u8', 'm3u8_native'):
+            if muxed and f.get('height'):
+                h = f['height']
+                # 同じ height は最初の1本（fps低い方が先に来る傾向）でよい
+                hls.setdefault(h, url)
+            if live_hls is None:
+                live_hls = url
+        elif muxed and proto in ('https', 'http') and f.get('height'):
+            # progressive(itag18/22)。itag18優先、無ければ最初の muxed-https。
+            if prog_url is None or f.get('format_id') == '18':
+                prog_url, prog_headers = url, f.get('http_headers', {})
+
+    entry = {
+        "meta": meta,
+        "prog_url": prog_url,
+        "prog_headers": prog_headers,
+        "hls": hls,
+        "live_hls": live_hls if is_live else None,
+        "is_live": is_live,
+        "expiry": time.time() + 14400,
+    }
+    # 何かしら再生ソースが取れた時だけキャッシュ
+    if prog_url or hls or live_hls:
         with url_cache_lock:
-            url_cache[cache_key] = {"url": url, "headers": headers, "expiry": time.time() + 14400}
-    return url, headers
+            url_cache[ckey] = entry
+    return entry
+
+
+def get_play_info(vid):
+    """プレイヤー用: 1抽出で {meta, prog_url, hls(heights), is_live, live_hls} を返す。"""
+    return _extract_video(vid)
+
+
+def get_hls_url(vid, height=720):
+    """muxed HLS の m3u8 URL を返す（共有キャッシュを使うので追加抽出なし）。
+    返り値: (m3u8_url, headers)。height 以下で最大、無ければ最小を選ぶ。"""
+    e = _extract_video(vid)
+    if not e:
+        return None, {}
+    hls = e.get("hls") or {}
+    if e.get("is_live") and e.get("live_hls") and not hls:
+        return e["live_hls"], {}
+    if not hls:
+        return None, {}
+    avail = sorted(hls.keys())
+    le = [h for h in avail if h <= height]
+    pick = max(le) if le else min(avail)
+    return hls.get(pick), {}
 
 
 def get_cached_meta(vid, qual="720"):
-    """キャッシュ済みメタデータがあれば返す (yt-dlp呼び出しなし)"""
-    cache_key = f"{vid}:{qual}"
+    """キャッシュ済みなら (prog_url, headers, meta) を返す（yt-dlp呼び出しなし）。"""
     with url_cache_lock:
-        cached = url_cache.get(cache_key)
-        if cached and time.time() < cached["expiry"]:
-            return cached["url"], cached.get("headers", {}), cached["meta"]
+        e = url_cache.get(f"v:{vid}")
+        if e and time.time() < e["expiry"]:
+            return e.get("prog_url"), e.get("prog_headers", {}), e["meta"]
     return None, None, None
 
 
 def get_video_url(vid, qual="720", audio_only=False):
-    """Extract direct YouTube CDN URL via yt-dlp library, with 4h cache."""
-    cache_key = f"{vid}:{'audio' if audio_only else qual}"
-    with url_cache_lock:
-        cached = url_cache.get(cache_key)
-        if cached and time.time() < cached["expiry"]:
-            return cached["url"], cached.get("headers", {}), cached["meta"]
-
-    try:
-        if audio_only:
-            fmt = "bestaudio[ext=m4a]/bestaudio"
-        else:
-            # progressive(音声+映像が1本)のみ。acodec/vcodec 両方ありを強制し、
-            # 720p progressive(itag22)→任意progressive→itag18(360p) の順でフォールバック。
-            fmt = (f"best[ext=mp4][height<={qual}][acodec!=none][vcodec!=none]/"
-                   f"best[height<={qual}][acodec!=none][vcodec!=none]/18/best")
-        ydl_opts = {
-            'format': fmt,
-            'quiet': True,
-            'no_warnings': True,
-            'extractor_args': {'youtube': {'player_client': PLAYER_CLIENTS}},
-            # YouTube の n-signature チャレンジを解くため Node を JS ランタイムに使い
-            # （yt-dlp はデフォルト deno のみ有効）、EJS 解決スクリプトを github から取得する。
-            # これが無いと formats が全部ドロップされ "Requested format is not available" になる。
-            'js_runtimes': {'node': {}},
-            'remote_components': ['ejs:github'],
-            # ハングした抽出が90秒スピンしてスレッドを溜めるのを防ぐ
-            'socket_timeout': 15,
-            'retries': 1,
-        }
-        if os.path.exists(COOKIES_FILE):
-            ydl_opts['cookiefile'] = COOKIES_FILE
-        # 同時抽出数を制限（待てなければ諦めてスレッドを溜めない）
-        if not _extract_sem.acquire(timeout=_SEM_WAIT):
-            log.warning(f"extract semaphore busy, skip {vid}")
-            return None, {}, {}
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                d = ydl.extract_info(f"https://www.youtube.com/watch?v={vid}", download=False)
-        finally:
-            _extract_sem.release()
-
-        is_live = d.get('is_live') or d.get('live_status') == 'is_live'
-
-        meta = {
-            "title": d.get('title'),
-            "description": d.get('description'),
-            "author": d.get('uploader'),
-            "channelId": d.get('channel_id'),
-            "viewCount": d.get('view_count'),
-            "uploadDate": format_date(d.get('upload_date')),
-            "thumbnail": d.get('thumbnail'),
-            "is_live": is_live,
-        }
-
-        if is_live:
-            # 生放送: HLS m3u8 URL を取得（キャッシュなし）
-            hls_url = None
-            for f in sorted(d.get('formats', []), key=lambda x: x.get('height') or 0, reverse=True):
-                if f.get('protocol') in ('m3u8', 'm3u8_native') and f.get('url'):
-                    hls_url = f['url']
-                    break
-            if not hls_url:
-                hls_url = d.get('manifest_url') or d.get('url')
-            meta['hls_url'] = hls_url
-            headers = d.get('http_headers', {})
-            return hls_url, headers, meta
-
-        source = d
-        stream_url = d.get('url')
-        if not stream_url and d.get('requested_formats'):
-            source = d['requested_formats'][0]
-            stream_url = source.get('url')
-
-        headers = source.get('http_headers', {})
-
-        if stream_url:
-            with url_cache_lock:
-                url_cache[cache_key] = {
-                    "url": stream_url,
-                    "headers": headers,
-                    "meta": meta,
-                    "expiry": time.time() + 14400
-                }
-
-        return stream_url, headers, meta
-    except Exception as e:
-        log.error(f"get_video_url error for {vid}: {e}")
+    """progressive(=/stream中継用の単一URL)とメタを返す。HLSは get_hls_url 側。"""
+    if audio_only:
+        return _get_audio_url(vid)
+    e = _extract_video(vid)
+    if not e:
         return None, {}, {}
+    # 生放送は HLS をそのまま返す（従来通り meta['hls_url']）
+    if e.get("is_live") and e.get("live_hls"):
+        meta = dict(e["meta"]); meta["hls_url"] = e["live_hls"]
+        return e["live_hls"], {}, meta
+    return e.get("prog_url"), e.get("prog_headers", {}), e["meta"]
+
+
+_AUDIO_CLIENTS = ['web']
+
+
+def _get_audio_url(vid):
+    """音声のみ（バックグラウンド再生用）。軽い別抽出・短期キャッシュ。"""
+    cache_key = f"audio:{vid}"
+    with url_cache_lock:
+        c = url_cache.get(cache_key)
+        if c and time.time() < c["expiry"]:
+            return c["url"], c.get("headers", {}), c["meta"]
+    ydl_opts = {
+        'format': "bestaudio[ext=m4a]/bestaudio",
+        'quiet': True, 'no_warnings': True,
+        'js_runtimes': {'node': {}}, 'remote_components': ['ejs:github'],
+        'socket_timeout': 15, 'retries': 1,
+    }
+    if os.path.exists(COOKIES_FILE):
+        ydl_opts['cookiefile'] = COOKIES_FILE
+    if not _extract_sem.acquire(timeout=_SEM_WAIT):
+        return None, {}, {}
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            d = ydl.extract_info(f"https://www.youtube.com/watch?v={vid}", download=False)
+    except Exception as e:
+        log.error(f"audio extract error {vid}: {e}")
+        return None, {}, {}
+    finally:
+        _extract_sem.release()
+    meta = {"title": d.get('title'), "author": d.get('uploader'),
+            "channelId": d.get('channel_id'), "is_live": False}
+    url = d.get('url')
+    headers = d.get('http_headers', {})
+    if url:
+        with url_cache_lock:
+            url_cache[cache_key] = {"url": url, "headers": headers, "meta": meta,
+                                    "expiry": time.time() + 14400}
+    return url, headers, meta
