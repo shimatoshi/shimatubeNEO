@@ -144,6 +144,8 @@ const UI = {
                 UI._hideQuality();
             }
             videoEl.play().catch(() => {});
+            // 続きから再生: 保存位置へシーク
+            if (!data.is_live) UI._resumeSeek(videoEl, videoId);
         } else {
             if (data.status === 'ready' && !data.is_live && data.url) UI.updateDownloadButton(B(data.url), true);
         }
@@ -154,7 +156,10 @@ const UI = {
     updateDownloadButton: (url, isReady) => {
         const el = document.getElementById('dl-container');
         if (isReady && url) {
-            el.innerHTML = `<a href="${url}?dl=1" class="dl-ready" download>💾 DL</a>`;
+            // 動画(progressive 360p) と 音声(m4a) の2種
+            el.innerHTML =
+                `<a href="${url}?dl=1" class="dl-ready" download>💾動画</a>`
+                + `<a href="${url}?format=audio&dl=1" class="dl-ready" download style="margin-left:8px;">🎵音声</a>`;
         } else {
             el.innerHTML = `<span class="dl-wait">Wait...</span>`;
         }
@@ -295,5 +300,48 @@ Object.assign(UI, {
             if (wasPlaying) v.play().catch(() => {});
         };
         v.addEventListener('loadedmetadata', onMeta);
+    },
+
+    // --- 続きから再生(進捗) ---
+    _progressMap() {
+        try { return JSON.parse(localStorage.getItem('shimatube_progress') || '{}'); }
+        catch (e) { return {}; }
+    },
+    _getProgress(vid) {
+        const m = UI._progressMap();
+        return m[vid] || 0;
+    },
+    saveProgress(vid, sec) {
+        if (!vid || !sec || sec < 5) return;
+        const m = UI._progressMap();
+        m[vid] = Math.floor(sec);
+        const keys = Object.keys(m);
+        if (keys.length > 200) delete m[keys[0]];
+        localStorage.setItem('shimatube_progress', JSON.stringify(m));
+    },
+    clearProgress(vid) {
+        const m = UI._progressMap();
+        if (m[vid] !== undefined) { delete m[vid]; localStorage.setItem('shimatube_progress', JSON.stringify(m)); }
+    },
+    _resumeSeek(videoEl, vid) {
+        const pos = UI._getProgress(vid);
+        if (pos <= 5) return;
+        const seekOnce = () => {
+            videoEl.removeEventListener('loadedmetadata', seekOnce);
+            const dur = videoEl.duration;
+            if (dur && pos < dur - 15) {
+                try { videoEl.currentTime = pos; } catch (e) {}
+                toast('続きから再生');
+            }
+        };
+        videoEl.addEventListener('loadedmetadata', seekOnce);
+    },
+
+    // --- 自動再生トグル表示 ---
+    updateAutoplayBtn() {
+        const ic = document.getElementById('autoplay-icon');
+        const tx = document.getElementById('autoplay-text');
+        if (ic) ic.style.opacity = app.autoplay ? '1' : '0.35';
+        if (tx) tx.textContent = app.autoplay ? '自動ON' : '自動OFF';
     }
 });

@@ -15,6 +15,7 @@ from handlers.comments import handle_comments
 from handlers.user_data import handle_user_data_get, handle_user_data_post, handle_subscribe, handle_history
 from handlers.feed import handle_feed, handle_feed_channel, handle_feed_refresh
 from handlers.hls import handle_hls, handle_hls_segment
+from handlers.related import handle_related
 
 def handle_version(handler):
     handler.send_json({"version": "21.0", "app": "ShimaTube NEO"})
@@ -24,6 +25,7 @@ GET_ROUTES = [
     ("/api/feed/refresh/",          handle_feed_refresh),
     ("/api/feed/channel/",          handle_feed_channel),
     ("/api/feed",                   handle_feed),
+    ("/api/related/",               handle_related),
     ("/api/user_data",              handle_user_data_get),
     ("/api_proxy/api/v1/search",    handle_search),
     ("/api_proxy/api/v1/channels/", handle_channel),

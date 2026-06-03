@@ -49,5 +49,8 @@ const API = {
     },
     getFeedChannel: (channelId) => {
         return API._fetch(B(`/api/feed/channel/${channelId}`));
+    },
+    getRelated: (videoId) => {
+        return API._fetch(B(`/api/related/${videoId}`));
     }
 };

@@ -44,16 +44,25 @@ Object.assign(app, {
         }
 
         tabEls[0].textContent = 'Related';
-        const cid = channelId || app.currentChannelId;
-        if (!cid) return;
+        const vid = app.currentVideoId;
+        if (!vid) return;
         document.getElementById('player-list').innerHTML = 'Loading...';
         try {
-            const res = await API.getChannelVideos(cid);
-            const filtered = res.videos.filter(v => v.videoId !== app.currentVideoId);
-            UI.renderVideoList(filtered, 'player-list');
+            // YouTube本来のおすすめ(関連, Shorts除外)
+            const res = await API.getRelated(vid);
+            if (app.currentVideoId !== vid) return;
+            app.relatedVideos = (res || []).filter(v => v.videoId !== vid);
+            UI.renderVideoList(app.relatedVideos, 'player-list');
         } catch {
             document.getElementById('player-list').innerHTML = '<div style="padding:10px;color:#666;">Error</div>';
         }
+    },
+
+    toggleAutoplay: () => {
+        app.autoplay = !app.autoplay;
+        localStorage.setItem('shimatube_autoplay', app.autoplay ? '1' : '0');
+        UI.updateAutoplayBtn();
+        toast(app.autoplay ? '自動再生 ON' : '自動再生 OFF');
     },
 
     loadComments: async () => {
