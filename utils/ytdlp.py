@@ -25,6 +25,49 @@ PLAYER_CLIENTS = ['web', 'mweb']
 # ~/shimatube/cookies.txt があればログイン状態で抽出（最も確実な回避策）。
 COOKIES_FILE = os.path.expanduser('~/shimatube/cookies.txt')
 
+def get_hls_url(vid, height=720):
+    """muxed HLS(音声+映像結合, itag 91-96/300等)のm3u8 URLを取得。
+    web クライアントには無いので player_client を絞らずデフォルト集合を使う。
+    返り値: (m3u8_url, http_headers)。4hキャッシュ。"""
+    cache_key = f"hls:{vid}:{height}"
+    with url_cache_lock:
+        c = url_cache.get(cache_key)
+        if c and time.time() < c["expiry"]:
+            return c["url"], c.get("headers", {})
+
+    fmt = (f"best[protocol*=m3u8][height<={height}][vcodec!=none][acodec!=none]/"
+           f"best[protocol*=m3u8][vcodec!=none][acodec!=none]")
+    ydl_opts = {
+        'format': fmt,
+        'quiet': True,
+        'no_warnings': True,
+        'js_runtimes': {'node': {}},
+        'remote_components': ['ejs:github'],
+        'socket_timeout': 15,
+        'retries': 1,
+    }
+    if os.path.exists(COOKIES_FILE):
+        ydl_opts['cookiefile'] = COOKIES_FILE
+    if not _extract_sem.acquire(timeout=_SEM_WAIT):
+        log.warning(f"hls semaphore busy, skip {vid}")
+        return None, {}
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            d = ydl.extract_info(f"https://www.youtube.com/watch?v={vid}", download=False)
+    except Exception as e:
+        log.error(f"get_hls_url error for {vid}: {e}")
+        return None, {}
+    finally:
+        _extract_sem.release()
+
+    url = d.get('url')
+    headers = d.get('http_headers', {})
+    if url:
+        with url_cache_lock:
+            url_cache[cache_key] = {"url": url, "headers": headers, "expiry": time.time() + 14400}
+    return url, headers
+
+
 def get_cached_meta(vid, qual="720"):
     """キャッシュ済みメタデータがあれば返す (yt-dlp呼び出しなし)"""
     cache_key = f"{vid}:{qual}"
