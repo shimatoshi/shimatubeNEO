@@ -1,3 +1,4 @@
+import os
 import threading
 import time
 import logging
@@ -10,6 +11,13 @@ log = logging.getLogger('shimatube')
 
 url_cache = {}
 url_cache_lock = threading.Lock()
+
+# YouTube の "Sign in to confirm you're not a bot" 回避用。
+# web 単体は datacenter/flagged だと弾かれやすいので、PO token 不要で
+# 通りやすいクライアントを優先列挙し yt-dlp に内部フォールバックさせる。
+PLAYER_CLIENTS = ['tv', 'web_safari', 'mweb', 'web']
+# ~/shimatube/cookies.txt があればログイン状態で抽出（最も確実な回避策）。
+COOKIES_FILE = os.path.expanduser('~/shimatube/cookies.txt')
 
 def get_cached_meta(vid, qual="720"):
     """キャッシュ済みメタデータがあれば返す (yt-dlp呼び出しなし)"""
@@ -38,7 +46,10 @@ def get_video_url(vid, qual="720", audio_only=False):
             'format': fmt,
             'quiet': True,
             'no_warnings': True,
+            'extractor_args': {'youtube': {'player_client': PLAYER_CLIENTS}},
         }
+        if os.path.exists(COOKIES_FILE):
+            ydl_opts['cookiefile'] = COOKIES_FILE
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             d = ydl.extract_info(f"https://www.youtube.com/watch?v={vid}", download=False)
 
