@@ -68,36 +68,33 @@ def _dur_to_sec(s):
     return sec
 
 
-def _lockup_duration(lvm):
-    """サムネ overlay の時間バッジから秒数を取る。Live/無しは None。"""
+def _lockup_badges(lvm):
+    """lockup サムネ下部バッジの text を列挙（時間 '3:16' や 'ライブ' 等）。"""
     try:
         overlays = lvm['contentImage']['thumbnailViewModel']['overlays']
     except (KeyError, TypeError):
-        return None
+        return []
+    texts = []
     for o in overlays or []:
-        b = o.get('thumbnailOverlayBadgeViewModel')
-        if not b:
-            continue
-        for tb in b.get('thumbnailBadges', []):
-            t = (tb.get('thumbnailBadgeViewModel', {}) or {}).get('text', '')
-            if t and ':' in t:
-                return _dur_to_sec(t)
+        bo = o.get('thumbnailBottomOverlayViewModel') or {}
+        for b in bo.get('badges', []):
+            t = (b.get('thumbnailBadgeViewModel', {}) or {}).get('text')
+            if t:
+                texts.append(t)
+    return texts
+
+
+def _lockup_duration(lvm):
+    for t in _lockup_badges(lvm):
+        if ':' in t:
+            return _dur_to_sec(t)
     return None
 
 
 def _lockup_is_live(lvm):
-    try:
-        overlays = lvm['contentImage']['thumbnailViewModel']['overlays']
-    except (KeyError, TypeError):
-        return False
-    for o in overlays or []:
-        b = o.get('thumbnailOverlayBadgeViewModel')
-        if not b:
-            continue
-        for tb in b.get('thumbnailBadges', []):
-            t = (tb.get('thumbnailBadgeViewModel', {}) or {}).get('text', '') or ''
-            if 'ライブ' in t or 'LIVE' in t.upper():
-                return True
+    for t in _lockup_badges(lvm):
+        if 'ライブ' in t or 'LIVE' in t.upper():
+            return True
     return False
 
 
