@@ -12,6 +12,12 @@ log = logging.getLogger('shimatube')
 url_cache = {}
 url_cache_lock = threading.Lock()
 
+# 同時 yt-dlp 抽出数の上限。電話のCPUは非力なので、prefetch等で大量並列に
+# 撃たれると全抽出が遅延しスレッドが累積→サーバ全体(/api/version等)まで巻き添えで
+# 遅くなる。同時実行を絞り、待てない分は早期に諦めてスレッドを溜めない。
+_extract_sem = threading.BoundedSemaphore(2)
+_SEM_WAIT = 20  # この秒数 acquire できなければ503で即返す
+
 # cookies.txt でログイン認証している前提。サーバは単一の progressive URL を
 # 中継する方式（音声+映像が1本になった形式が必須）なので、progressive(itag 18/22)
 # を返す web/mweb を使う。tv 等は adaptive(分離) しか返さず "format not available" になる。
@@ -55,11 +61,21 @@ def get_video_url(vid, qual="720", audio_only=False):
             # これが無いと formats が全部ドロップされ "Requested format is not available" になる。
             'js_runtimes': {'node': {}},
             'remote_components': ['ejs:github'],
+            # ハングした抽出が90秒スピンしてスレッドを溜めるのを防ぐ
+            'socket_timeout': 15,
+            'retries': 1,
         }
         if os.path.exists(COOKIES_FILE):
             ydl_opts['cookiefile'] = COOKIES_FILE
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            d = ydl.extract_info(f"https://www.youtube.com/watch?v={vid}", download=False)
+        # 同時抽出数を制限（待てなければ諦めてスレッドを溜めない）
+        if not _extract_sem.acquire(timeout=_SEM_WAIT):
+            log.warning(f"extract semaphore busy, skip {vid}")
+            return None, {}, {}
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                d = ydl.extract_info(f"https://www.youtube.com/watch?v={vid}", download=False)
+        finally:
+            _extract_sem.release()
 
         is_live = d.get('is_live') or d.get('live_status') == 'is_live'
 
