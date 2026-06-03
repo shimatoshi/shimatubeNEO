@@ -12,10 +12,10 @@ log = logging.getLogger('shimatube')
 url_cache = {}
 url_cache_lock = threading.Lock()
 
-# YouTube の "Sign in to confirm you're not a bot" 回避用。
-# web 単体は datacenter/flagged だと弾かれやすいので、PO token 不要で
-# 通りやすいクライアントを優先列挙し yt-dlp に内部フォールバックさせる。
-PLAYER_CLIENTS = ['tv', 'web_safari', 'mweb', 'web']
+# cookies.txt でログイン認証している前提。サーバは単一の progressive URL を
+# 中継する方式（音声+映像が1本になった形式が必須）なので、progressive(itag 18/22)
+# を返す web/mweb を使う。tv 等は adaptive(分離) しか返さず "format not available" になる。
+PLAYER_CLIENTS = ['web', 'mweb']
 # ~/shimatube/cookies.txt があればログイン状態で抽出（最も確実な回避策）。
 COOKIES_FILE = os.path.expanduser('~/shimatube/cookies.txt')
 
@@ -41,12 +41,20 @@ def get_video_url(vid, qual="720", audio_only=False):
         if audio_only:
             fmt = "bestaudio[ext=m4a]/bestaudio"
         else:
-            fmt = f"best[ext=mp4][height<={qual}]/best[ext=mp4]/best"
+            # progressive(音声+映像が1本)のみ。acodec/vcodec 両方ありを強制し、
+            # 720p progressive(itag22)→任意progressive→itag18(360p) の順でフォールバック。
+            fmt = (f"best[ext=mp4][height<={qual}][acodec!=none][vcodec!=none]/"
+                   f"best[height<={qual}][acodec!=none][vcodec!=none]/18/best")
         ydl_opts = {
             'format': fmt,
             'quiet': True,
             'no_warnings': True,
             'extractor_args': {'youtube': {'player_client': PLAYER_CLIENTS}},
+            # YouTube の n-signature チャレンジを解くため Node を JS ランタイムに使い
+            # （yt-dlp はデフォルト deno のみ有効）、EJS 解決スクリプトを github から取得する。
+            # これが無いと formats が全部ドロップされ "Requested format is not available" になる。
+            'js_runtimes': {'node': {}},
+            'remote_components': ['ejs:github'],
         }
         if os.path.exists(COOKIES_FILE):
             ydl_opts['cookiefile'] = COOKIES_FILE
