@@ -4,8 +4,8 @@ import os
 import uuid
 
 from utils.response import JsonResponseMixin
-from utils.db import ensure_user
-from utils.auth import get_user_id, set_user_cookie
+from utils.db import ensure_user, adopt_orphan_data
+from utils.auth import get_user_id, get_query_uid, set_user_cookie
 from handlers.search import handle_search
 from handlers.channel import handle_channel
 from handlers.video import handle_video_details
@@ -18,7 +18,7 @@ from handlers.hls import handle_hls, handle_hls_segment
 from handlers.related import handle_related
 
 def handle_version(handler):
-    handler.send_json({"version": "21.0", "app": "ShimaTube NEO"})
+    handler.send_json({"version": "25.0", "app": "ShimaTube NEO"})
 
 GET_ROUTES = [
     ("/api/version",                handle_version),
@@ -60,13 +60,23 @@ class CustomHandler(JsonResponseMixin, http.server.SimpleHTTPRequestHandler):
     def log_message(self, fmt, *args):
         pass
 
+    # 既知uidのプロセス内キャッシュ（/hls_seg等の高頻度リクエストでDBを叩かないため）
+    _known_users = set()
+
     def ensure_user_id(self):
         self.user_id = get_user_id(self)
         self._set_user_cookie = None
         if not self.user_id:
             self.user_id = str(uuid.uuid4())
             self._set_user_cookie = self.user_id
+        if self.user_id not in CustomHandler._known_users:
             ensure_user(self.user_id)
+            # 旧cookie時代に散在したhistory等を一度だけ引き取る。
+            # ?uid=持ち（新フロントの実ユーザー）のみ対象。旧フロントの
+            # 匿名uuidに発動すると誰のものでもないIDへ統合されてしまう。
+            if get_query_uid(self):
+                adopt_orphan_data(self.user_id)
+            CustomHandler._known_users.add(self.user_id)
 
     def end_headers(self):
         if hasattr(self, '_set_user_cookie') and self._set_user_cookie:
@@ -112,11 +122,12 @@ class CustomHandler(JsonResponseMixin, http.server.SimpleHTTPRequestHandler):
 
     def do_POST(self):
         self.ensure_user_id()
+        path = self.path.split('?')[0]  # ?uid= 付きでもルーティングできるようクエリ除去
         for prefix, handler_fn in POST_ROUTES:
-            if self.path == prefix:
+            if path == prefix:
                 handler_fn(self)
                 return
-        if self.path == '/':
+        if path == '/':
             handle_user_data_post(self)
         else:
             self.send_error(404)

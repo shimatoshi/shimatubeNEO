@@ -27,8 +27,11 @@ const UI = {
                 div.innerHTML = `
                     <img src="${esc(v.thumbnail)}" class="c-thumb" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(v.title)}'">
                     <div class="c-name">${esc(v.title)}</div>
-                    <button class="${btnClass}" onclick="app.toggleSubUniversal('${esc(v.channelId)}', ${JSON.stringify(v.title || '')}, ${JSON.stringify(v.thumbnail || '')})">${btnText}</button>
+                    <button class="${btnClass}">${btnText}</button>
                 `;
+                // 注: onclick属性にJSON.stringifyを埋めると " で属性が壊れるためJSで結線する
+                div.querySelector('.c-sub-btn').onclick = () =>
+                    app.toggleSubUniversal(v.channelId, v.title || '', v.thumbnail || '');
                 container.appendChild(div);
             } else if (v.type === 'playlist') {
                 const div = document.createElement('div');
@@ -63,11 +66,16 @@ const UI = {
                         <div class="v-title" onclick="app.playVideo('${esc(v.videoId)}')">${esc(v.title)}</div>
                         <div class="v-meta">
                             ${esc(v.author)} • ${UI.formatViews(v.viewCount)}
-                            ${v.channelId ? `<span class="block-btn" onclick="app.blockChannel('${esc(v.channelId)}', ${JSON.stringify(v.author || '')})">Block</span>` : ''}
+                            ${v.channelId ? '<span class="block-btn">Block</span>' : ''}
                         </div>
                     </div>
                     <div class="dl-btn" onclick="event.stopPropagation(); UI.startDownload('${esc(v.videoId)}')">💾</div>
                 `;
+                const blockBtn = div.querySelector('.block-btn');
+                if (blockBtn) blockBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    app.blockChannel(v.channelId, v.author || '');
+                };
                 UI.addLongPress(div, v.videoId);
                 container.appendChild(div);
             }
@@ -90,8 +98,10 @@ const UI = {
             div.innerHTML = `
                 <img src="${esc(c.thumbnail)}" class="c-thumb" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(c.title)}'">
                 <div class="c-name">${esc(c.title)}</div>
-                <button class="c-sub-btn subscribed" onclick="app.toggleSubUniversal('${esc(c.channelId)}', ${JSON.stringify(c.title || '')}, ${JSON.stringify(c.thumbnail || '')})">Subbed</button>
+                <button class="c-sub-btn subscribed">Subbed</button>
             `;
+            div.querySelector('.c-sub-btn').onclick = () =>
+                app.toggleSubUniversal(c.channelId, c.title || '', c.thumbnail || '');
             container.appendChild(div);
         });
     },
@@ -104,7 +114,11 @@ const UI = {
 
         const nameEl = document.getElementById('c-name');
         const author = meta.author || 'Unknown';
-        nameEl.innerHTML = `${esc(author)} <span class="block-btn" onclick="event.stopPropagation();app.blockChannel('${esc(meta.channelId)}', ${JSON.stringify(author)})">Block</span>`;
+        nameEl.innerHTML = `${esc(author)} <span class="block-btn">Block</span>`;
+        nameEl.querySelector('.block-btn').onclick = (e) => {
+            e.stopPropagation();
+            app.blockChannel(meta.channelId, author);
+        };
 
         document.getElementById('desc-content').textContent = meta.description || '';
         document.getElementById('c-icon').src = meta.thumbnail || `https://ui-avatars.com/api/?name=${encodeURIComponent(author)}`;
@@ -157,9 +171,11 @@ const UI = {
         const el = document.getElementById('dl-container');
         if (isReady && url) {
             // 動画(progressive 360p) と 音声(m4a) の2種
+            // B()が ?uid= を付けるため、既にクエリがある場合は & で繋ぐ
+            const sep = url.includes('?') ? '&' : '?';
             el.innerHTML =
-                `<a href="${url}?dl=1" class="dl-ready" download>💾動画</a>`
-                + `<a href="${url}?format=audio&dl=1" class="dl-ready" download style="margin-left:8px;">🎵音声</a>`;
+                `<a href="${url}${sep}dl=1" class="dl-ready" download>💾動画</a>`
+                + `<a href="${url}${sep}format=audio&dl=1" class="dl-ready" download style="margin-left:8px;">🎵音声</a>`;
         } else {
             el.innerHTML = `<span class="dl-wait">Wait...</span>`;
         }

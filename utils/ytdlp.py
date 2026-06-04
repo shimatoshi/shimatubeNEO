@@ -30,6 +30,22 @@ COOKIES_FILE = os.path.expanduser('~/shimatube/cookies.txt')
 _EXTRACT_FMT = "18/best[acodec!=none][vcodec!=none]"
 
 
+def _audio_lang_score(f):
+    """オリジナル音声を優先するスコア(大きいほど優先)。
+    自動吹替(auto-dub)動画では同じheightに複数言語が並び、formatsリストは
+    吹替が先に来る(実測: 91-0 en-US lp=5 '(default)' → 91-1 ja lp=10 '(original)')。
+    先頭を素朴に拾うと英語吹替を掴むため、note='original' を第一キー、
+    language_preference を第二キーにする。"""
+    note = (f.get('format_note') or '').lower()
+    lp = f.get('language_preference')
+    lp = lp if lp is not None else 0
+    if 'original' in note:
+        return 1000 + lp
+    if 'dub' in note:  # 'dubbed', 'dubbed-auto'
+        return -1000 + lp
+    return lp
+
+
 def _extract_video(vid):
     """1動画を1回だけ抽出してキャッシュエントリ(dict)を返す。失敗時 None。"""
     ckey = f"v:{vid}"
@@ -77,7 +93,9 @@ def _extract_video(vid):
 
     formats = d.get('formats', [])
     prog_url, prog_headers = None, {}
+    prog_score = float('-inf')
     hls = {}          # height -> m3u8 url（muxed のみ）
+    hls_score = {}    # height -> 音声言語スコア（original優先）
     live_hls = None   # 生放送用の任意 m3u8
     for f in formats:
         url = f.get('url')
@@ -88,14 +106,20 @@ def _extract_video(vid):
         if proto in ('m3u8', 'm3u8_native'):
             if muxed and f.get('height'):
                 h = f['height']
-                # 同じ height は最初の1本（fps低い方が先に来る傾向）でよい
-                hls.setdefault(h, url)
+                # 同height複数本(自動吹替の言語違い等)は original 音声を優先。
+                # スコア同点は最初の1本（fps低い方が先に来る傾向）でよい
+                sc = _audio_lang_score(f)
+                if sc > hls_score.get(h, float('-inf')):
+                    hls[h] = url
+                    hls_score[h] = sc
             if live_hls is None:
                 live_hls = url
         elif muxed and proto in ('https', 'http') and f.get('height'):
-            # progressive(itag18/22)。itag18優先、無ければ最初の muxed-https。
-            if prog_url is None or f.get('format_id') == '18':
-                prog_url, prog_headers = url, f.get('http_headers', {})
+            # progressive(itag18/22)。original音声 > itag18 の順で優先。
+            base_id = (f.get('format_id') or '').split('-')[0]
+            sc = _audio_lang_score(f) * 2 + (1 if base_id == '18' else 0)
+            if sc > prog_score:
+                prog_url, prog_headers, prog_score = url, f.get('http_headers', {}), sc
 
     entry = {
         "meta": meta,

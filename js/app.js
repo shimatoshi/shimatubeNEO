@@ -22,7 +22,22 @@ async function resolveBackend() {
     }
 }
 
-function B(path) { return BACKEND + path; }
+// ユーザーID: クロスオリジン(Vercel→トンネル)ではcookieが送られないため、
+// localStorageで永続化したuidを全APIリクエストに ?uid= で付与する
+function UID() {
+    let id = localStorage.getItem('shimatube_uid');
+    if (!id) {
+        id = (crypto.randomUUID && crypto.randomUUID())
+            || (Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10));
+        localStorage.setItem('shimatube_uid', id);
+    }
+    return id;
+}
+
+function B(path) {
+    const sep = path.includes('?') ? '&' : '?';
+    return BACKEND + path + sep + 'uid=' + encodeURIComponent(UID());
+}
 
 function toast(msg, duration = 2000) {
     const el = document.getElementById('toast');

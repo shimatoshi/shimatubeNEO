@@ -15,17 +15,17 @@ const API = {
         top.forEach(id => {
             if (API._videoCache[id] || API._prefetching.has(id)) return;
             API._prefetching.add(id);
-            API._fetch(`${B(API_BASE_PATH)}/videos/${id}?quality=720`).then(data => {
+            API._fetch(B(`${API_BASE_PATH}/videos/${id}?quality=720`)).then(data => {
                 API._videoCache[id] = data;
             }).catch(() => {}).finally(() => API._prefetching.delete(id));
         });
     },
 
     search: (query, page = 1, filter = '', sort = '') => {
-        let url = `${B(API_BASE_PATH)}/search?q=${encodeURIComponent(query)}&page=${page}`;
-        if (filter) url += `&filter=${filter}`;
-        if (sort) url += `&sort=${sort}`;
-        return API._fetch(url);
+        let path = `${API_BASE_PATH}/search?q=${encodeURIComponent(query)}&page=${page}`;
+        if (filter) path += `&filter=${filter}`;
+        if (sort) path += `&sort=${sort}`;
+        return API._fetch(B(path));
     },
     getVideo: async (videoId) => {
         // プリフェッチキャッシュがあれば即返す
@@ -34,18 +34,18 @@ const API = {
             delete API._videoCache[videoId];
             return data;
         }
-        return API._fetch(`${B(API_BASE_PATH)}/videos/${videoId}?quality=720`);
+        return API._fetch(B(`${API_BASE_PATH}/videos/${videoId}?quality=720`));
     },
     getComments: (videoId) => {
-        return API._fetch(`${B(API_BASE_PATH)}/comments/${videoId}`);
+        return API._fetch(B(`${API_BASE_PATH}/comments/${videoId}`));
     },
     getChannelVideos: (channelId, page = 1, tab = '') => {
-        let url = `${B(API_BASE_PATH)}/channels/${channelId}?page=${page}`;
-        if (tab) url += `&tab=${tab}`;
-        return API._fetch(url);
+        let path = `${API_BASE_PATH}/channels/${channelId}?page=${page}`;
+        if (tab) path += `&tab=${tab}`;
+        return API._fetch(B(path));
     },
     getPlaylist: (playlistId) => {
-        return API._fetch(`${B(API_BASE_PATH)}/playlists/${playlistId}`);
+        return API._fetch(B(`${API_BASE_PATH}/playlists/${playlistId}`));
     },
     getFeedChannel: (channelId) => {
         return API._fetch(B(`/api/feed/channel/${channelId}`));

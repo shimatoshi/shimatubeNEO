@@ -113,6 +113,47 @@ def ensure_user(user_id):
                                 (user_id, cat, i))
         conn.commit()
 
+ADOPT_FLAG = os.path.join(os.path.dirname(DB_PATH), '.orphan_adopted')
+
+def adopt_orphan_data(user_id):
+    """旧cookie時代(クロスオリジンでcookie不達→毎リクエスト新規uuid)に
+    散在した history/subscriptions 等を、最初に来た実ユーザーへ一度だけ統合する。
+    e2eテスト用の 'test-' 接頭辞uidには渡さない。"""
+    if user_id.startswith('test-') or user_id == '_legacy_' or os.path.exists(ADOPT_FLAG):
+        return
+    with get_conn() as conn:
+        # history: video_idごとに最新watched_atの行を採用して引き取る
+        conn.execute(
+            "INSERT OR REPLACE INTO history(user_id, video_id, title, thumbnail, length_seconds, view_count, watched_at) "
+            "SELECT ?, video_id, title, thumbnail, length_seconds, view_count, MAX(watched_at) "
+            "FROM history WHERE user_id != ? GROUP BY video_id",
+            (user_id, user_id))
+        conn.execute("DELETE FROM history WHERE user_id != ?", (user_id,))
+        conn.execute(
+            "DELETE FROM history WHERE user_id=? AND video_id NOT IN "
+            "(SELECT video_id FROM history WHERE user_id=? ORDER BY watched_at DESC LIMIT 50)",
+            (user_id, user_id))
+        # subscriptions / block系 / categories も統合
+        for sql in [
+            "INSERT OR IGNORE INTO subscriptions(user_id, channel_id, title, thumbnail) "
+            "SELECT ?, channel_id, title, thumbnail FROM subscriptions WHERE user_id != ?",
+            "INSERT OR IGNORE INTO blocked_channels(user_id, channel_id, name) "
+            "SELECT ?, channel_id, name FROM blocked_channels WHERE user_id != ?",
+            "INSERT OR IGNORE INTO blocked_keywords(user_id, keyword) "
+            "SELECT ?, keyword FROM blocked_keywords WHERE user_id != ?",
+            "INSERT OR IGNORE INTO categories(user_id, name, sort_order) "
+            "SELECT ?, name, sort_order FROM categories WHERE user_id != ?",
+        ]:
+            conn.execute(sql, (user_id, user_id))
+        for t in ['subscriptions', 'blocked_channels', 'blocked_keywords', 'categories']:
+            conn.execute(f"DELETE FROM {t} WHERE user_id != ?", (user_id,))
+        # 幽霊ユーザー行の掃除
+        conn.execute("DELETE FROM users WHERE user_id != ?", (user_id,))
+        conn.execute("INSERT OR IGNORE INTO users(user_id) VALUES(?)", (user_id,))
+        conn.commit()
+    open(ADOPT_FLAG, 'w').close()
+    log.info(f"orphan data adopted by {user_id}")
+
 # --- Read ---
 
 def get_user_data(user_id):

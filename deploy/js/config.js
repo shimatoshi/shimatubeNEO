@@ -21,8 +21,8 @@ Object.assign(app, {
 
     refreshConfig: () => {
         if (!app.userData) return;
-        app.renderTags('cat-list', app.userData.categories, 'app.removeCategory');
-        app.renderTags('kw-list', app.userData.blocked_keywords, 'app.removeBlockKeyword');
+        app.renderTags('cat-list', app.userData.categories, app.removeCategory);
+        app.renderTags('kw-list', app.userData.blocked_keywords, app.removeBlockKeyword);
         const bcList = document.getElementById('bc-list');
         bcList.innerHTML = '';
         app.userData.blocked_channels.forEach(c => {
@@ -30,11 +30,21 @@ Object.assign(app, {
         });
     },
 
-    renderTags: (elId, list, removeFuncStr) => {
+    renderTags: (elId, list, removeFunc) => {
         const el = document.getElementById(elId);
         el.innerHTML = '';
         list.forEach(item => {
-            el.innerHTML += `<div class="tag"><span>${esc(item)}</span><span class="tag-del" onclick="${removeFuncStr}(${JSON.stringify(item)})">✕</span></div>`;
+            // onclick属性にJSON.stringifyを埋めると " で属性が壊れるためJSで結線する
+            const tag = document.createElement('div');
+            tag.className = 'tag';
+            const label = document.createElement('span');
+            label.textContent = item;
+            const del = document.createElement('span');
+            del.className = 'tag-del';
+            del.textContent = '✕';
+            del.onclick = () => removeFunc(item);
+            tag.append(label, del);
+            el.appendChild(tag);
         });
     },
 
