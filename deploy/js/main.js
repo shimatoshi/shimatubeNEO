@@ -4,8 +4,14 @@ app.init = async () => {
     app.autoplay = localStorage.getItem('shimatube_autoplay') !== '0';  // 既定ON
     app.updateBackBtn();
     app.switchTab('home', false);
-    // resolveBackend と loadUserData を並列実行
-    await Promise.all([resolveBackend(), app.loadUserData()]);
+    // backendキャッシュがあれば並列、無ければ resolveBackend 完了後に loadUserData
+    // （初回訪問で BACKEND='' のまま same-origin(Vercel) に飛んで404になるのを防ぐ）
+    if (localStorage.getItem('shimatube_backend')) {
+        await Promise.all([resolveBackend(), app.loadUserData()]);
+    } else {
+        await resolveBackend();
+        await app.loadUserData();
+    }
 
     // Migrate localStorage → server (one-time)
     if (!localStorage.getItem('shimatube_migrated')) {
