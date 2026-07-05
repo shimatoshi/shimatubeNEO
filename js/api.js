@@ -21,6 +21,9 @@ const API = {
         });
     },
 
+    trending: () => {
+        return API._fetch(B('/api/trending'));
+    },
     search: (query, page = 1, filter = '', sort = '') => {
         let path = `${API_BASE_PATH}/search?q=${encodeURIComponent(query)}&page=${page}`;
         if (filter) path += `&filter=${filter}`;

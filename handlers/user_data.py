@@ -4,9 +4,19 @@ import logging
 from utils.db import (get_user_data, update_categories, block_channel,
                        unblock_channel, block_keyword, unblock_keyword,
                        add_subscription, remove_subscription,
-                       is_subscribed, add_history)
+                       is_subscribed, add_history, adopt_orphan_data)
 
 log = logging.getLogger('shimatube')
+
+def handle_adopt(handler):
+    """データ復旧: WebViewストレージ消失等でuidが変わった時、
+    旧uidに残った購読/履歴を現uidへ引き取る (設定画面のボタンから)"""
+    try:
+        adopt_orphan_data(handler.user_id, force=True)
+        handler.send_json({"status": True, "data": get_user_data(handler.user_id)})
+    except Exception as e:
+        log.error(f"Adopt error: {e}")
+        handler.send_error(500, str(e))
 
 def handle_user_data_get(handler):
     handler.send_json(get_user_data(handler.user_id))

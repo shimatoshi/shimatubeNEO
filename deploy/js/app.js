@@ -23,15 +23,26 @@ async function resolveBackend() {
 }
 
 // ユーザーID: クロスオリジン(Vercel→トンネル)ではcookieが送られないため、
-// localStorageで永続化したuidを全APIリクエストに ?uid= で付与する
+// localStorageで永続化したuidを全APIリクエストに ?uid= で付与する。
+// WebViewのストレージ削減でlocalStorageだけ消えるケースに備え、
+// 自オリジンcookieにもミラーして相互復元する (両方消えたら設定の「データ復旧」で引き取る)
+function _getUidCookie() {
+    const m = document.cookie.match(/(?:^|;\s*)st_uid=([A-Za-z0-9_-]{8,64})/);
+    return m ? m[1] : null;
+}
 function UID() {
-    let id = localStorage.getItem('shimatube_uid');
+    let id = localStorage.getItem('shimatube_uid') || _getUidCookie();
     if (!id) {
         id = (crypto.randomUUID && crypto.randomUUID())
             || (Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10));
-        localStorage.setItem('shimatube_uid', id);
     }
+    localStorage.setItem('shimatube_uid', id);
+    document.cookie = `st_uid=${id}; Path=/; Max-Age=315360000; SameSite=Lax`;
     return id;
+}
+// ストレージの自動削減(eviction)をブラウザに抑止してもらう
+if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist().catch(() => {});
 }
 
 function B(path) {

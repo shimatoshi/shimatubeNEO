@@ -1,4 +1,21 @@
 Object.assign(app, {
+    // データ復旧: uid再生成で見えなくなった旧uidの購読/履歴をサーバー側で現uidへ統合
+    recoverData: async () => {
+        if (!confirm('サーバーに残っている旧IDの購読・履歴を現在のIDへ引き取ります。よい？')) return;
+        try {
+            const res = await fetch(B('/api/adopt'), { method: 'POST' });
+            const data = await res.json();
+            if (data.status) {
+                app.userData = data.data;
+                toast(`復旧完了: 購読${data.data.subscriptions.length}件 / 履歴${data.data.history.length}件`);
+                app.refreshConfig();
+                app.renderHome();
+            } else {
+                toast('復旧失敗');
+            }
+        } catch (e) { toast('復旧失敗: ' + e.message); }
+    },
+
     forceUpdate: async () => {
         toast('Updating...');
         if ('caches' in window) {

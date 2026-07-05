@@ -1,4 +1,5 @@
 import re
+import time
 import urllib.parse
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -12,15 +13,18 @@ log = logging.getLogger('shimatube')
 
 _VALID_CID = re.compile(r'^[a-zA-Z0-9_@-]{2,60}$')
 
-# チャンネルごとの動画キャッシュ（メモリ内、サーバー再起動でクリア）
-# { channelId: [video, ...] }  最大50件保持
+# チャンネルごとの動画キャッシュ（メモリ内）
+# { channelId: (expiry, [video, ...]) }  最大50件保持
+# 以前は無期限で、サーバーが長生きすると新着が永遠に出なかった → 30分TTL
 _channel_cache = {}
+_CHANNEL_TTL = 1800
 
 
 def _fetch_channel_videos(channel_id, limit=50):
-    """1チャンネルの動画を取得（キャッシュ付き）"""
-    if channel_id in _channel_cache:
-        return _channel_cache[channel_id]
+    """1チャンネルの動画を取得（30分キャッシュ付き）"""
+    c = _channel_cache.get(channel_id)
+    if c and time.time() < c[0]:
+        return c[1]
 
     try:
         ydl_opts = {
@@ -51,7 +55,7 @@ def _fetch_channel_videos(channel_id, limit=50):
                 "thumbnail": f"https://i.ytimg.com/vi/{v.get('id')}/mqdefault.jpg",
             })
 
-        _channel_cache[channel_id] = videos
+        _channel_cache[channel_id] = (time.time() + _CHANNEL_TTL, videos)
         return videos
     except Exception as e:
         log.error(f"Feed fetch error for {channel_id}: {e}")

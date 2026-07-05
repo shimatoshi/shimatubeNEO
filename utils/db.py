@@ -107,19 +107,21 @@ def ensure_user(user_id):
                 for t in ['categories', 'blocked_channels', 'blocked_keywords']:
                     conn.execute(f"DELETE FROM {t} WHERE user_id='_legacy_'")
                 conn.execute("DELETE FROM users WHERE user_id='_legacy_'")
-            else:
-                for i, cat in enumerate(["Trending", "News"]):
-                    conn.execute("INSERT INTO categories(user_id, name, sort_order) VALUES(?,?,?)",
-                                (user_id, cat, i))
+            # 新規ユーザーのデフォルトカテゴリなし
+            # (旧デフォルトの Trending/News は海外結果ばかりで不評→日本の急上昇 /api/trending に置換)
         conn.commit()
 
 ADOPT_FLAG = os.path.join(os.path.dirname(DB_PATH), '.orphan_adopted')
 
-def adopt_orphan_data(user_id):
+def adopt_orphan_data(user_id, force=False):
     """旧cookie時代(クロスオリジンでcookie不達→毎リクエスト新規uuid)に
     散在した history/subscriptions 等を、最初に来た実ユーザーへ一度だけ統合する。
-    e2eテスト用の 'test-' 接頭辞uidには渡さない。"""
-    if user_id.startswith('test-') or user_id == '_legacy_' or os.path.exists(ADOPT_FLAG):
+    e2eテスト用の 'test-' 接頭辞uidには渡さない。
+    force=True (設定画面の「データ復旧」ボタン): WebViewストレージ消失等で
+    uidが再生成された時に、旧uidのデータを現uidへ引き取り直す。"""
+    if user_id.startswith('test-') or user_id == '_legacy_':
+        return
+    if not force and os.path.exists(ADOPT_FLAG):
         return
     with get_conn() as conn:
         # history: video_idごとに最新watched_atの行を採用して引き取る

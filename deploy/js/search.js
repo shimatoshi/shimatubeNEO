@@ -58,6 +58,30 @@ Object.assign(app, {
             });
         }
 
+        // 急上昇 (日本): サーバーの /api/trending から (旧 Trending/News カテゴリの置き換え)
+        {
+            const hdr = document.createElement('div');
+            hdr.className = 'cat-header';
+            hdr.innerHTML = '<span>🔥 急上昇 (日本)</span><span class="cat-toggle" id="toggle-trend">▼</span>';
+            hdr.onclick = () => {
+                const c = document.getElementById('trend-content');
+                const icon = document.getElementById('toggle-trend');
+                c.classList.toggle('hidden');
+                icon.classList.toggle('closed');
+            };
+            container.appendChild(hdr);
+            const trendDiv = document.createElement('div');
+            trendDiv.id = 'trend-content';
+            trendDiv.className = 'cat-content';
+            trendDiv.innerHTML = '<div style="padding:10px;font-size:12px;color:#666;">Loading...</div>';
+            container.appendChild(trendDiv);
+            API.trending().then(res => {
+                UI.renderVideoList(res, 'trend-content');
+            }).catch(() => {
+                trendDiv.innerHTML = '<div style="padding:10px;color:#666;">Error</div>';
+            });
+        }
+
         // カテゴリヘッダーを先に全部描画（折りたたみ状態も設定）
         app.userData.categories.forEach((cat, index) => {
             const listId = `list-${index}`;
