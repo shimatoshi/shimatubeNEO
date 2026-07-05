@@ -1,6 +1,7 @@
 import logging
 import time
 import threading
+import urllib.parse
 
 import yt_dlp
 
@@ -9,27 +10,30 @@ from utils.formatting import format_date
 
 log = logging.getLogger('shimatube')
 
-# 日本の急上昇 (30分キャッシュ)
+# 日本の人気動画 (30分キャッシュ)
+# 本家YouTubeは2025年に急上昇ページ(FEtrending)を廃止したため、
+# 「今週アップロード×再生数順」検索(sp=CAMSAggD)を日本語シードで叩いて代替する。
+# シード「の」はほぼ全ての日本語動画タイトルに含まれるため、実質「日本の今週人気」になる。
 _cache = {'items': None, 'expiry': 0}
 _lock = threading.Lock()
 _TTL = 1800
 
-TRENDING_URL = "https://www.youtube.com/feed/trending?gl=JP&hl=ja"
+_SEEDS = ['の', '【']  # 複数シードをマージして偏りを減らす
+_SP_WEEK_VIEWS = 'CAMSAggD'  # filter:今週 + sort:再生数
 
 
-def _fetch_trending():
+def _fetch_seed(seed, limit=25):
+    url = (f"https://www.youtube.com/results?search_query={urllib.parse.quote(seed)}"
+           f"&sp={_SP_WEEK_VIEWS}&gl=JP&hl=ja")
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
         'extract_flat': True,
         'skip_download': True,
-        'playlistend': 30,
-        # 地域を日本に固定 (URLのgl=JPだけだとIP側の地域が勝つことがある)
-        'geo_bypass_country': 'JP',
-        'extractor_args': {'youtube': {'lang': ['ja']}},
+        'playlistend': limit,
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        result = ydl.extract_info(TRENDING_URL, download=False)
+        result = ydl.extract_info(url, download=False)
     items = []
     for v in (result.get('entries', []) if result else []):
         if v is None or not v.get('id'):
@@ -48,17 +52,33 @@ def _fetch_trending():
     return items
 
 
+def _fetch_trending():
+    seen = set()
+    merged = []
+    for seed in _SEEDS:
+        try:
+            for it in _fetch_seed(seed):
+                if it['videoId'] in seen:
+                    continue
+                seen.add(it['videoId'])
+                merged.append(it)
+        except Exception as e:
+            log.warning(f"Trending seed '{seed}' failed: {e}")
+    merged.sort(key=lambda x: x.get('viewCount') or 0, reverse=True)
+    return merged[:30]
+
+
 def handle_trending(handler):
-    """日本の急上昇動画 (ホーム画面用、30分キャッシュ)"""
+    """日本の人気動画 (ホーム画面用、30分キャッシュ)"""
     with _lock:
         cached = _cache['items'] if time.time() < _cache['expiry'] else None
     if cached is None:
-        try:
-            cached = _fetch_trending()
+        items = _fetch_trending()
+        if items:
             with _lock:
-                _cache['items'] = cached
+                _cache['items'] = items
                 _cache['expiry'] = time.time() + _TTL
-        except Exception as e:
-            log.error(f"Trending fetch error: {e}")
-            cached = _cache['items'] or []  # 期限切れでも古いのがあれば出す
+            cached = items
+        else:
+            cached = _cache['items'] or []  # 全滅時は期限切れでも古いのを出す
     handler.send_json(filter_blocked(cached, handler.user_id))

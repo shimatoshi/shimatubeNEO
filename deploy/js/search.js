@@ -62,7 +62,7 @@ Object.assign(app, {
         {
             const hdr = document.createElement('div');
             hdr.className = 'cat-header';
-            hdr.innerHTML = '<span>🔥 急上昇 (日本)</span><span class="cat-toggle" id="toggle-trend">▼</span>';
+            hdr.innerHTML = '<span>🔥 今週の人気 (日本)</span><span class="cat-toggle" id="toggle-trend">▼</span>';
             hdr.onclick = () => {
                 const c = document.getElementById('trend-content');
                 const icon = document.getElementById('toggle-trend');
