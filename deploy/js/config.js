@@ -33,7 +33,25 @@ Object.assign(app, {
         const modal = document.getElementById('config-modal');
         const isShow = modal.style.display === 'block';
         modal.style.display = isShow ? 'none' : 'block';
-        if (!isShow) app.refreshConfig();
+        if (!isShow) {
+            app.refreshConfig();
+            // 開いている間だけ Escape を受ける。✕以外に閉じ方が無いと、
+            // 全画面オーバーレイが背後のタップを黙って吸い続ける
+            app._configEsc = (e) => { if (e.key === 'Escape') app.toggleConfig(); };
+            document.addEventListener('keydown', app._configEsc);
+        } else if (app._configEsc) {
+            document.removeEventListener('keydown', app._configEsc);
+            app._configEsc = null;
+        }
+    },
+
+    // 背景(モーダル自身)のクリックで閉じる。中身のクリックでは閉じない
+    initConfigDismiss: () => {
+        const modal = document.getElementById('config-modal');
+        if (!modal) return;
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) app.toggleConfig();
+        });
     },
 
     refreshConfig: () => {

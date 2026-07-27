@@ -54,13 +54,23 @@ const UI = {
                 if (app.currentPlaylist && app.currentVideoId === v.videoId) {
                     div.classList.add('now-playing');
                 }
+                // 長さは一覧APIの値を優先。履歴は lengthSeconds を持たないので
+                // 視聴時に保存した実尺(進捗エントリの d)で補う。どちらも無ければ出さない
+                // (0:00 と出すと「長さ0の動画」に見えるため)
+                const prog = UI._getProgressEntry(v.videoId);
+                const totalSec = v.lengthSeconds || (prog && prog.d) || 0;
                 const dur = v.is_live
                     ? '<span class="live-badge">LIVE</span>'
-                    : `<span class="duration">${UI.formatDuration(v.lengthSeconds)}</span>`;
+                    : (totalSec ? `<span class="duration">${UI.formatDuration(totalSec)}</span>` : '');
+                // 途中まで見た動画は続きの位置をバーで示す(復元機能が在ることを一覧で見せる)
+                const watched = (prog && prog.p > 5 && totalSec)
+                    ? `<div class="watch-bar"><div class="watch-bar-fill" style="width:${Math.min(100, prog.p / totalSec * 100).toFixed(1)}%"></div></div>`
+                    : '';
                 div.innerHTML = `
                     <div class="thumb" onclick="app.playVideo('${esc(v.videoId)}')">
                         <img src="${esc(v.thumbnail)}" loading="lazy">
                         ${dur}
+                        ${watched}
                     </div>
                     <div class="details">
                         <div class="v-title" onclick="app.playVideo('${esc(v.videoId)}')">${esc(v.title)}</div>
@@ -69,7 +79,8 @@ const UI = {
                             ${v.channelId ? '<span class="block-btn">Block</span>' : ''}
                         </div>
                     </div>
-                    <div class="dl-btn" onclick="event.stopPropagation(); UI.startDownload('${esc(v.videoId)}')">💾</div>
+                    <div class="dl-btn" title="動画で保存" onclick="event.stopPropagation(); UI.startDownload('${esc(v.videoId)}')">💾</div>
+                    <div class="dl-btn dl-audio" title="音声(楽曲)で保存" onclick="event.stopPropagation(); UI.startDownload('${esc(v.videoId)}', 'audio')">🎵</div>
                 `;
                 const blockBtn = div.querySelector('.block-btn');
                 if (blockBtn) blockBtn.onclick = (e) => {
@@ -208,10 +219,12 @@ const UI = {
         if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         return `${m}:${s.toString().padStart(2, '0')}`;
     },
-    startDownload: (videoId) => {
-        toast('Download started');
+    startDownload: (videoId, kind) => {
+        const isAudio = kind === 'audio';
+        // 保存はブラウザ任せで進捗を取れないため、少なくとも「何を・どの形式で」は残す
+        toast(isAudio ? '🎵 音声(m4a)で保存を開始しました' : '💾 動画(mp4)で保存を開始しました', 4000);
         const a = document.createElement('a');
-        a.href = B(`/stream/${videoId}?dl=1`);
+        a.href = B(`/stream/${videoId}?dl=1${isAudio ? '&format=audio' : ''}`);
         a.download = '';
         document.body.appendChild(a);
         a.click();
@@ -323,14 +336,25 @@ Object.assign(UI, {
         try { return JSON.parse(localStorage.getItem('shimatube_progress') || '{}'); }
         catch (e) { return {}; }
     },
-    _getProgress(vid) {
-        const m = UI._progressMap();
-        return m[vid] || 0;
+    // 保存形式は {p: 位置秒, d: 実尺秒}。旧形式(数値のみ)も読めるようにしておく
+    _getProgressEntry(vid) {
+        if (!vid) return null;
+        const e = UI._progressMap()[vid];
+        if (e === undefined) return null;
+        return (typeof e === 'number') ? { p: e, d: 0 } : e;
     },
-    saveProgress(vid, sec) {
+    _getProgress(vid) {
+        const e = UI._getProgressEntry(vid);
+        return e ? (e.p || 0) : 0;
+    },
+    saveProgress(vid, sec, dur) {
         if (!vid || !sec || sec < 5) return;
         const m = UI._progressMap();
-        m[vid] = Math.floor(sec);
+        const prev = UI._getProgressEntry(vid);
+        m[vid] = {
+            p: Math.floor(sec),
+            d: Math.floor(dur && isFinite(dur) ? dur : (prev && prev.d) || 0),
+        };
         const keys = Object.keys(m);
         if (keys.length > 200) delete m[keys[0]];
         localStorage.setItem('shimatube_progress', JSON.stringify(m));

@@ -67,11 +67,12 @@ app.init = async () => {
         if (now - _lastSave < 5000) return;
         _lastSave = now;
         if (app.currentVideoId && mainVideo.currentTime > 5) {
-            UI.saveProgress(app.currentVideoId, mainVideo.currentTime);
+            UI.saveProgress(app.currentVideoId, mainVideo.currentTime, mainVideo.duration);
         }
     });
 
     UI.updateAutoplayBtn();
+    app.initConfigDismiss();
     const verEl = document.getElementById('app-version');
     if (verEl) verEl.textContent = 'ShimaTube NEO ' + APP_VERSION;
 };

@@ -79,6 +79,10 @@ video { width: 100%; max-height: 50vh; background: #000; }
 .block-btn { color: #ff4444; border: 1px solid #ff4444; padding: 2px 4px; border-radius: 4px; font-size: 10px; margin-left: 8px; cursor: pointer; display: inline-block; }
 .dl-btn { display: flex; align-items: center; justify-content: center; width: 36px; flex-shrink: 0; font-size: 18px; text-decoration: none; color: #2ecc71; opacity: 0.7; transition: opacity 0.2s; }
 .dl-btn:active { opacity: 1; }
+.dl-btn.dl-audio { width: 30px; font-size: 16px; color: #f1c40f; }
+/* 途中まで見た動画の続き位置。サムネ下端に重ねる */
+.watch-bar { position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: rgba(255,255,255,0.25); }
+.watch-bar-fill { height: 100%; background: #ff0000; }
 
 /* Now Playing highlight */
 .video-item.now-playing { background: #1a3a5c; border-radius: 8px; padding: 5px; }
