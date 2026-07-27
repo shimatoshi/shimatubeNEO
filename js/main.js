@@ -4,10 +4,14 @@ app.init = async () => {
     app.autoplay = localStorage.getItem('shimatube_autoplay') !== '0';  // 既定ON
     app.updateBackBtn();
     app.switchTab('home', false);
-    // backendキャッシュがあれば並列、無ければ resolveBackend 完了後に loadUserData
-    // （初回訪問で BACKEND='' のまま same-origin(Vercel) に飛んで404になるのを防ぐ）
+    // backendキャッシュがあれば即使ってloadUserDataだけ待つ。resolveBackend()の
+    // url-board往復は裏で走らせ、renderHomeをブロックしない
+    // （毎回の起動/復帰がurl-board次第で重くなっていたのを解消）。
+    // 初回訪問(キャッシュ無し)だけは BACKEND='' のまま same-origin(Vercel) に飛んで
+    // 404になるのを防ぐため resolveBackend の完了を待つ
     if (localStorage.getItem('shimatube_backend')) {
-        await Promise.all([resolveBackend(), app.loadUserData()]);
+        resolveBackend();
+        await app.loadUserData();
     } else {
         await resolveBackend();
         await app.loadUserData();
@@ -40,6 +44,7 @@ app.init = async () => {
     }
 
     app.renderHome();
+    app.runAutoDL();  // 起動のたびに購読チャンネルの新着を裏で自動DL（有効時のみ・非await）
 
     document.getElementById('search-input').addEventListener('keydown', e => {
         if (e.key === 'Enter') app.search();

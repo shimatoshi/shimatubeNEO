@@ -35,7 +35,7 @@ Object.assign(app, {
         modal.style.display = isShow ? 'none' : 'block';
         if (!isShow) {
             app.refreshConfig();
-            // 開いている間だけ Escape を受ける。✕以外に閉じ方が無いと、
+            // 開いている間だけ Escape を受ける。✕以外に閉じ方が無いと
             // 全画面オーバーレイが背後のタップを黙って吸い続ける
             app._configEsc = (e) => { if (e.key === 'Escape') app.toggleConfig(); };
             document.addEventListener('keydown', app._configEsc);
@@ -56,6 +56,7 @@ Object.assign(app, {
 
     refreshConfig: () => {
         if (!app.userData) return;
+        app.refreshAutodlUI();
         app.renderTags('cat-list', app.userData.categories, app.removeCategory);
         app.renderTags('kw-list', app.userData.blocked_keywords, app.removeBlockKeyword);
         const bcList = document.getElementById('bc-list');

@@ -29,8 +29,12 @@ Object.assign(app, {
             if (!append) {
                 const tabBtn = (key, label) =>
                     `<button class="filter-btn ${ctab === key ? 'active' : ''}" onclick="app.setChannelTab('${key}')">${label}</button>`;
+                const isSub = Storage.isSubscribed(channelId);
                 container.innerHTML = `
-                    <div class="cat-header" style="font-size:16px;">${esc(ctitle)}</div>
+                    <div class="cat-header" style="font-size:16px;">
+                        <span>${esc(ctitle)}</span>
+                        <button id="ch-sub-btn" class="c-sub-btn${isSub ? ' subscribed' : ''}">${isSub ? 'Subbed' : 'Subscribe'}</button>
+                    </div>
                     <div class="filter-bar">
                         ${tabBtn('videos', '動画')}
                         ${tabBtn('live', 'ライブ')}
@@ -39,6 +43,14 @@ Object.assign(app, {
                     <div id="channel-v-list"></div>
                     <div id="scroll-sentinel" class="scroll-sentinel"><div class="loader"></div></div>
                 `;
+                const chSub = document.getElementById('ch-sub-btn');
+                chSub.onclick = async (e) => {
+                    e.stopPropagation();
+                    const sub = await app.toggleSubUniversal(
+                        channelId, app.currentChannelTitle || ctitle, '');
+                    chSub.textContent = sub ? 'Subbed' : 'Subscribe';
+                    chSub.classList.toggle('subscribed', sub);
+                };
             }
             const vids = res.videos || [];
             if (vids.length < 20) {

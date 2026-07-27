@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ShimaTube NEO</title>
-    <link rel="stylesheet" href="css/style.css?v=26">
+    <link rel="stylesheet" href="css/style.css?v=27">
     <link rel="manifest" href="manifest.json">
 </head>
 <body>
@@ -100,6 +100,20 @@
             <div class="config-title">Blocked Channels</div>
             <div id="bc-list" class="tag-list"></div>
         </div>
+        <div class="config-section">
+            <div class="config-title">自動DL</div>
+            <label style="display:flex;align-items:center;gap:8px;color:#ccc;font-size:13px;">
+                <input type="checkbox" id="autodl-enabled" onchange="app.toggleAutodl(this.checked)">
+                起動のたびに購読チャンネルの新着をまとめて自動DL
+            </label>
+            <div class="input-row" style="margin-top:8px;">
+                <input type="number" id="autodl-quota" min="100" step="100" style="width:100px;" onchange="app.setAutodlQuota(this.value)">
+                <span style="color:#999;font-size:12px;align-self:center;">MB上限</span>
+            </div>
+            <div id="autodl-usage" style="color:#999;font-size:12px;margin-top:4px;"></div>
+            <div style="color:#777;font-size:11px;margin-top:8px;">容量上限に達すると「リリース対象」の古い順から自動で消して入れ替えます。消したくない動画は🔒キープにしてください。</div>
+            <div id="autodl-list" style="margin-top:6px;max-height:200px;overflow-y:auto;"></div>
+        </div>
         <div class="config-section" style="border-bottom:none; margin-top:20px;">
             <button class="btn" style="width:100%; background:#3ea6ff; padding:12px;" onclick="app.forceUpdate()">↻ Update App</button>
             <button class="btn" style="width:100%; background:#555; padding:12px; margin-top:8px;" onclick="app.recoverData()">🛟 データ復旧（購読・履歴が消えたとき）</button>
@@ -121,18 +135,19 @@
         </div>
     </div>
 
-    <script>const APP_VERSION = 'v26.0';</script>
-    <script defer src="js/hls.min.js?v=26"></script>
-    <script defer src="js/app.js?v=26"></script>
-    <script defer src="js/storage.js?v=26"></script>
-    <script defer src="js/api.js?v=26"></script>
-    <script defer src="js/ui.js?v=26"></script>
-    <script defer src="js/navigation.js?v=26"></script>
-    <script defer src="js/search.js?v=26"></script>
-    <script defer src="js/player.js?v=26"></script>
-    <script defer src="js/channel.js?v=26"></script>
-    <script defer src="js/playlist.js?v=26"></script>
-    <script defer src="js/config.js?v=26"></script>
-    <script defer src="js/main.js?v=26"></script>
+    <script>const APP_VERSION = 'v30.0';</script>
+    <script defer src="js/hls.min.js?v=30"></script>
+    <script defer src="js/app.js?v=30"></script>
+    <script defer src="js/storage.js?v=30"></script>
+    <script defer src="js/api.js?v=30"></script>
+    <script defer src="js/ui.js?v=30"></script>
+    <script defer src="js/navigation.js?v=30"></script>
+    <script defer src="js/search.js?v=30"></script>
+    <script defer src="js/player.js?v=30"></script>
+    <script defer src="js/channel.js?v=30"></script>
+    <script defer src="js/playlist.js?v=30"></script>
+    <script defer src="js/config.js?v=30"></script>
+    <script defer src="js/autodl.js?v=30"></script>
+    <script defer src="js/main.js?v=30"></script>
 </body>
 </html>

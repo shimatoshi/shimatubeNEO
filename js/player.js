@@ -161,5 +161,6 @@ Object.assign(app, {
         } else {
             toast(isSub ? 'Subscribed' : 'Unsubscribed');
         }
+        return isSub;
     }
 });

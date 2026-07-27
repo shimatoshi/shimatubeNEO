@@ -30,8 +30,12 @@ const UI = {
                     <button class="${btnClass}">${btnText}</button>
                 `;
                 // 注: onclick属性にJSON.stringifyを埋めると " で属性が壊れるためJSで結線する
-                div.querySelector('.c-sub-btn').onclick = () =>
-                    app.toggleSubUniversal(v.channelId, v.title || '', v.thumbnail || '');
+                div.querySelector('.c-sub-btn').onclick = async (e) => {
+                    const btn = e.target;
+                    const sub = await app.toggleSubUniversal(v.channelId, v.title || '', v.thumbnail || '');
+                    btn.textContent = sub ? 'Subbed' : 'Subscribe';
+                    btn.classList.toggle('subscribed', sub);
+                };
                 container.appendChild(div);
             } else if (v.type === 'playlist') {
                 const div = document.createElement('div');
@@ -54,15 +58,14 @@ const UI = {
                 if (app.currentPlaylist && app.currentVideoId === v.videoId) {
                     div.classList.add('now-playing');
                 }
-                // 長さは一覧APIの値を優先。履歴は lengthSeconds を持たないので
-                // 視聴時に保存した実尺(進捗エントリの d)で補う。どちらも無ければ出さない
-                // (0:00 と出すと「長さ0の動画」に見えるため)
+                // 履歴は lengthSeconds を持たない(0固定で保存される)ため、
+                // 視聴時に記録した実尺で補う。どちらも無ければバッジ自体を出さない
                 const prog = UI._getProgressEntry(v.videoId);
                 const totalSec = v.lengthSeconds || (prog && prog.d) || 0;
                 const dur = v.is_live
                     ? '<span class="live-badge">LIVE</span>'
                     : (totalSec ? `<span class="duration">${UI.formatDuration(totalSec)}</span>` : '');
-                // 途中まで見た動画は続きの位置をバーで示す(復元機能が在ることを一覧で見せる)
+                // 途中まで見た動画は続きの位置を示す(復元が効いていることを一覧で見せる)
                 const watched = (prog && prog.p > 5 && totalSec)
                     ? `<div class="watch-bar"><div class="watch-bar-fill" style="width:${Math.min(100, prog.p / totalSec * 100).toFixed(1)}%"></div></div>`
                     : '';
@@ -79,8 +82,10 @@ const UI = {
                             ${v.channelId ? '<span class="block-btn">Block</span>' : ''}
                         </div>
                     </div>
-                    <div class="dl-btn" title="動画で保存" onclick="event.stopPropagation(); UI.startDownload('${esc(v.videoId)}')">💾</div>
-                    <div class="dl-btn dl-audio" title="音声(楽曲)で保存" onclick="event.stopPropagation(); UI.startDownload('${esc(v.videoId)}', 'audio')">🎵</div>
+                    <a class="dl-btn" href="${B('/stream/' + esc(v.videoId) + '?dl=1')}" download title="動画(mp4)で保存"
+                       onclick="event.stopPropagation(); toast('💾 動画(mp4)で保存を開始しました', 4000)">💾</a>
+                    <a class="dl-btn dl-audio" href="${B('/stream/' + esc(v.videoId) + '?dl=1&format=audio')}" download title="音声(楽曲)で保存"
+                       onclick="event.stopPropagation(); toast('🎵 音声(m4a)で保存を開始しました', 4000)">🎵</a>
                 `;
                 const blockBtn = div.querySelector('.block-btn');
                 if (blockBtn) blockBtn.onclick = (e) => {
@@ -219,16 +224,12 @@ const UI = {
         if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         return `${m}:${s.toString().padStart(2, '0')}`;
     },
-    startDownload: (videoId, kind) => {
-        const isAudio = kind === 'audio';
-        // 保存はブラウザ任せで進捗を取れないため、少なくとも「何を・どの形式で」は残す
-        toast(isAudio ? '🎵 音声(m4a)で保存を開始しました' : '💾 動画(mp4)で保存を開始しました', 4000);
-        const a = document.createElement('a');
-        a.href = B(`/stream/${videoId}?dl=1${isAudio ? '&format=audio' : ''}`);
-        a.download = '';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
+    startDownload: (videoId) => {
+        // JS合成の<a>.click()はWebViewでDownloadListenerに届かないことがあるため、
+        // 実ナビゲーション(location.assign)で確実に発火させる。
+        // attachment応答なので遷移はキャンセルされページは保持される。
+        toast('💾 動画(mp4)で保存を開始しました', 4000);
+        window.location.assign(B(`/stream/${videoId}?dl=1`));
     },
 
     addLongPress: (el, videoId) => {

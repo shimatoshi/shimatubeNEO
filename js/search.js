@@ -139,6 +139,9 @@ Object.assign(app, {
                     <div class="thumb" style="width:140px;height:79px;margin-bottom:4px;">
                         <img src="${esc(v.thumbnail)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;">
                         ${dur}
+                        <a class="dl-btn" href="${B('/stream/' + esc(v.videoId) + '?dl=1')}" download
+                           onclick="event.stopPropagation(); toast('Download started')"
+                           style="position:absolute;top:2px;right:2px;width:auto;padding:1px 4px;background:rgba(0,0,0,.6);border-radius:4px;font-size:14px;">💾</a>
                     </div>
                     <div class="feed-ch-title">${esc(v.title)}</div>
                 `;
