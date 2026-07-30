@@ -31,6 +31,10 @@ def handle_search(handler):
     page = int(params.get('page', ['1'])[0])
     live_filter = params.get('filter', [''])[0]
     sort = params.get('sort', [''])[0]
+    # 空クエリはyt-dlp側で例外になり500を返してしまうので、ここで空配列を返す
+    if not query.strip():
+        handler.send_json([])
+        return
     try:
         # キャッシュチェック
         ck = _cache_key(query, page, live_filter, sort)
