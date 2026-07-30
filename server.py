@@ -1,3 +1,4 @@
+import os
 import socketserver
 import logging
 
@@ -7,7 +8,8 @@ from handlers.handler import CustomHandler
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%H:%M:%S')
 log = logging.getLogger('shimatube')
 
-PORT = 8080
+# 予備サーバー(shimabook等)では8080が別用途で埋まっているので環境変数で移せるようにする
+PORT = int(os.environ.get("SHIMATUBE_PORT", 8080))
 
 
 class ThreadingHTTPServer(socketserver.ThreadingTCPServer):

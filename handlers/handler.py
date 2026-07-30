@@ -17,12 +17,19 @@ from handlers.feed import handle_feed, handle_feed_channel, handle_feed_refresh
 from handlers.trending import handle_trending
 from handlers.hls import handle_hls, handle_hls_segment
 from handlers.related import handle_related
+from handlers.autodl import (handle_autodl_settings, handle_autodl_list, handle_autodl_pending,
+                             handle_autodl_complete, handle_autodl_pin, handle_autodl_retry_id,
+                             handle_autodl_evict_candidates, handle_autodl_evicted)
 
 def handle_version(handler):
-    handler.send_json({"version": "26.0", "app": "ShimaTube NEO"})
+    handler.send_json({"version": "29.0", "app": "ShimaTube NEO"})
 
 GET_ROUTES = [
     ("/api/version",                handle_version),
+    ("/api/autodl/settings",        handle_autodl_settings),
+    ("/api/autodl/list",            handle_autodl_list),
+    ("/api/autodl/pending",         handle_autodl_pending),
+    ("/api/autodl/evict_candidates", handle_autodl_evict_candidates),
     ("/api/feed/refresh/",          handle_feed_refresh),
     ("/api/feed/channel/",          handle_feed_channel),
     ("/api/feed",                   handle_feed),
@@ -40,9 +47,14 @@ GET_ROUTES = [
 ]
 
 POST_ROUTES = [
-    ("/api/subscribe", handle_subscribe),
-    ("/api/history",   handle_history),
-    ("/api/adopt",     handle_adopt),
+    ("/api/subscribe",        handle_subscribe),
+    ("/api/history",          handle_history),
+    ("/api/adopt",            handle_adopt),
+    ("/api/autodl/settings",  handle_autodl_settings),
+    ("/api/autodl/complete",  handle_autodl_complete),
+    ("/api/autodl/pin",       handle_autodl_pin),
+    ("/api/autodl/retry_id",  handle_autodl_retry_id),
+    ("/api/autodl/evicted",   handle_autodl_evicted),
 ]
 
 # 静的ファイル配信ディレクトリを検索

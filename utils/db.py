@@ -65,6 +65,22 @@ def init_db():
                 PRIMARY KEY (user_id, video_id)
             );
             CREATE INDEX IF NOT EXISTS idx_history_watched ON history(user_id, watched_at DESC);
+            CREATE TABLE IF NOT EXISTS autodl_settings (
+                user_id  TEXT PRIMARY KEY,
+                enabled  INTEGER DEFAULT 0,
+                quota_mb INTEGER DEFAULT 1000
+            );
+            CREATE TABLE IF NOT EXISTS autodl_items (
+                user_id     TEXT NOT NULL,
+                video_id    TEXT NOT NULL,
+                title       TEXT DEFAULT '',
+                mb          INTEGER DEFAULT 0,
+                download_id TEXT DEFAULT '',
+                pinned      INTEGER DEFAULT 0,
+                created     TEXT DEFAULT (datetime('now')),
+                PRIMARY KEY (user_id, video_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_autodl_created ON autodl_items(user_id, created);
         """)
         conn.commit()
         _migrate_json(conn)
@@ -179,7 +195,8 @@ def get_user_data(user_id):
         'blocked_channels': bc,
         'blocked_keywords': bk,
         'subscriptions': subs,
-        'history': hist
+        'history': hist,
+        'autodl': get_autodl_settings(user_id)
     }
 
 def filter_blocked(items, user_id):
@@ -266,3 +283,93 @@ def add_history(user_id, video):
             "(SELECT video_id FROM history WHERE user_id=? ORDER BY watched_at DESC LIMIT 50)",
             (user_id, user_id))
         conn.commit()
+
+# --- AutoDL ---
+# 実DLはクライアント(sniffer-browserのDownloadManager)側で行い、
+# サーバーは「何をDL済みか・容量をどれだけ使ったか」の台帳だけを持つ。
+# 見積りMBはフロント(js/autodl.js)の AUTODL_MB_PER_MIN=7 と一致させること。
+# ズレるとフロントが空き容量ありと判断してサーバーが弾く（またはその逆）が起きる。
+
+AUTODL_MB_PER_MIN = 7
+AUTODL_DEFAULT_QUOTA_MB = 1000
+
+def estimate_mb(length_seconds):
+    return max(5, round((length_seconds or 0) / 60 * AUTODL_MB_PER_MIN))
+
+def get_autodl_settings(user_id):
+    with get_conn() as conn:
+        row = conn.execute("SELECT enabled, quota_mb FROM autodl_settings WHERE user_id=?",
+                           (user_id,)).fetchone()
+        used = conn.execute("SELECT COALESCE(SUM(mb), 0) AS mb FROM autodl_items WHERE user_id=?",
+                            (user_id,)).fetchone()['mb']
+    return {
+        'enabled': bool(row['enabled']) if row else False,
+        'quota_mb': row['quota_mb'] if row else AUTODL_DEFAULT_QUOTA_MB,
+        'used_mb': int(used),
+    }
+
+def set_autodl_settings(user_id, enabled, quota_mb):
+    quota_mb = max(100, int(quota_mb or AUTODL_DEFAULT_QUOTA_MB))
+    with get_conn() as conn:
+        conn.execute("INSERT INTO autodl_settings(user_id, enabled, quota_mb) VALUES(?,?,?) "
+                     "ON CONFLICT(user_id) DO UPDATE SET enabled=excluded.enabled, "
+                     "quota_mb=excluded.quota_mb",
+                     (user_id, 1 if enabled else 0, quota_mb))
+        conn.commit()
+    return get_autodl_settings(user_id)
+
+def list_autodl(user_id):
+    """キープ/リリース管理リスト用（新しい順）"""
+    with get_conn() as conn:
+        return [{'video_id': r['video_id'], 'title': r['title'], 'mb': r['mb'],
+                 'download_id': r['download_id'], 'pinned': bool(r['pinned'])}
+                for r in conn.execute(
+            "SELECT video_id, title, mb, download_id, pinned FROM autodl_items "
+            "WHERE user_id=? ORDER BY created DESC", (user_id,))]
+
+def autodl_ids(user_id):
+    with get_conn() as conn:
+        return set(r['video_id'] for r in conn.execute(
+            "SELECT video_id FROM autodl_items WHERE user_id=?", (user_id,)))
+
+def add_autodl_item(user_id, video_id, title, length_seconds, download_id):
+    with get_conn() as conn:
+        conn.execute(
+            "INSERT INTO autodl_items(user_id, video_id, title, mb, download_id) VALUES(?,?,?,?,?) "
+            "ON CONFLICT(user_id, video_id) DO UPDATE SET title=excluded.title, "
+            "mb=excluded.mb, download_id=excluded.download_id",
+            (user_id, video_id, title or '', estimate_mb(length_seconds), str(download_id or '')))
+        conn.commit()
+
+def set_autodl_pin(user_id, video_id, pinned):
+    with get_conn() as conn:
+        conn.execute("UPDATE autodl_items SET pinned=? WHERE user_id=? AND video_id=?",
+                     (1 if pinned else 0, user_id, video_id))
+        conn.commit()
+
+def set_autodl_download_id(user_id, video_id, download_id):
+    with get_conn() as conn:
+        conn.execute("UPDATE autodl_items SET download_id=? WHERE user_id=? AND video_id=?",
+                     (str(download_id or ''), user_id, video_id))
+        conn.commit()
+
+def remove_autodl_item(user_id, video_id):
+    with get_conn() as conn:
+        conn.execute("DELETE FROM autodl_items WHERE user_id=? AND video_id=?", (user_id, video_id))
+        conn.commit()
+
+def autodl_evict_candidates(user_id, need_mb):
+    """古い順・非キープのみを、need_mb分に達するまで挙げる"""
+    need_mb = max(0, int(need_mb or 0))
+    picked, total = [], 0
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT video_id, download_id, mb FROM autodl_items "
+            # createdは秒精度なので同秒の並びが揺れないようrowidで固定する
+            "WHERE user_id=? AND pinned=0 ORDER BY created ASC, rowid ASC", (user_id,)).fetchall()
+    for r in rows:
+        if total >= need_mb:
+            break
+        picked.append({'video_id': r['video_id'], 'download_id': r['download_id'], 'mb': r['mb']})
+        total += r['mb']
+    return picked, total
