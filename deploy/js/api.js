@@ -1,9 +1,46 @@
 const API_BASE_PATH = '/api_proxy/api/v1';
 
 const API = {
-    _fetch: async (url) => {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+    // url-board引き直しの多重実行を防ぐ（同時に何本もAPIが飛ぶので）
+    _reresolving: null,
+
+    // キャッシュしていたBACKENDが死んでいた時、url-boardを引き直して
+    // URLのホスト部分だけ差し替えた新URLを返す。変わらなければ null。
+    _reresolve: async (url) => {
+        const old = BACKEND;
+        if (!API._reresolving) {
+            API._reresolving = resolveBackend().finally(() => { API._reresolving = null; });
+        }
+        await API._reresolving;
+        if (BACKEND && BACKEND !== old) {
+            console.warn('backend rotated:', old, '->', BACKEND);
+            return old ? url.replace(old, BACKEND) : BACKEND + url;
+        }
+        return null;
+    },
+
+    // トンネルURLが回るとキャッシュ済みBACKENDが死ぬ（cloudflare quick tunnelは
+    // P5が再起動する度に変わる）。落ちたら url-board を引き直して1回だけやり直す。
+    _fetch: async (url, _retried) => {
+        let res;
+        try {
+            res = await fetch(url);
+        } catch (e) {
+            // DNS解決不能/接続不能 = トンネルが消えた時の典型
+            if (!_retried) {
+                const next = await API._reresolve(url);
+                if (next) return API._fetch(next, true);
+            }
+            throw e;
+        }
+        // 502/503/530 はcloudflareが「オリジンに繋がらない」時に返す
+        if (!res.ok) {
+            if (!_retried && (res.status === 404 || res.status >= 500)) {
+                const next = await API._reresolve(url);
+                if (next) return API._fetch(next, true);
+            }
+            throw new Error(`API ${res.status}: ${res.statusText}`);
+        }
         return res.json();
     },
     // プリフェッチ済み動画データキャッシュ
