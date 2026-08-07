@@ -9,12 +9,13 @@ interface Props {
 export default function SubsScreen({ subs, onOpenChannel, onToggleSub }: Props) {
   return (
     <div>
-      <div style={{ padding: 10, fontWeight: 'bold', borderBottom: '1px solid #333' }}>
-        Subscribed Channels
+      <div className="screen-heading">
+        <div className="eyebrow">LIBRARY</div>
+        <h1>購読チャンネル</h1>
       </div>
       <div className="list-container">
         {!subs.length ? (
-          <div style={{ padding: 20, color: '#aaa' }}>No subscriptions yet.</div>
+          <div className="empty-state">購読中のチャンネルはありません</div>
         ) : (
           subs.map(c => (
             <div key={c.channelId} className="channel-item" onClick={() => onOpenChannel(c.channelId)}>
@@ -30,7 +31,7 @@ export default function SubsScreen({ subs, onOpenChannel, onToggleSub }: Props) 
                 className="c-sub-btn subscribed"
                 onClick={e => { e.stopPropagation(); onToggleSub(c.channelId, c.title, c.thumbnail) }}
               >
-                Subbed
+                購読中
               </button>
             </div>
           ))

@@ -130,9 +130,9 @@ export default function PlayerScreen({
     <div className="player-view">
       <video ref={videoRef} controls playsInline preload="metadata" />
       <div className="info-area">
-        <div className="video-title">{meta.title || 'Unknown'}</div>
+        <div className="video-title">{meta.title || '動画を読み込み中…'}</div>
         <div className="meta-row">
-          <span>{formatViews(meta.viewCount)} views</span>
+          <span>{formatViews(meta.viewCount)} 回再生</span>
           <span>{meta.uploadDate || ''}</span>
         </div>
 
@@ -140,21 +140,21 @@ export default function PlayerScreen({
           <div className="action-item">
             {streamUrl ? (
               <div className="dl-player-wrap">
-                <a href={`${streamUrl}?dl=1`} className="dl-ready" download>🎬 MP4</a>
-                <a href={`${streamUrl}?dl=1&format=audio`} className="dl-ready dl-audio" download>🎵 M4A</a>
+                <a href={`${streamUrl}?dl=1`} className="dl-ready" download>動画保存</a>
+                <a href={`${streamUrl}?dl=1&format=audio`} className="dl-ready dl-audio" download>音声保存</a>
               </div>
             ) : (
-              <span className="dl-wait">Wait...</span>
+              <span className="dl-wait">保存準備中…</span>
             )}
           </div>
           <div className="action-item" onClick={shareVideo}>
-            <span className="action-icon">📤</span><span>Share</span>
+            <span className="action-icon">↗</span><span>共有</span>
           </div>
           <div className="action-item" onClick={() => setShowDesc(p => !p)}>
-            <span className="action-icon">📝</span><span>Desc</span>
+            <span className="action-icon">≡</span><span>説明</span>
           </div>
           <div className="action-item" onClick={togglePip}>
-            <span className="action-icon">📺</span><span>PiP</span>
+            <span className="action-icon">▣</span><span>小窓</span>
           </div>
           <div className="action-item" onClick={() => {
             if (meta.channelId) onToggleSub(meta.channelId, meta.author || '', meta.thumbnail || '')
@@ -162,7 +162,7 @@ export default function PlayerScreen({
             <span className="action-icon" style={{ color: subbed ? 'yellow' : '#fff' }}>
               {subbed ? '★' : '☆'}
             </span>
-            <span>{subbed ? 'Subbed' : 'Sub'}</span>
+            <span>{subbed ? '購読中' : '購読'}</span>
           </div>
         </div>
 
@@ -176,13 +176,13 @@ export default function PlayerScreen({
             onError={e => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=U` }}
           />
           <div className="c-name">
-            {meta.author || 'Unknown'}
+            {meta.author || 'チャンネル不明'}
             {meta.channelId && (
               <span
                 className="block-btn"
                 onClick={e => { e.stopPropagation(); onBlockChannel(meta.channelId!, meta.author || '') }}
               >
-                Block
+                非表示
               </span>
             )}
           </div>
@@ -199,13 +199,13 @@ export default function PlayerScreen({
             className={`tab ${tab === 'related' ? 'active' : ''}`}
             onClick={() => setTab('related')}
           >
-            {playlist ? 'Playlist' : 'Related'}
+            {playlist ? 'プレイリスト' : '関連動画'}
           </div>
           <div
             className={`tab ${tab === 'comments' ? 'active' : ''}`}
             onClick={loadComments}
           >
-            Comments
+            コメント
           </div>
         </div>
 
@@ -219,9 +219,9 @@ export default function PlayerScreen({
               onBlockChannel={onBlockChannel}
             />
           ) : loadingComments ? (
-            <div style={{ padding: 20, color: '#666' }}>Loading comments...</div>
+            <div className="empty-state">コメントを読み込み中…</div>
           ) : comments.length === 0 ? (
-            <div style={{ padding: 20, color: '#666' }}>No comments</div>
+            <div className="empty-state">コメントはありません</div>
           ) : (
             comments.map((c, i) => (
               <div key={i} style={{ marginBottom: 15, fontSize: 13 }}>

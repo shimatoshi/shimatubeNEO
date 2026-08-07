@@ -25,7 +25,7 @@ export default function SearchScreen({
 }: Props) {
   const [items, setItems] = useState<SearchItem[]>([])
   const [filter, setFilter] = useState('')
-  const [page, setPage] = useState(1)
+  const [, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -66,12 +66,12 @@ export default function SearchScreen({
 
   return (
     <div>
-      <div className="cat-header">Search: {query}</div>
+      <div className="cat-header">検索結果: {query}</div>
       <FilterBar
         current={filter}
         filters={[
-          { value: '', label: 'All' },
-          { value: 'live', label: 'Live' },
+          { value: '', label: 'すべて' },
+          { value: 'live', label: 'ライブ' },
         ]}
         onChange={f => { setFilter(f); setPage(1); setHasMore(true) }}
       />

@@ -77,21 +77,19 @@ export default function VideoItemComponent({
       </div>
       <div className="details">
         <div className="v-title" onClick={() => onPlay?.(v.videoId)}>{v.title}</div>
-        <div className="v-meta">
-          {v.author} {v.viewCount ? `• ${formatViews(v.viewCount)}` : ''}
-          {v.channelId && (
-            <span
-              className="block-btn"
-              onClick={e => { e.stopPropagation(); onBlockChannel?.(v.channelId!, v.author || '') }}
-            >
-              Block
-            </span>
-          )}
-        </div>
-      </div>
-      <div className="dl-btns" onClick={e => e.stopPropagation()}>
-        <div className="dl-btn-mp4" onClick={() => download(v.videoId, 'video')}>🎬</div>
-        <div className="dl-btn-m4a" onClick={() => download(v.videoId, 'audio')}>🎵</div>
+          <div className="v-meta">{v.author} {v.viewCount ? `• ${formatViews(v.viewCount)}` : ''}</div>
+          <div className="item-actions" onClick={e => e.stopPropagation()}>
+            <button className="quiet-action" onClick={() => download(v.videoId, 'video')}>動画保存</button>
+            <button className="quiet-action" onClick={() => download(v.videoId, 'audio')}>音声保存</button>
+            {v.channelId && (
+              <button
+                className="quiet-action danger-action"
+                onClick={() => onBlockChannel?.(v.channelId!, v.author || '')}
+              >
+                チャンネルを非表示
+              </button>
+            )}
+          </div>
       </div>
     </div>
   )

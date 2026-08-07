@@ -46,13 +46,17 @@ export default function ConfigModal({
   }
 
   return (
-    <div className="config-modal">
-      <div style={{ textAlign: 'right', marginBottom: 10 }}>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#fff', fontSize: 20 }}>✕</button>
+    <div className="config-modal" role="dialog" aria-modal="true" aria-label="設定">
+      <div className="settings-header">
+        <div>
+          <div className="eyebrow">SHIMATUBE NEO</div>
+          <h1>設定</h1>
+        </div>
+        <button className="settings-close" onClick={onClose} aria-label="設定を閉じる">✕</button>
       </div>
 
       <div className="config-section">
-        <div className="config-title">Categories</div>
+        <div className="config-title">フィードのカテゴリ</div>
         <div className="tag-list">
           {userData.categories.map(cat => (
             <div key={cat} className="tag">
@@ -64,17 +68,17 @@ export default function ConfigModal({
         <div className="input-row">
           <input
             type="text"
-            placeholder="Add Category"
+            placeholder="カテゴリを追加"
             value={catInput}
             onChange={e => setCatInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') addCategory() }}
           />
-          <button className="btn" onClick={addCategory}>Add</button>
+          <button className="btn" onClick={addCategory}>追加</button>
         </div>
       </div>
 
       <div className="config-section">
-        <div className="config-title">Blocked Keywords</div>
+        <div className="config-title">非表示キーワード</div>
         <div className="tag-list">
           {userData.blocked_keywords.map(kw => (
             <div key={kw} className="tag">
@@ -86,17 +90,17 @@ export default function ConfigModal({
         <div className="input-row">
           <input
             type="text"
-            placeholder="Block Keyword"
+            placeholder="キーワードを追加"
             value={kwInput}
             onChange={e => setKwInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') addBlockKeyword() }}
           />
-          <button className="btn" onClick={addBlockKeyword}>Block</button>
+          <button className="btn" onClick={addBlockKeyword}>非表示にする</button>
         </div>
       </div>
 
       <div className="config-section">
-        <div className="config-title">Blocked Channels</div>
+        <div className="config-title">非表示チャンネル</div>
         <div className="tag-list">
           {userData.blocked_channels.map(c => (
             <div key={c.id} className="tag">
@@ -113,7 +117,7 @@ export default function ConfigModal({
           style={{ width: '100%', background: '#3ea6ff', padding: 12 }}
           onClick={onForceUpdate}
         >
-          ↻ Update App
+          ↻ データを更新
         </button>
       </div>
 

@@ -15,7 +15,7 @@ export default function ChannelScreen({ channelId, onPlay, onOpenChannel, onBloc
   const [videos, setVideos] = useState<VideoItem[]>([])
   const [title, setTitle] = useState('Loading...')
   const [filter, setFilter] = useState('')
-  const [page, setPage] = useState(1)
+  const [, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -61,8 +61,8 @@ export default function ChannelScreen({ channelId, onPlay, onOpenChannel, onBloc
       <FilterBar
         current={filter}
         filters={[
-          { value: '', label: 'Videos' },
-          { value: 'live', label: 'Live' },
+          { value: '', label: '動画' },
+          { value: 'live', label: 'ライブ' },
         ]}
         onChange={f => { setFilter(f); setPage(1); setHasMore(true) }}
       />

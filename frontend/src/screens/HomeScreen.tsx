@@ -203,8 +203,8 @@ export default function HomeScreen({
           : ch.phase === 'watched' ? 'WATCHED' : 'LOOP'
 
         return (
-          <div key={ch.feed.channelId}>
-            <div className="cat-header feed-header" onClick={() => toggleChannelCollapse(i)}>
+          <div key={ch.feed.channelId} className="feed-section">
+            <div className="cat-header feed-header" onClick={() => toggleChannelCollapse(i)} role="button" tabIndex={0}>
               <div className="feed-ch-info">
                 <img
                   src={ch.feed.thumbnail}
@@ -230,14 +230,14 @@ export default function HomeScreen({
                     onClick={() => hardRefreshChannel(i)}
                     disabled={ch.refreshing}
                   >
-                    {ch.refreshing ? '...' : '🔄 Reload'}
+                    {ch.refreshing ? '更新中…' : '↻ 更新'}
                   </button>
                   <span className="feed-count">
-                    {ch.feed.unwatched.length} new / {ch.feed.totalFetched} total
+                    未視聴 {ch.feed.unwatched.length} ・ 全 {ch.feed.totalFetched} 件
                   </span>
                 </div>
                 {items.length === 0 ? (
-                  <div style={{ padding: 15, fontSize: 13, color: '#666' }}>No videos</div>
+                  <div className="empty-state">このチャンネルに動画はありません</div>
                 ) : (
                   <VideoList
                     items={items}

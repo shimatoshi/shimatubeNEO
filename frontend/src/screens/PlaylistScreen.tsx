@@ -21,7 +21,7 @@ export default function PlaylistScreen({
   currentVideoId,
 }: Props) {
   const [videos, setVideos] = useState<VideoItem[]>([])
-  const [title, setTitle] = useState('Loading Playlist...')
+  const [title, setTitle] = useState('プレイリストを読み込み中…')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export default function PlaylistScreen({
       setVideos(res.videos)
       setLoading(false)
     }).catch(() => {
-      setTitle('Error loading playlist.')
+      setTitle('プレイリストを読み込めませんでした')
       setLoading(false)
     })
   }, [playlistId])
@@ -42,18 +42,17 @@ export default function PlaylistScreen({
 
   return (
     <div>
-      <div className="cat-header" style={{ fontSize: 16 }}>
+      <div className="screen-heading playlist-heading">
         <span>{title}</span>
         <button
           className="btn"
-          style={{ fontSize: 11, padding: '4px 10px' }}
           onClick={() => onPlayAll(videos, title, playlistId)}
         >
-          ▶ Play All
+          ▶ すべて再生
         </button>
       </div>
-      <div style={{ padding: '4px 10px', fontSize: 12, color: '#888' }}>
-        {videos.length} videos
+      <div className="result-count">
+        {videos.length} 件の動画
       </div>
       <div className="list-container">
         <VideoList

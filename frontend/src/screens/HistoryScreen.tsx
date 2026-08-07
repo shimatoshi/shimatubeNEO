@@ -11,8 +11,9 @@ interface Props {
 export default function HistoryScreen({ history, onPlay, onOpenChannel, onBlockChannel }: Props) {
   return (
     <div>
-      <div style={{ padding: 10, fontWeight: 'bold', borderBottom: '1px solid #333' }}>
-        Watch History
+      <div className="screen-heading">
+        <div className="eyebrow">LIBRARY</div>
+        <h1>視聴履歴</h1>
       </div>
       <div className="list-container">
         <VideoList
@@ -20,7 +21,7 @@ export default function HistoryScreen({ history, onPlay, onOpenChannel, onBlockC
           onPlay={onPlay}
           onOpenChannel={onOpenChannel}
           onBlockChannel={onBlockChannel}
-          emptyMessage="No history yet."
+          emptyMessage="まだ視聴履歴がありません"
         />
       </div>
     </div>
