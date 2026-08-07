@@ -147,23 +147,23 @@ export default function PlayerScreen({
               <span className="dl-wait">保存準備中…</span>
             )}
           </div>
-          <div className="action-item" onClick={shareVideo}>
+          <button className="action-item" onClick={shareVideo}>
             <span className="action-icon">↗</span><span>共有</span>
-          </div>
-          <div className="action-item" onClick={() => setShowDesc(p => !p)}>
+          </button>
+          <button className="action-item" onClick={() => setShowDesc(p => !p)} aria-expanded={showDesc}>
             <span className="action-icon">≡</span><span>説明</span>
-          </div>
-          <div className="action-item" onClick={togglePip}>
+          </button>
+          <button className="action-item" onClick={togglePip}>
             <span className="action-icon">▣</span><span>小窓</span>
-          </div>
-          <div className="action-item" onClick={() => {
+          </button>
+          <button className="action-item" onClick={() => {
             if (meta.channelId) onToggleSub(meta.channelId, meta.author || '', meta.thumbnail || '')
           }}>
             <span className="action-icon" style={{ color: subbed ? 'yellow' : '#fff' }}>
               {subbed ? '★' : '☆'}
             </span>
             <span>{subbed ? '購読中' : '購読'}</span>
-          </div>
+          </button>
         </div>
 
         <div

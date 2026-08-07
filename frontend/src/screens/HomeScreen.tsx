@@ -204,7 +204,14 @@ export default function HomeScreen({
 
         return (
           <div key={ch.feed.channelId} className="feed-section">
-            <div className="cat-header feed-header" onClick={() => toggleChannelCollapse(i)} role="button" tabIndex={0}>
+            <div
+              className="cat-header feed-header"
+              onClick={() => toggleChannelCollapse(i)}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleChannelCollapse(i) } }}
+              role="button"
+              tabIndex={0}
+              aria-expanded={!ch.collapsed}
+            >
               <div className="feed-ch-info">
                 <img
                   src={ch.feed.thumbnail}

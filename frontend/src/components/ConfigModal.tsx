@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { UserData } from '../api/client'
 
 interface Props {
@@ -24,6 +24,22 @@ export default function ConfigModal({
 }: Props) {
   const [catInput, setCatInput] = useState('')
   const [kwInput, setKwInput] = useState('')
+  const closeRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!visible) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    closeRef.current?.focus()
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [visible, onClose])
 
   if (!visible || !userData) return null
 
@@ -46,13 +62,19 @@ export default function ConfigModal({
   }
 
   return (
-    <div className="config-modal" role="dialog" aria-modal="true" aria-label="設定">
+    <div
+      className="config-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="設定"
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    >
       <div className="settings-header">
         <div>
           <div className="eyebrow">SHIMATUBE NEO</div>
           <h1>設定</h1>
         </div>
-        <button className="settings-close" onClick={onClose} aria-label="設定を閉じる">✕</button>
+        <button ref={closeRef} className="settings-close" onClick={onClose} aria-label="設定を閉じる">✕</button>
       </div>
 
       <div className="config-section">
