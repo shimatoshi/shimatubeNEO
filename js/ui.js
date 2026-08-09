@@ -160,7 +160,8 @@ const UI = {
             } else if (hlsHeights.length) {
                 // 公式画質: muxed HLS を hls.js で再生（720p等）+ 画質セレクタ
                 const q = UI._preferredQuality(hlsHeights);
-                UI._playHls(videoEl, B(`/hls/${videoId}?q=${q}`), false);
+                UI._playHls(videoEl, B(`/hls/${videoId}?q=${q}`), false,
+                    data.url ? B(data.url) : null);
                 UI._buildQuality(videoId, hlsHeights, q);
                 UI.updateDownloadButton(data.url ? B(data.url) : null, !!data.url);
             } else if (data.status === 'ready' && data.url) {
@@ -286,7 +287,7 @@ Object.assign(UI, {
         const le = heights.filter(h => h <= saved);
         return le.length ? Math.max(...le) : Math.min(...heights);
     },
-    _playHls(videoEl, url, isLive) {
+    _playHls(videoEl, url, isLive, fallbackUrl = null) {
         UI._destroyHls();
         if (window.Hls && Hls.isSupported()) {
             const hls = new Hls({ enableWorker: true, maxBufferLength: isLive ? 10 : 30 });
@@ -297,7 +298,15 @@ Object.assign(UI, {
                 if (!d || !d.fatal) return;
                 if (d.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
                 else if (d.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
-                else UI._destroyHls();
+                else {
+                    UI._destroyHls();
+                    // HLS側（特に端末上のCloudflare tunnel）が落ちていても、
+                    // APIが返したprogressive streamで再生を継続する。
+                    if (!isLive && fallbackUrl) {
+                        videoEl.src = fallbackUrl;
+                        videoEl.play().catch(() => {});
+                    }
+                }
             });
         } else {
             // Safari等ネイティブHLS / 最後の手段

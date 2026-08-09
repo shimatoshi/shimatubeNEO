@@ -1,3 +1,4 @@
+import utils.dnsfix  # Android/Bionic DNS fallback (must be imported first)
 import os
 import socketserver
 import logging
