@@ -296,16 +296,18 @@ Object.assign(UI, {
             hls.attachMedia(videoEl);
             hls.on(Hls.Events.ERROR, (evt, d) => {
                 if (!d || !d.fatal) return;
-                if (d.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
-                else if (d.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
-                else {
+                if (!isLive && fallbackUrl) {
                     UI._destroyHls();
                     // HLS側（特に端末上のCloudflare tunnel）が落ちていても、
                     // APIが返したprogressive streamで再生を継続する。
-                    if (!isLive && fallbackUrl) {
-                        videoEl.src = fallbackUrl;
-                        videoEl.play().catch(() => {});
-                    }
+                    videoEl.src = fallbackUrl;
+                    videoEl.play().catch(() => {});
+                } else if (d.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                    hls.startLoad();
+                } else if (d.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                    hls.recoverMediaError();
+                } else {
+                    UI._destroyHls();
                 }
             });
         } else {
