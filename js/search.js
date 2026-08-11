@@ -208,6 +208,7 @@ Object.assign(app, {
         }
 
         app.isLoadingMore = true;
+        if (!append) { const el = document.getElementById('search-res-list'); if (el) el.innerHTML = '<div style="padding:20px;text-align:center;color:#888;">Searching...</div>'; }
         try {
             const results = await API.search(query, page, app.currentFilter, sort);
             if (results.length < 20) {
