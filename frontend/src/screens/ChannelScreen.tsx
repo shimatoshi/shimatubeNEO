@@ -6,12 +6,14 @@ import FilterBar from '../components/FilterBar'
 
 interface Props {
   channelId: string
+  isSubscribed: (channelId: string) => boolean
+  onToggleSub: (channelId: string, title: string, thumbnail: string) => void
   onPlay: (videoId: string) => void
   onOpenChannel: (channelId: string) => void
   onBlockChannel: (channelId: string, name: string) => void
 }
 
-export default function ChannelScreen({ channelId, onPlay, onOpenChannel, onBlockChannel }: Props) {
+export default function ChannelScreen({ channelId, isSubscribed, onToggleSub, onPlay, onOpenChannel, onBlockChannel }: Props) {
   const [videos, setVideos] = useState<VideoItem[]>([])
   const [title, setTitle] = useState('Loading...')
   const [filter, setFilter] = useState('')
@@ -55,9 +57,19 @@ export default function ChannelScreen({ channelId, onPlay, onOpenChannel, onBloc
     return () => observer.disconnect()
   }, [hasMore, loading, filter, loadPage])
 
+  const subbed = isSubscribed(channelId)
+
   return (
     <div>
-      <div className="cat-header" style={{ fontSize: 16 }}>{title}</div>
+      <div className="cat-header" style={{ fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span>{title}</span>
+        <button
+          className={`c-sub-btn ${subbed ? 'subscribed' : ''}`}
+          onClick={() => onToggleSub(channelId, title, '')}
+        >
+          {subbed ? 'Subbed' : 'Subscribe'}
+        </button>
+      </div>
       <FilterBar
         current={filter}
         filters={[

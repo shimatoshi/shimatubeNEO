@@ -137,7 +137,7 @@ export default function PlayerScreen({
         </div>
 
         <div className="action-bar">
-          <div className="action-item">
+          <div className="action-item dl-action-item">
             {streamUrl ? (
               <div className="dl-player-wrap">
                 <a href={`${streamUrl}?dl=1`} className="dl-ready" download>動画保存</a>

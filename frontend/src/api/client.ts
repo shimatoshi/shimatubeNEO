@@ -13,10 +13,7 @@ function getUid() {
   return uid
 }
 
-async function resolveBackend() {
-  if (typeof window === 'undefined') return
-  const cached = localStorage.getItem('shimatube_backend')
-  if (cached) backend = cached.replace(/\/$/, '')
+async function fetchLatestBackend() {
   try {
     const res = await fetch(URL_BOARD, { cache: 'no-store' })
     if (!res.ok) throw new Error(String(res.status))
@@ -30,6 +27,18 @@ async function resolveBackend() {
   }
 }
 
+async function resolveBackend(force = false) {
+  if (typeof window === 'undefined') return
+  const cached = localStorage.getItem('shimatube_backend')
+  if (cached) backend = cached.replace(/\/$/, '')
+  if (cached && !force) {
+    // キャッシュ済みURLで即座に描画を始め、最新化は裏で行う(url-board往復で全画面が待たされないように)
+    fetchLatestBackend()
+    return
+  }
+  await fetchLatestBackend()
+}
+
 function ensureBackend() {
   if (!backendReady) backendReady = resolveBackend()
   return backendReady
@@ -40,6 +49,11 @@ function backendUrl(path: string) {
   return `${backend}${path}${sep}uid=${encodeURIComponent(getUid())}`
 }
 
+function backendAssetUrl(path: string | null) {
+  if (!path || /^https?:\/\//i.test(path)) return path
+  return `${backend}${path.startsWith('/') ? path : `/${path}`}`
+}
+
 async function apiFetch<T>(path: string, retried = false): Promise<T> {
   await ensureBackend()
   let res: Response
@@ -47,7 +61,7 @@ async function apiFetch<T>(path: string, retried = false): Promise<T> {
     res = await fetch(backendUrl(path))
   } catch (error) {
     if (!retried) {
-      backendReady = resolveBackend()
+      backendReady = resolveBackend(true)
       await backendReady
       return apiFetch(path, true)
     }
@@ -55,7 +69,7 @@ async function apiFetch<T>(path: string, retried = false): Promise<T> {
   }
   if (!res.ok) {
     if (!retried && (res.status === 404 || res.status >= 500)) {
-      backendReady = resolveBackend()
+      backendReady = resolveBackend(true)
       await backendReady
       return apiFetch(path, true)
     }
@@ -166,8 +180,10 @@ export const api = {
     return apiFetch<SearchItem[]>(url)
   },
 
-  getVideo: (videoId: string) =>
-    apiFetch<VideoDetails>(`${API_BASE}/videos/${videoId}?quality=720`),
+  getVideo: async (videoId: string) => {
+    const details = await apiFetch<VideoDetails>(`${API_BASE}/videos/${videoId}?quality=720`)
+    return { ...details, url: backendAssetUrl(details.url) }
+  },
 
   getComments: (videoId: string) =>
     apiFetch<Comment[]>(`${API_BASE}/comments/${videoId}`),
@@ -198,4 +214,9 @@ export const api = {
 
   addHistory: (video: Partial<VideoItem>) =>
     apiSend('/api/history', video),
+
+  streamUrl: async (videoId: string, format: 'video' | 'audio' = 'video') => {
+    await ensureBackend()
+    return backendUrl(`/stream/${videoId}?dl=1&format=${format}`)
+  },
 }

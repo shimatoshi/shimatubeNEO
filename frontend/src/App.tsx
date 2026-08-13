@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useUserData } from './hooks/useUserData'
 import { useToast } from './hooks/useToast'
 import type { VideoItem, VideoDetails } from './api/client'
@@ -50,6 +50,37 @@ export default function App() {
     : currentView.type === 'history' ? 'history'
     : currentView.type === 'player' ? 'player'
     : 'home'
+
+  // Androidの実機戻る操作(ハードキー/ジェスチャー)がアプリの画面スタックを無視して
+  // PWA自体を終了/リロードしてしまい、再生中の動画に戻れなくなる問題への対処。
+  // viewStackの増減をブラウザのhistoryエントリに同期させ、戻る操作をgoBack()にマップする。
+  const poppedByBrowserRef = useRef(false)
+  const prevLenRef = useRef(1)
+
+  useEffect(() => {
+    const len = viewStack.length
+    const prevLen = prevLenRef.current
+    prevLenRef.current = len
+    if (len > prevLen) {
+      window.history.pushState({ depth: len }, '')
+    } else if (len < prevLen) {
+      if (poppedByBrowserRef.current) {
+        poppedByBrowserRef.current = false
+      } else {
+        window.history.back()
+      }
+    }
+  }, [viewStack])
+
+  useEffect(() => {
+    const onPopState = () => {
+      poppedByBrowserRef.current = true
+      setViewStack(prev => (prev.length > 1 ? prev.slice(0, -1) : prev))
+      setTimeout(() => { poppedByBrowserRef.current = false }, 0)
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
 
   const push = useCallback((view: View) => {
     setViewStack(prev => [...prev, view])
@@ -196,6 +227,8 @@ export default function App() {
         {currentView.type === 'channel' && (
           <ChannelScreen
             channelId={currentView.channelId}
+            isSubscribed={isSubscribed}
+            onToggleSub={handleToggleSub}
             onPlay={handlePlay}
             onOpenChannel={handleOpenChannel}
             onBlockChannel={handleBlockChannel}

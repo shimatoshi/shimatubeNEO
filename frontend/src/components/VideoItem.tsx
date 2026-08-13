@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import { api } from '../api/client'
 import type { VideoItem as VideoItemType, ChannelItem, PlaylistItem, SearchItem } from '../api/client'
 import { formatDuration, formatViews } from '../utils'
 
@@ -23,9 +24,10 @@ export default function VideoItemComponent({
   onToggleSub,
   onBlockChannel,
 }: Props) {
-  const download = useCallback((videoId: string, format: 'video' | 'audio') => {
+  const download = useCallback(async (videoId: string, format: 'video' | 'audio') => {
+    const href = await api.streamUrl(videoId, format)
     const a = document.createElement('a')
-    a.href = `/stream/${videoId}?dl=1&format=${format}`
+    a.href = href
     a.download = ''
     document.body.appendChild(a)
     a.click()
