@@ -38,7 +38,12 @@ def handle_stream(handler):
         handler.send_error(502, "Could not get stream URL")
         return
 
-    content_type = 'audio/mp4' if audio_only else 'video/mp4'
+    # dl=1(DLボタン)時はvideo/mp4のままだとWebViewがインライン再生を試みてナビゲーションをコミットしてしまい、
+    # onDownloadStartが発火しない(=DownloadManager通知が出ない)。描画不能なoctet-streamにしてDL扱いを確定させる。
+    if is_download:
+        content_type = 'application/octet-stream'
+    else:
+        content_type = 'audio/mp4' if audio_only else 'video/mp4'
     file_ext = 'm4a' if audio_only else 'mp4'
 
     try:
