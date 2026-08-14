@@ -25,13 +25,10 @@ export default function VideoItemComponent({
   onBlockChannel,
 }: Props) {
   const download = useCallback(async (videoId: string, format: 'video' | 'audio') => {
+    // 合成<a>.click()はWebViewのDownloadListener(onDownloadStart)に届かないことが判明済み。
+    // location.assignによるナビゲーションでのみ確実に発火する。
     const href = await api.streamUrl(videoId, format)
-    const a = document.createElement('a')
-    a.href = href
-    a.download = ''
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
+    window.location.assign(href)
   }, [])
 
   if (item.type === 'channel') {
