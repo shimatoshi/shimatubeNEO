@@ -120,6 +120,9 @@ export type SearchItem = VideoItem | ChannelItem | PlaylistItem
 export interface VideoDetails {
   status: 'ready' | 'error'
   url: string | null
+  is_live: boolean
+  hls_url: string | null
+  hls: number[]
   metadata: {
     title?: string
     description?: string
@@ -219,4 +222,6 @@ export const api = {
     await ensureBackend()
     return backendUrl(`/stream/${videoId}?dl=1&format=${format}`)
   },
+
+  hlsUrl: (videoId: string, quality: number) => backendUrl(`/hls/${videoId}?q=${quality}`),
 }

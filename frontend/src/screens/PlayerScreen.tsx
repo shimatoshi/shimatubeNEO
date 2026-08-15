@@ -1,8 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import Hls from 'hls.js'
 import { api } from '../api/client'
 import type { VideoItem, VideoDetails, Comment } from '../api/client'
 import VideoList from '../components/VideoList'
 import { formatViews } from '../utils'
+
+function preferredQuality(heights: number[]) {
+  const saved = parseInt(localStorage.getItem('shimatube_quality') || '720', 10)
+  const le = heights.filter(h => h <= saved)
+  return le.length ? Math.max(...le) : Math.min(...heights)
+}
 
 interface PlaylistState {
   id: string
@@ -41,6 +48,43 @@ export default function PlayerScreen({
   const [showDesc, setShowDesc] = useState(false)
   const [loadingComments, setLoadingComments] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const hlsRef = useRef<Hls | null>(null)
+
+  const destroyHls = useCallback(() => {
+    if (hlsRef.current) {
+      try { hlsRef.current.destroy() } catch { /* noop */ }
+      hlsRef.current = null
+    }
+  }, [])
+
+  const playHls = useCallback((el: HTMLVideoElement, url: string, isLive: boolean, fallbackUrl: string | null) => {
+    destroyHls()
+    if (Hls.isSupported()) {
+      const hls = new Hls({ enableWorker: true, maxBufferLength: isLive ? 10 : 30 })
+      hlsRef.current = hls
+      hls.loadSource(url)
+      hls.attachMedia(el)
+      hls.on(Hls.Events.ERROR, (_evt, data) => {
+        if (!data.fatal) return
+        if (!isLive && fallbackUrl) {
+          destroyHls()
+          el.src = fallbackUrl
+          el.play().catch(() => {})
+        } else if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+          hls.startLoad()
+        } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+          hls.recoverMediaError()
+        } else {
+          destroyHls()
+        }
+      })
+    } else if (el.canPlayType('application/vnd.apple.mpegurl')) {
+      el.src = url
+    } else if (fallbackUrl) {
+      el.src = fallbackUrl
+    }
+    el.play().catch(() => {})
+  }, [destroyHls])
 
   useEffect(() => {
     if (!videoId) return
@@ -48,15 +92,32 @@ export default function PlayerScreen({
     setStreamUrl(null)
     setComments([])
     setShowDesc(false)
+    destroyHls()
 
     api.getVideo(videoId).then(data => {
       setMeta(data.metadata)
       onVideoLoaded(data.metadata)
-      if (data.status === 'ready' && data.url) {
+
+      const el = videoRef.current
+      const heights = data.hls || []
+      if (data.is_live && data.hls_url && el) {
+        // 生放送: HLSを直接再生（ダウンロードは提供しない）
+        playHls(el, data.hls_url, true, null)
+        setStreamUrl(null)
+      } else if (heights.length && el) {
+        // 公式画質: muxed HLSをhls.jsで再生し、progressive(あれば)をフォールバックに
+        const q = preferredQuality(heights)
+        playHls(el, api.hlsUrl(videoId, q), false, data.url)
+        setStreamUrl(data.url)
+      } else if (data.status === 'ready' && data.url && el) {
+        // フォールバック: progressive直
+        el.src = data.url
+        el.play().catch(() => {})
         setStreamUrl(data.url)
       } else {
         setStreamUrl(null)
       }
+
       setTab('related')
       setShowDesc(false)
 
@@ -69,14 +130,9 @@ export default function PlayerScreen({
         }).catch(() => setRelated([]))
       }
     }).catch(console.error)
-  }, [videoId])
 
-  useEffect(() => {
-    const el = videoRef.current
-    if (!el || !streamUrl) return
-    el.src = streamUrl
-    el.play().catch(() => {})
-  }, [streamUrl])
+    return () => destroyHls()
+  }, [videoId])
 
   // Auto-play next in playlist
   useEffect(() => {
