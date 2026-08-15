@@ -63,6 +63,10 @@ def _extract_video(vid):
         'remote_components': ['ejs:github'],
         'socket_timeout': 15,
         'retries': 1,
+        # defaultのみだと生放送で "No video formats found!"(formats 0件)になる
+        # (2026-08確認、YouTube側の生放送クライアント制限)。tv_simplyを足すと
+        # 生放送のmuxed HLSが拾える。progressive(itag18)はdefaultのままで取れる。
+        'extractor_args': {'youtube': {'player_client': ['default', 'tv_simply']}},
     }
     if os.path.exists(COOKIES_FILE):
         ydl_opts['cookiefile'] = COOKIES_FILE
