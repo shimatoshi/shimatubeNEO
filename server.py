@@ -4,6 +4,7 @@ import socketserver
 import logging
 
 from utils.db import init_db
+from utils.ytdlp import check_ytdlp_version
 from handlers.handler import CustomHandler
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%H:%M:%S')
@@ -18,6 +19,9 @@ class ThreadingHTTPServer(socketserver.ThreadingTCPServer):
 
 
 init_db()
+# 古いyt-dlpだと全動画が再生不能になる。起動ログの先頭で分かるようにしておく
+# （落とさないのは、検索・履歴など抽出以外の機能は動くため）。
+check_ytdlp_version()
 log.info(f"ShimaTube NEO server running on port {PORT}")
 log.info("Stream mode: proxy (no disk storage)")
 with ThreadingHTTPServer(("", PORT), CustomHandler) as httpd:

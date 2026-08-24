@@ -12,7 +12,10 @@ source.include_exts = py,png,jpg,kv,atlas,html,js,css,json
 
 # Requirements
 # hostpython3 and python3 are implicit
-requirements = python3,kivy,pyjnius,android,yt-dlp,certifi,brotli,websockets,requests,urllib3
+# yt-dlp はバージョンを固定しないと古い版が焼き込まれ、APK内蔵バックエンドでも
+# "The page needs to be reloaded." で抽出が全滅する。下限は requirements.txt /
+# utils/ytdlp.py の YTDLP_MIN_VERSION と揃えること。
+requirements = python3,kivy,pyjnius,android,yt-dlp>=2026.8.19,certifi,brotli,websockets,requests,urllib3
 
 # Android settings
 android.permissions = INTERNET,ACCESS_NETWORK_STATE

@@ -1,0 +1,19 @@
+# ShimaTube NEO バックエンド(server.py)の実行依存。
+# 配信機(Termux)では `pip install -U -r requirements.txt` で更新する。
+#
+# yt-dlp は「入っていれば良い」ではなく「新しくないと動かない」依存。
+# YouTube側の変更に追従できていない版は抽出が
+# "The page needs to be reloaded." で全滅する（2026-08-24に本番で発生）。
+# 実測(2026-08-25): <=2025.10.14 は全動画で失敗、>=2025.10.22 で解消。
+# 下限は再生経路を通しで検証済みの版に置く。utils/ytdlp.py の
+# YTDLP_MIN_VERSION と必ず揃えること。
+yt-dlp>=2026.8.19
+
+# yt-dlp の impersonation ターゲット用（ボット検出回避に効く）
+curl_cffi
+
+# Android/Termux では OS の CA ストアが当てにならないので同梱の CA を使う
+certifi
+
+# yt-dlp が受け取る br 圧縮レスポンスの展開用
+brotli
