@@ -49,10 +49,24 @@ export PATH=/data/data/com.termux/files/usr/bin:$PATH
 cd ~/shimatubeNEO || exit 1
 
 # deps
-python3 -c 'import yt_dlp, curl_cffi' 2>/dev/null || {
-  echo "[p5] installing deps..."; pip install -q -U yt-dlp curl_cffi 2>&1 | tail -2
-}
-python3 -c 'import yt_dlp, curl_cffi' 2>/dev/null && echo "[p5] DEPS_OK" || { echo "[p5] DEPS_FAIL"; exit 2; }
+# yt-dlp は「import が通る」だけでは不足。YouTube側の変更に追従できていない古い版だと
+# 抽出が "The page needs to be reloaded." で全滅し、全動画が再生不能になる。
+# 旧実装は import が通ると skip していたため、一度入った古い版が更新されず残り続けた
+# （2026-08-24の再生不能はこれが原因）。毎デプロイで下限バージョンを満たすまで更新する。
+ytdlp_ok(){ python3 -c 'import sys; from utils.ytdlp import check_ytdlp_version; sys.exit(0 if check_ytdlp_version() else 1)' 2>/dev/null; }
+
+if ! python3 -c 'import curl_cffi' 2>/dev/null || ! ytdlp_ok; then
+  echo "[p5] deps missing or yt-dlp too old -> pip install -U -r requirements.txt"
+  pip install -q -U -r requirements.txt 2>&1 | tail -3
+fi
+
+if python3 -c 'import curl_cffi' 2>/dev/null && ytdlp_ok; then
+  echo "[p5] DEPS_OK ($(python3 -c 'import yt_dlp; print(yt_dlp.version.__version__)'))"
+else
+  echo "[p5] DEPS_FAIL: curl_cffi missing, or yt-dlp below the required minimum"
+  python3 -c 'import sys; from utils.ytdlp import check_ytdlp_version; check_ytdlp_version()' 2>&1 | tail -3
+  exit 2
+fi
 
 # (re)start server
 pkill -f 'python3 server.py' 2>/dev/null; sleep 1

@@ -21,6 +21,84 @@ _SEM_WAIT = 20
 # ~/shimatube/cookies.txt があればログイン状態で抽出（ボット検出回避）。
 COOKIES_FILE = os.path.expanduser('~/shimatube/cookies.txt')
 
+# YouTube側の仕様変更に古いyt-dlpが追従できないと、抽出が
+# "The page needs to be reloaded."(YouTubeが返す拒否文言) で全滅する。
+# 2026-08-24に本番で発生。実測(2026-08-25, 実機同等構成):
+#   <=2025.10.14 → 全動画で失敗 / >=2025.10.22 → 解消
+# ただし公式画質のmuxed HLSが取れるかは版とplayer_clientの組み合わせ次第なので、
+# 下限は「再生経路を通しで検証済みの版」に置く。
+YTDLP_MIN_VERSION = (2026, 8, 19)
+_MIN_VERSION_STR = '.'.join(str(n) for n in YTDLP_MIN_VERSION)
+
+# YouTubeがリクエストごと拒否した時の文言。これが出たらまずyt-dlpが古い。
+_PAGE_RELOAD_ERR = 'the page needs to be reloaded'
+
+# 抽出に使う player_client。1つでは足りず、役割の違う3つを併用する:
+#   default    … progressive(itag18) とメタデータの主力
+#   tv_simply  … 生放送。これが無いと live で "Requested format is not available"
+#                (2026-08-15コミットの経緯。2026.08.19版でも依然必須と再確認)
+#   web_safari … VOD の muxed HLS(公式画質 144-1080)。yt-dlp 2026.08.19 では
+#                default+tv_simply だけだと muxed HLS が0件になり公式画質が消える
+_PLAYER_CLIENTS = ['default', 'tv_simply', 'web_safari']
+
+
+def _version_tuple(s):
+    out = []
+    for chunk in s.split('.')[:3]:
+        try:
+            out.append(int(chunk))
+        except ValueError:
+            return ()
+    return tuple(out)
+
+
+def check_ytdlp_version():
+    """起動時に1回呼ぶ。古いyt-dlpは再生不能の直接原因なので大きく警告する。"""
+    cur = yt_dlp.version.__version__
+    if _version_tuple(cur) < YTDLP_MIN_VERSION:
+        log.error(f"yt-dlp {cur} is older than required {_MIN_VERSION_STR}. "
+                  f"Playback will fail with 'The page needs to be reloaded.' "
+                  f"Fix: pip install -U yt-dlp")
+        return False
+    log.info(f"yt-dlp {cur} (>= {_MIN_VERSION_STR}) OK")
+    return True
+
+
+def _run_extract(ydl_opts, vid):
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        return ydl.extract_info(f"https://www.youtube.com/watch?v={vid}", download=False)
+
+
+def _log_extract_failure(vid, err):
+    """server.log だけ見れば原因と対処が分かるようにしておく。"""
+    log.error(f"extract error for {vid}: {err}")
+    if _PAGE_RELOAD_ERR in str(err).lower():
+        log.error(f"{vid}: YouTube rejected this yt-dlp build "
+                  f"(installed {yt_dlp.version.__version__}, "
+                  f"need >= {_MIN_VERSION_STR}). Fix: pip install -U yt-dlp")
+
+
+def _extract_with_cookie_fallback(ydl_opts, vid):
+    """cookies付きで抽出し、失敗したらcookies無しで1回だけ再試行する。
+    期限切れcookieはYouTubeにセッションごと拒否されうるので、素の状態も試す。
+    両方失敗したら None（呼び出し側は再生不可として扱う）。"""
+    try:
+        return _run_extract(ydl_opts, vid)
+    except Exception as e:
+        if 'cookiefile' not in ydl_opts:
+            _log_extract_failure(vid, e)
+            return None
+        log.warning(f"extract with cookies failed for {vid}, retrying without: {e}")
+
+    retry_opts = dict(ydl_opts)
+    retry_opts.pop('cookiefile', None)
+    try:
+        return _run_extract(retry_opts, vid)
+    except Exception as e:
+        _log_extract_failure(vid, e)
+        return None
+
+
 # 1動画につき extract_info は1回だけ。1回の抽出から
 #   - metadata
 #   - progressive(itag18, 360p, /stream中継&DLフォールバック用)
@@ -63,10 +141,7 @@ def _extract_video(vid):
         'remote_components': ['ejs:github'],
         'socket_timeout': 15,
         'retries': 1,
-        # defaultのみだと生放送で "No video formats found!"(formats 0件)になる
-        # (2026-08確認、YouTube側の生放送クライアント制限)。tv_simplyを足すと
-        # 生放送のmuxed HLSが拾える。progressive(itag18)はdefaultのままで取れる。
-        'extractor_args': {'youtube': {'player_client': ['default', 'tv_simply']}},
+        'extractor_args': {'youtube': {'player_client': _PLAYER_CLIENTS}},
     }
     if os.path.exists(COOKIES_FILE):
         ydl_opts['cookiefile'] = COOKIES_FILE
@@ -75,13 +150,11 @@ def _extract_video(vid):
         log.warning(f"extract semaphore busy, skip {vid}")
         return None
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            d = ydl.extract_info(f"https://www.youtube.com/watch?v={vid}", download=False)
-    except Exception as e:
-        log.error(f"extract error for {vid}: {e}")
-        return None
+        d = _extract_with_cookie_fallback(ydl_opts, vid)
     finally:
         _extract_sem.release()
+    if d is None:
+        return None
 
     is_live = bool(d.get('is_live') or d.get('live_status') == 'is_live')
     meta = {
@@ -186,9 +259,6 @@ def get_video_url(vid, qual="720", audio_only=False):
     return e.get("prog_url"), e.get("prog_headers", {}), e["meta"]
 
 
-_AUDIO_CLIENTS = ['web']
-
-
 def _get_audio_url(vid):
     """音声のみ（バックグラウンド再生用）。軽い別抽出・短期キャッシュ。"""
     cache_key = f"audio:{vid}"
@@ -207,13 +277,11 @@ def _get_audio_url(vid):
     if not _extract_sem.acquire(timeout=_SEM_WAIT):
         return None, {}, {}
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            d = ydl.extract_info(f"https://www.youtube.com/watch?v={vid}", download=False)
-    except Exception as e:
-        log.error(f"audio extract error {vid}: {e}")
-        return None, {}, {}
+        d = _extract_with_cookie_fallback(ydl_opts, vid)
     finally:
         _extract_sem.release()
+    if d is None:
+        return None, {}, {}
     meta = {"title": d.get('title'), "author": d.get('uploader'),
             "channelId": d.get('channel_id'), "is_live": False}
     url = d.get('url')
