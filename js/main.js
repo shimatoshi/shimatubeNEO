@@ -18,7 +18,7 @@ app.init = async () => {
     }
 
     // Migrate localStorage → server (one-time)
-    if (!localStorage.getItem('shimatube_migrated')) {
+    if (app.userData && !localStorage.getItem('shimatube_migrated')) {
         const oldSubs = localStorage.getItem('shimatube_subs');
         if (oldSubs) {
             for (const ch of JSON.parse(oldSubs)) {
@@ -43,12 +43,9 @@ app.init = async () => {
         await app.loadUserData();
     }
 
-    app.renderHome();
+    if (app.homeState === 'feed' && app.navStack.at(-1) === 'home') app.renderHome();
     app.runAutoDL();  // 起動のたびに購読チャンネルの新着を裏で自動DL（有効時のみ・非await）
 
-    document.getElementById('search-input').addEventListener('keydown', e => {
-        if (e.key === 'Enter') app.search();
-    });
     const mainVideo = document.getElementById('main-video');
     mainVideo.addEventListener('ended', () => {
         if (app.currentVideoId) UI.clearProgress(app.currentVideoId);  // 最後まで見たら進捗クリア
@@ -82,4 +79,8 @@ app.init = async () => {
     if (verEl) verEl.textContent = 'ShimaTube NEO ' + APP_VERSION;
 };
 
+// 初期通信が完了する前から検索をキーボードで操作できるようにする。
+document.getElementById('search-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.isComposing) app.search();
+});
 app.init();

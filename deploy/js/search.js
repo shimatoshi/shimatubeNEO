@@ -8,7 +8,9 @@ Object.assign(app, {
         app.resetHomeStack({ type: 'feed', key: 'feed' });
 
         if (!app.userData || !app.userData.categories) {
-            container.innerHTML = '<div style="padding:20px;">Loading settings...</div>';
+            container.innerHTML = app.userDataError
+                ? '<div class="connection-state" role="alert"><p>設定を読み込めませんでした。接続を確認して再試行してください。</p><button class="btn" onclick="app.retryUserData()">再試行</button><p class="hint">動画名の検索や履歴は下のメニューから操作できます。</p></div>'
+                : '<div class="connection-state" role="status">設定を読み込み中...</div>';
             return;
         }
 
