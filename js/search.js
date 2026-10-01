@@ -169,7 +169,8 @@ Object.assign(app, {
     },
 
     search: async (page = 1, append = false, isBack = false) => {
-        const query = document.getElementById('search-input').value || app.currentSearchQuery;
+        if (append && (app.isLoadingMore || !app.hasMoreResults)) return;
+        const query = (append ? app.currentSearchQuery : document.getElementById('search-input').value).trim();
         if (!query) return;
 
         const plId = app.extractPlaylistId(query);
@@ -178,7 +179,8 @@ Object.assign(app, {
         if (app.navStack[app.navStack.length - 1] !== 'home') app.switchTab('home');
 
         app.homeState = 'search';
-        app.currentSearchPage = page;
+        const requestId = app._searchRequestId = (app._searchRequestId || 0) + 1;
+        if (!append) { app.destroyInfiniteScroll(); app.hasMoreResults = true; }
         app.currentSearchQuery = query;
         app.currentPlaylist = null;
         if (!append && !isBack) {
@@ -187,6 +189,8 @@ Object.assign(app, {
         }
 
         const sort = app.currentSort || '';
+        const filter = app.currentFilter;
+        const isCurrent = () => app._searchRequestId === requestId && app.homeState === 'search';
         const container = document.getElementById('home-list');
         if (!append) {
             const sortOpt = (val, label) =>
@@ -210,7 +214,9 @@ Object.assign(app, {
         app.isLoadingMore = true;
         if (!append) { const el = document.getElementById('search-res-list'); if (el) el.innerHTML = '<div style="padding:20px;text-align:center;color:#888;">Searching...</div>'; }
         try {
-            const results = await API.search(query, page, app.currentFilter, sort);
+            const results = await API.search(query, page, filter, sort);
+            if (!isCurrent()) return;
+            app.currentSearchPage = page;
             if (results.length < 20) {
                 app.hasMoreResults = false;
                 const s = document.getElementById('scroll-sentinel');
@@ -220,14 +226,29 @@ Object.assign(app, {
             const videoIds = results.filter(r => r.type === 'video').map(r => r.videoId);
             API.prefetchVideos(videoIds);
             UI.renderVideoList(results, 'search-res-list', append);
+            app.setupInfiniteScroll(() => app.search(app.currentSearchPage + 1, true), results.length >= 20);
             if (!append) {
-                app.setupInfiniteScroll(() => app.search(app.currentSearchPage + 1, true));
                 window.scrollTo(0, 0);
             }
         } catch (e) {
-            if (!append) toast('Search error');
+            if (!isCurrent()) return;
+            app.hasMoreResults = false;
+            app.destroyInfiniteScroll();
+            const sentinel = document.getElementById('scroll-sentinel');
+            if (sentinel) sentinel.style.display = 'none';
+            const list = document.getElementById('search-res-list');
+            const retry = document.createElement('button');
+            retry.className = 'btn';
+            retry.textContent = '再試行';
+            retry.onclick = () => { retry.remove(); app.hasMoreResults = true; app.search(page, append, isBack); };
+            if (list) {
+                if (!append) list.textContent = '検索に失敗しました。接続を確認して再試行してください。';
+                list.appendChild(retry);
+            }
+            toast('検索に失敗しました');
+        } finally {
+            if (isCurrent()) app.isLoadingMore = false;
         }
-        app.isLoadingMore = false;
     },
 
     setSort: (sort) => {

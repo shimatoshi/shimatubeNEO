@@ -87,9 +87,9 @@ Object.assign(app, {
         }
     },
 
-    setupInfiniteScroll: (loadMoreFn) => {
+    setupInfiniteScroll: (loadMoreFn, hasMoreResults = true) => {
         app.destroyInfiniteScroll();
-        app.hasMoreResults = true;
+        app.hasMoreResults = hasMoreResults;
         app.isLoadingMore = false;
         const sentinel = document.getElementById('scroll-sentinel');
         if (!sentinel) return;
