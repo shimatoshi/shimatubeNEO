@@ -1,6 +1,21 @@
 // Backend URL: resolved from url-board at startup, fallback to same-origin
 let BACKEND = '';
 
+// 通信・JSONの受信を含めて期限を設け、待ちっぱなしを防ぐ。
+async function fetchJSON(url) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    try {
+        const res = await fetch(url, { signal: controller.signal, cache: 'no-store' });
+        if (!res.ok) {
+            const error = new Error(`HTTP ${res.status}`);
+            error.status = res.status;
+            throw error;
+        }
+        return await res.json();
+    } finally { clearTimeout(timer); }
+}
+
 async function resolveBackend() {
     // 前回値をキャッシュから即セット（ネットワーク待ち前に使える）
     const cached = localStorage.getItem('shimatube_backend');
@@ -8,9 +23,7 @@ async function resolveBackend() {
 
     const URL_BOARD = 'https://url-board.vercel.app/api/resolve/shimatube';
     try {
-        const res = await fetch(URL_BOARD, { cache: 'no-store' });
-        if (!res.ok) throw new Error(res.status);
-        const data = await res.json();
+        const data = await fetchJSON(URL_BOARD);
         if (data.url) {
             BACKEND = data.url.replace(/\/$/, '');
             localStorage.setItem('shimatube_backend', BACKEND);
@@ -75,9 +88,27 @@ const app = {
     playlistIndex: -1,
 
     loadUserData: async () => {
+        app.userDataLoading = true;
+        app.userDataError = false;
         try {
-            const res = await fetch(B('/api/user_data'));
-            app.userData = await res.json();
-        } catch (e) { console.error(e); }
+            const data = await fetchJSON(B('/api/user_data'));
+            if (!data || !Array.isArray(data.categories)) throw new Error('Invalid settings');
+            app.userData = data;
+            return true;
+        } catch (e) {
+            app.userDataError = true;
+            console.error(e);
+            return false;
+        } finally { app.userDataLoading = false; }
+    },
+
+    retryUserData: async () => {
+        if (app.userDataLoading) return;
+        app.userDataLoading = true;
+        app.userDataError = false;
+        app.renderHome();
+        await resolveBackend();
+        await app.loadUserData();
+        if (app.homeState === 'feed' && app.navStack.at(-1) === 'home') app.renderHome();
     }
 };

@@ -254,3 +254,26 @@ body {
     .v-title { font-size: 13px; }
     .dl-btn { width: 25px; font-size: 14px; }
 }
+
+/* 操作の名前・タップ領域・画面下の安全領域 */
+:root { --nav-height: calc(72px + env(safe-area-inset-bottom)); }
+body { padding-bottom: var(--nav-height); }
+button, input, select { font: inherit; }
+button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 3px;
+}
+#header { height: auto; min-height: 68px; }
+#search-input { min-height: 44px; font-size: 16px; }
+.btn-go, .btn-icon, #back-btn, .btn, .c-sub-btn { min-width: 44px; min-height: 44px; }
+.filter-bar { flex-wrap: wrap; }
+.filter-btn, .sort-select { min-height: 44px; }
+#bottom-nav { height: var(--nav-height); }
+.nav-item { background: transparent; border: 0; font-size: 12px; }
+#mini-player { bottom: var(--nav-height); }
+#mini-close { min-width: 44px; min-height: 44px; }
+#toast { bottom: calc(var(--nav-height) + 20px); }
+.connection-state { padding: 20px; line-height: 1.6; }
+.connection-state .hint { color: var(--muted); font-size: 14px; }
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+}

@@ -5,7 +5,10 @@ Object.assign(app, {
         }
         app.updateBackBtn();
         document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(el => {
+            el.classList.remove('active');
+            el.removeAttribute('aria-current');
+        });
 
         if (tabName !== 'player' && app.currentVideoId) {
             UI.showMiniPlayer(app.currentVideoMeta ? app.currentVideoMeta.title : 'Playing');
@@ -27,6 +30,7 @@ Object.assign(app, {
         } else if (tabName === 'player') {
             document.getElementById('view-player').classList.add('active');
         }
+        document.querySelectorAll('.nav-item.active').forEach(el => el.setAttribute('aria-current', 'page'));
     },
 
     // home ビュー内のサブ画面履歴 (feed/search/channel/playlist)

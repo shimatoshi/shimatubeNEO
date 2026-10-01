@@ -22,26 +22,16 @@ const API = {
     // トンネルURLが回るとキャッシュ済みBACKENDが死ぬ（cloudflare quick tunnelは
     // P5が再起動する度に変わる）。落ちたら url-board を引き直して1回だけやり直す。
     _fetch: async (url, _retried) => {
-        let res;
         try {
-            res = await fetch(url);
+            return await fetchJSON(url);
         } catch (e) {
             // DNS解決不能/接続不能 = トンネルが消えた時の典型
-            if (!_retried) {
+            if (!_retried && (!e.status || e.status === 404 || e.status >= 500)) {
                 const next = await API._reresolve(url);
                 if (next) return API._fetch(next, true);
             }
             throw e;
         }
-        // 502/503/530 はcloudflareが「オリジンに繋がらない」時に返す
-        if (!res.ok) {
-            if (!_retried && (res.status === 404 || res.status >= 500)) {
-                const next = await API._reresolve(url);
-                if (next) return API._fetch(next, true);
-            }
-            throw new Error(`API ${res.status}: ${res.statusText}`);
-        }
-        return res.json();
     },
     // プリフェッチ済み動画データキャッシュ
     _videoCache: {},
