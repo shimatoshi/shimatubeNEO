@@ -64,7 +64,7 @@ Object.assign(app, {
                 if (lst) lst.innerHTML = '<div style="padding:24px;text-align:center;color:#888;">ここには何もありません</div>';
             }
             if (!append) {
-                app.setupInfiniteScroll(() => app.openChannel(channelId, app.currentChannelPage + 1, true));
+                app.setupInfiniteScroll(() => app.openChannel(channelId, app.currentChannelPage + 1, true), vids.length >= 20);
                 window.scrollTo(0, 0);
             }
         } catch (e) {
