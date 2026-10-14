@@ -1,0 +1,22 @@
+name: Store PWA version
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      deployment_id:
+        description: 'Successful production deployment ID for the current commit'
+        type: string
+        required: true
+permissions:
+  contents: write
+  deployments: read
+jobs:
+  release:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' &&
+       (github.event.deployment.environment == 'Production' || github.event.deployment.environment == 'production'))
+    uses: shimatoshi/app-store-releases/.github/workflows/release-pwa.yml@ca3e3ae491b898cf5b476c311a3c3ee65a755fcd
+    with:
+      deployment-id: ${{ github.event.deployment.id && format('{0}', github.event.deployment.id) || inputs.deployment_id }}
+      commit: ${{ github.event.deployment.sha || github.sha }}

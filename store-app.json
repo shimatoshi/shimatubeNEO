@@ -1,0 +1,11 @@
+{
+  "id": "shimatube",
+  "type": "pwa",
+  "app": {
+    "name": "ShimaTube NEO",
+    "icon": "https://raw.githubusercontent.com/shimatoshi/app-store-releases/main/icons/shimatube.png",
+    "description": "YouTube代替プロキシ",
+    "category": "メディア",
+    "url": "https://shimatube.vercel.app"
+  }
+}
