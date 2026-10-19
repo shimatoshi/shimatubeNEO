@@ -22,7 +22,10 @@ _TAB_MAP = {
 def handle_channel(handler):
     parsed = urllib.parse.urlparse(handler.path)
     params = urllib.parse.parse_qs(parsed.query)
-    page = int(params.get('page', ['1'])[0])
+    try:
+        page = max(1, int(params.get('page', ['1'])[0]))
+    except ValueError:
+        page = 1
     # tab優先。旧 filter=live は後方互換で tab=live 扱い
     tab = params.get('tab', [''])[0]
     if not tab:

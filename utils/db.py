@@ -144,8 +144,10 @@ def adopt_orphan_data(user_id, force=False):
         conn.execute(
             "INSERT OR REPLACE INTO history(user_id, video_id, title, thumbnail, length_seconds, view_count, watched_at) "
             "SELECT ?, video_id, title, thumbnail, length_seconds, view_count, MAX(watched_at) "
-            "FROM history WHERE user_id != ? GROUP BY video_id",
-            (user_id, user_id))
+            "FROM history WHERE user_id != ? "
+            "AND NOT EXISTS (SELECT 1 FROM history h WHERE h.user_id=? AND h.video_id=history.video_id "
+            "AND h.watched_at >= history.watched_at) GROUP BY video_id",
+            (user_id, user_id, user_id))
         conn.execute("DELETE FROM history WHERE user_id != ?", (user_id,))
         conn.execute(
             "DELETE FROM history WHERE user_id=? AND video_id NOT IN "
@@ -204,14 +206,15 @@ def filter_blocked(items, user_id):
     with get_conn() as conn:
         blocked_chs = set(r['channel_id'] for r in conn.execute(
             "SELECT channel_id FROM blocked_channels WHERE user_id=?", (user_id,)))
-        keywords = [r['keyword'].lower() for r in conn.execute(
-            "SELECT keyword FROM blocked_keywords WHERE user_id=?", (user_id,))]
+        keywords = [r['keyword'].strip().lower() for r in conn.execute(
+            "SELECT keyword FROM blocked_keywords WHERE user_id=?", (user_id,))
+            if r['keyword'] and r['keyword'].strip()]
     result = []
     for item in items:
         ch_id = item.get('channelId', '')
         if ch_id and ch_id in blocked_chs:
             continue
-        title = item.get('title', '').lower()
+        title = (item.get('title') or '').lower()
         if any(kw in title for kw in keywords):
             continue
         result.append(item)

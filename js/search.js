@@ -39,7 +39,7 @@ Object.assign(app, {
                 row.dataset.loaded = '0';
                 row.innerHTML = `
                     <div class="feed-ch-header" onclick="app.openChannel('${esc(sub.channelId)}')">
-                        <img src="${esc(sub.thumbnail)}" class="c-thumb" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(sub.title)}'">
+                        <img src="${esc(sub.thumbnail)}" class="c-thumb" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(sub.title).replace(/'/g, '%27')}'">
                         <span>${esc(sub.title)}</span>
                     </div>
                     <div class="feed-ch-videos" id="fch-${esc(sub.channelId)}">

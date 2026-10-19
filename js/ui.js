@@ -25,7 +25,7 @@ const UI = {
                 const btnText = isSub ? 'Subbed' : 'Subscribe';
                 const btnClass = isSub ? 'c-sub-btn subscribed' : 'c-sub-btn';
                 div.innerHTML = `
-                    <img src="${esc(v.thumbnail)}" class="c-thumb" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(v.title)}'">
+                    <img src="${esc(v.thumbnail)}" class="c-thumb" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(v.title).replace(/'/g, '%27')}'">
                     <div class="c-name">${esc(v.title)}</div>
                     <button class="${btnClass}">${btnText}</button>
                 `;
@@ -112,7 +112,7 @@ const UI = {
                 if (!e.target.classList.contains('c-sub-btn')) app.openChannel(c.channelId);
             };
             div.innerHTML = `
-                <img src="${esc(c.thumbnail)}" class="c-thumb" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(c.title)}'">
+                <img src="${esc(c.thumbnail)}" class="c-thumb" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(c.title).replace(/'/g, '%27')}'">
                 <div class="c-name">${esc(c.title)}</div>
                 <button class="c-sub-btn subscribed">Subbed</button>
             `;

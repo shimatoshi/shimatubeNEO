@@ -28,6 +28,20 @@ def _b64d(s):
     return base64.urlsafe_b64decode(s.encode()).decode()
 
 
+_ALLOWED_HOST_SUFFIXES = ('.googlevideo.com', '.youtube.com', '.googleusercontent.com')
+
+
+def _host_allowed(url):
+    try:
+        p = urllib.parse.urlparse(url)
+        host = (p.hostname or '').lower()
+    except ValueError:
+        return False
+    if p.scheme != 'https':
+        return False
+    return any(host == s[1:] or host.endswith(s) for s in _ALLOWED_HOST_SUFFIXES)
+
+
 def _rewrite_m3u8(text, base_url):
     """m3u8内のセグメント/子プレイリスト/鍵URIを /hls_seg プロキシ経由に書き換える。"""
     out = []
@@ -57,7 +71,10 @@ def handle_hls(handler):
         handler.send_error(400, "Invalid video ID")
         return
     params = urllib.parse.parse_qs(parsed.query)
-    height = int(params.get('q', ['720'])[0])
+    try:
+        height = int(params.get('q', ['720'])[0])
+    except ValueError:
+        height = 720
     debug = params.get('debug', ['0'])[0] == '1'
 
     m3u8_url, _ = get_hls_url(vid, height)
@@ -104,7 +121,7 @@ def handle_hls_segment(handler):
     except Exception:
         handler.send_error(400, "bad u")
         return
-    if 'googlevideo.com' not in url and 'youtube.com' not in url and '.googleusercontent.com' not in url:
+    if not _host_allowed(url):
         handler.send_error(403, "host not allowed")
         return
 

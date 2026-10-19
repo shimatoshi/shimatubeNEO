@@ -22,9 +22,10 @@ _CHANNEL_TTL = 1800
 
 def _fetch_channel_videos(channel_id, limit=50):
     """1チャンネルの動画を取得（30分キャッシュ付き）"""
+    # 取得件数(limit)違いのキャッシュを流用しない。多く取得済みなら切り出して返す
     c = _channel_cache.get(channel_id)
-    if c and time.time() < c[0]:
-        return c[1]
+    if c and time.time() < c[0] and (c[2] >= limit or len(c[1]) < c[2]):
+        return c[1][:limit]
 
     try:
         ydl_opts = {
@@ -55,7 +56,11 @@ def _fetch_channel_videos(channel_id, limit=50):
                 "thumbnail": f"https://i.ytimg.com/vi/{v.get('id')}/mqdefault.jpg",
             })
 
-        _channel_cache[channel_id] = (time.time() + _CHANNEL_TTL, videos)
+        _channel_cache[channel_id] = (time.time() + _CHANNEL_TTL, videos, limit)
+        if len(_channel_cache) > 50:
+            now = time.time()
+            for k in [k for k, v in _channel_cache.items() if now >= v[0]]:
+                _channel_cache.pop(k, None)
         return videos
     except Exception as e:
         log.error(f"Feed fetch error for {channel_id}: {e}")

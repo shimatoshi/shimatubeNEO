@@ -28,7 +28,10 @@ def handle_search(handler):
     parsed = urllib.parse.urlparse(handler.path)
     params = urllib.parse.parse_qs(parsed.query)
     query = params.get('q', [''])[0]
-    page = int(params.get('page', ['1'])[0])
+    try:
+        page = max(1, int(params.get('page', ['1'])[0]))
+    except ValueError:
+        page = 1
     live_filter = params.get('filter', [''])[0]
     sort = params.get('sort', [''])[0]
     # 空クエリはyt-dlp側で例外になり500を返してしまうので、ここで空配列を返す
@@ -86,7 +89,7 @@ def handle_search(handler):
                     "type": "playlist",
                     "playlistId": v.get('id'),
                     "title": v.get('title'),
-                    "thumbnail": f"https://i.ytimg.com/vi/{v.get('id', '')}/mqdefault.jpg"
+                    "thumbnail": ((v.get('thumbnails') or [{}])[-1].get('url') or '')
                 }
                 all_items.append(item)
             elif ie_key == 'YoutubeTab' and '/channel/' in url:

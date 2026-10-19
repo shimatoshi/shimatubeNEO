@@ -36,7 +36,8 @@ def handle_user_data_post(handler):
         elif action == 'unblock_channel':
             unblock_channel(uid, payload['id'])
         elif action == 'block_keyword':
-            block_keyword(uid, payload)
+            if isinstance(payload, str) and payload.strip():
+                block_keyword(uid, payload.strip())
         elif action == 'unblock_keyword':
             unblock_keyword(uid, payload)
 

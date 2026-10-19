@@ -87,7 +87,7 @@ def handle_stream(handler):
 
     except urllib.error.HTTPError as e:
         if e.code == 403:
-            cache_key = f"{vid}:{'audio' if audio_only else qual}"
+            cache_key = f"audio:{vid}" if audio_only else f"v:{vid}"
             with url_cache_lock:
                 url_cache.pop(cache_key, None)
             log.warning(f"Stream URL expired for {vid}, cleared cache")
