@@ -92,6 +92,7 @@ const UI = {
                     e.stopPropagation();
                     app.blockChannel(v.channelId, v.author || '');
                 };
+                UI.addLongPress(div, v.videoId);
                 container.appendChild(div);
             }
         });
@@ -227,6 +228,55 @@ const UI = {
         if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         return `${m}:${s.toString().padStart(2, '0')}`;
     },
+    startDownload: (videoId) => {
+        // JS合成の<a>.click()はWebViewでDownloadListenerに届かないことがあるため、
+        // 実ナビゲーション(location.assign)で確実に発火させる。
+        // attachment応答なので遷移はキャンセルされページは保持される。
+        toast('💾 動画(mp4)で保存を開始しました', 4000);
+        window.location.assign(B(`/stream/${videoId}?dl=1`));
+    },
+
+    // 一覧の行を長押し(600ms)で動画をダウンロード。
+    // 誤爆防止: 指が8px以上動いたら(=スクロール)中断 / DL・ブロックボタン上では開始しない /
+    // 長押し成立後の指離しで再生が起動しないよう直後のclickを1回捨てる /
+    // タッチ後のエミュレートmousedownで二重起動しないようタッチ中はmouseを無視
+    addLongPress: (el, videoId) => {
+        let timer = null, sx = 0, sy = 0, fired = false, touched = false;
+        const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+        const start = (x, y, target) => {
+            if (target.closest && target.closest('.dl-btn, .block-btn, .c-sub-btn')) return;
+            cancel();
+            fired = false; sx = x; sy = y;
+            timer = setTimeout(() => {
+                timer = null;
+                fired = true;
+                if (navigator.vibrate) { try { navigator.vibrate(30); } catch (e) {} }
+                UI.startDownload(videoId);
+            }, 600);
+        };
+        const moved = (x, y) => { if (Math.abs(x - sx) > 8 || Math.abs(y - sy) > 8) cancel(); };
+        el.addEventListener('touchstart', (e) => {
+            touched = true;
+            const t = e.touches[0];
+            start(t.clientX, t.clientY, e.target);
+        }, { passive: true });
+        el.addEventListener('touchmove', (e) => {
+            const t = e.touches[0];
+            moved(t.clientX, t.clientY);
+        }, { passive: true });
+        el.addEventListener('touchend', cancel);
+        el.addEventListener('touchcancel', cancel);
+        el.addEventListener('mousedown', (e) => { if (!touched) start(e.clientX, e.clientY, e.target); });
+        el.addEventListener('mousemove', (e) => { if (!touched) moved(e.clientX, e.clientY); });
+        el.addEventListener('mouseup', cancel);
+        el.addEventListener('mouseleave', cancel);
+        // 長押し成立後に指を離した時のclick(=再生)を捨てる。端末の長押しメニューも抑止
+        el.addEventListener('click', (e) => {
+            if (fired) { fired = false; e.stopPropagation(); e.preventDefault(); }
+        }, true);
+        el.addEventListener('contextmenu', (e) => { if (fired || timer) e.preventDefault(); });
+    },
+
     formatViews: (num) => {
         if (!num) return '';
         if (num > 1000000) return (num / 1000000).toFixed(1) + 'M';
