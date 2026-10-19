@@ -49,6 +49,9 @@ const API = {
         });
     },
 
+    live: () => {
+        return API._fetch(B('/api/live'));
+    },
     trending: () => {
         return API._fetch(B('/api/trending'));
     },

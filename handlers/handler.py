@@ -15,6 +15,7 @@ from handlers.comments import handle_comments
 from handlers.user_data import handle_user_data_get, handle_user_data_post, handle_subscribe, handle_history, handle_adopt
 from handlers.feed import handle_feed, handle_feed_channel, handle_feed_refresh
 from handlers.trending import handle_trending
+from handlers.live import handle_live
 from handlers.hls import handle_hls, handle_hls_segment
 from handlers.related import handle_related
 from handlers.autodl import (handle_autodl_settings, handle_autodl_list, handle_autodl_pending,
@@ -34,6 +35,7 @@ GET_ROUTES = [
     ("/api/feed/channel/",          handle_feed_channel),
     ("/api/feed",                   handle_feed),
     ("/api/trending",               handle_trending),
+    ("/api/live",                   handle_live),
     ("/api/related/",               handle_related),
     ("/api/user_data",              handle_user_data_get),
     ("/api_proxy/api/v1/search",    handle_search),

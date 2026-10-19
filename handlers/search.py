@@ -115,6 +115,8 @@ def handle_search(handler):
                     "uploadDate": format_date(v.get('upload_date')),
                     "thumbnail": f"https://i.ytimg.com/vi/{vid}/mqdefault.jpg"
                 }
+                if live_filter == 'live':
+                    item["is_live"] = True
                 all_items.append(item)
 
         # キャッシュ保存 (ブロックフィルタ前のデータを保存)

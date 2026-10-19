@@ -19,13 +19,17 @@ Object.assign(app, {
         if (tabName === 'home') {
             document.getElementById('view-home').classList.add('active');
             document.querySelectorAll('.nav-item')[0].classList.add('active');
+        } else if (tabName === 'live') {
+            document.getElementById('view-live').classList.add('active');
+            document.querySelectorAll('.nav-item')[1].classList.add('active');
+            app.loadLive(false);
         } else if (tabName === 'subs') {
             document.getElementById('view-subs').classList.add('active');
-            document.querySelectorAll('.nav-item')[1].classList.add('active');
+            document.querySelectorAll('.nav-item')[2].classList.add('active');
             UI.renderChannelList(Storage.getSubs(), 'subs-list');
         } else if (tabName === 'history') {
             document.getElementById('view-history').classList.add('active');
-            document.querySelectorAll('.nav-item')[2].classList.add('active');
+            document.querySelectorAll('.nav-item')[3].classList.add('active');
             UI.renderVideoList(Storage.getHistory(), 'history-list');
         } else if (tabName === 'player') {
             document.getElementById('view-player').classList.add('active');

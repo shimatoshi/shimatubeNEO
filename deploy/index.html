@@ -67,6 +67,14 @@
         <div id="subs-list" class="list-container"></div>
     </div>
 
+    <div id="view-live" class="view-section">
+        <div style="padding:10px;font-weight:bold;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;">
+            <span>🔴 配信中のライブ</span>
+            <button class="btn" onclick="app.loadLive(true)" aria-label="ライブ一覧を更新">更新</button>
+        </div>
+        <div id="live-list" class="list-container"></div>
+    </div>
+
     <div id="view-history" class="view-section">
         <div style="padding:10px;font-weight:bold;border-bottom:1px solid #333;">視聴履歴</div>
         <div id="history-list" class="list-container"></div>
@@ -136,6 +144,9 @@
     <div id="bottom-nav">
         <button type="button" class="nav-item active" aria-current="page" onclick="app.handleHomeClick()">
             <span class="nav-icon" aria-hidden="true">🏠</span><span>ホーム</span>
+        </button>
+        <button type="button" class="nav-item" onclick="app.switchTab('live')">
+            <span class="nav-icon" aria-hidden="true">🔴</span><span>ライブ</span>
         </button>
         <button type="button" class="nav-item" onclick="app.switchTab('subs')">
             <span class="nav-icon" aria-hidden="true">📺</span><span>登録</span>

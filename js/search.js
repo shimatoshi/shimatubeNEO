@@ -257,5 +257,26 @@ Object.assign(app, {
         if ((app.currentSort || '') === sort) return;
         app.currentSort = sort;
         if (app.homeState === 'search') app.search(1);
+    },
+
+    // ライブメニュー: 配信中の一覧。切替のたびに取り直さず、5分以内は表示済みを使う
+    loadLive: async (force = false) => {
+        const container = document.getElementById('live-list');
+        if (!container) return;
+        const fresh = app._liveLoadedAt && Date.now() - app._liveLoadedAt < 300000;
+        if (!force && fresh && container.children.length) return;
+        const requestId = app._liveRequestId = (app._liveRequestId || 0) + 1;
+        container.innerHTML = '<div style="padding:20px;text-align:center;color:#91a0ae;">配信中のライブを探しています…</div>';
+        try {
+            const res = await API.live();
+            if (app._liveRequestId !== requestId) return;
+            app._liveLoadedAt = Date.now();
+            UI.renderVideoList(res, 'live-list');
+            if (!res.length) container.innerHTML = '<div style="padding:20px;text-align:center;color:#91a0ae;">配信中のライブが見つかりませんでした。「更新」で再取得できます。</div>';
+        } catch (e) {
+            if (app._liveRequestId !== requestId) return;
+            app._liveLoadedAt = 0;
+            container.innerHTML = '<div style="padding:20px;color:#91a0ae;">ライブ一覧を読み込めませんでした。時間をおいて「更新」を押してください。</div>';
+        }
     }
 });
