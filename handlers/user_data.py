@@ -13,6 +13,11 @@ def handle_adopt(handler):
     旧uidに残った購読/履歴を現uidへ引き取る (設定画面のボタンから)"""
     try:
         adopt_orphan_data(handler.user_id, force=True)
+        # 他uidのusers行を消したので、既知uidキャッシュも現uidだけに戻す
+        known = getattr(type(handler), '_known_users', None)
+        if known is not None:
+            known.clear()
+            known.add(handler.user_id)
         handler.send_json({"status": True, "data": get_user_data(handler.user_id)})
     except Exception as e:
         log.error(f"Adopt error: {e}")

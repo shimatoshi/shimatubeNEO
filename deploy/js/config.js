@@ -1,7 +1,7 @@
 Object.assign(app, {
     // データ復旧: uid再生成で見えなくなった旧uidの購読/履歴をサーバー側で現uidへ統合
     recoverData: async () => {
-        if (!confirm('サーバーに残っている旧IDの購読・履歴を現在のIDへ引き取ります。よい？')) return;
+        if (!confirm('サーバー上の他のIDの購読・履歴・設定を、すべて現在のIDに統合します（他のIDのデータは削除されます）。\n複数人で同じサーバーを使っている場合は実行しないでください。続けますか？')) return;
         try {
             const res = await fetch(B('/api/adopt'), { method: 'POST' });
             const data = await res.json();
@@ -17,7 +17,7 @@ Object.assign(app, {
     },
 
     forceUpdate: async () => {
-        toast('Updating...');
+        toast('更新中…');
         if ('caches' in window) {
             const keys = await caches.keys();
             await Promise.all(keys.map(k => caches.delete(k)));
@@ -35,6 +35,9 @@ Object.assign(app, {
         modal.style.display = isShow ? 'none' : 'block';
         if (!isShow) {
             app.refreshConfig();
+            app._configOpener = document.activeElement;
+            const closeBtn = modal.querySelector('button');
+            if (closeBtn) closeBtn.focus();
             // 開いている間だけ Escape を受ける。✕以外に閉じ方が無いと
             // 全画面オーバーレイが背後のタップを黙って吸い続ける
             app._configEsc = (e) => { if (e.key === 'Escape') app.toggleConfig(); };
@@ -43,6 +46,7 @@ Object.assign(app, {
             document.removeEventListener('keydown', app._configEsc);
             app._configEsc = null;
         }
+        if (isShow && app._configOpener && app._configOpener.focus) { app._configOpener.focus(); app._configOpener = null; }
     },
 
     // 背景(モーダル自身)のクリックで閉じる。中身のクリックでは閉じない
@@ -90,7 +94,7 @@ Object.assign(app, {
     },
 
     addCategory: async () => {
-        const val = document.getElementById('cat-input').value;
+        const val = document.getElementById('cat-input').value.trim();
         if (val && !app.userData.categories.includes(val)) {
             await app.updateServer('update_categories', [...app.userData.categories, val]);
             document.getElementById('cat-input').value = '';
@@ -104,9 +108,9 @@ Object.assign(app, {
     },
 
     blockChannel: async (id, name) => {
-        if (confirm(`Block channel "${name}"?`)) {
+        if (confirm(`チャンネル「${name}」をブロックしますか？`)) {
             await app.updateServer('block_channel', { id, name });
-            toast('Blocked');
+            toast('ブロックしました');
         }
     },
 
@@ -116,7 +120,7 @@ Object.assign(app, {
     },
 
     addBlockKeyword: async () => {
-        const val = document.getElementById('kw-input').value;
+        const val = document.getElementById('kw-input').value.trim();
         if (val) {
             await app.updateServer('block_keyword', val);
             document.getElementById('kw-input').value = '';

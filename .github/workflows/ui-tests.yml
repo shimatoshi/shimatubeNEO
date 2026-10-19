@@ -13,10 +13,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/search.test.cjs
+      - run: node --test tests/search.test.cjs tests/startup.test.cjs
       - name: Check deployed frontend matches source
         run: |
           cmp js/search.js deploy/js/search.js
           cmp js/channel.js deploy/js/channel.js
           cmp js/navigation.js deploy/js/navigation.js
-
+          cmp js/ui.js deploy/js/ui.js
+          cmp js/config.js deploy/js/config.js
+          cmp js/player.js deploy/js/player.js
+          cmp index.html deploy/index.html
+          cmp css/style.css deploy/css/style.css

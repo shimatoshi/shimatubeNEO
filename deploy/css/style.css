@@ -1,3 +1,5 @@
+/* 注意: このファイルは2層構成。前半=旧ベース(~'NEO visual system'の手前)、
+   後半=NEO(変数ベース)が前半を上書きする。見た目を変えるときは後半(末尾側)を編集すること */
 /* Base */
 body { margin: 0; padding-bottom: 60px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #121212; color: #fff; overscroll-behavior-y: none; }
 a { color: #3ea6ff; text-decoration: none; }
@@ -277,3 +279,15 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* 可読性: 小さすぎる文字・低コントラストの是正 */
+.action-item { font-size: 12px; }
+.duration, .live-badge { font-size: 11px; }
+.v-meta, .meta-row, .feed-ch-title { font-size: 12px; }
+.tag { font-size: 13px; }
+.tag-del { padding: 6px 4px; }
+.block-btn { font-size: 12px; padding: 6px 8px; margin-left: 6px; }
+.dl-btn { min-width: 36px; }
+.btn-danger { background: #3a1d1d; color: #ff9a9a; border: 1px solid #7a3333; }
+[role="button"] { cursor: pointer; }
+[role="button"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

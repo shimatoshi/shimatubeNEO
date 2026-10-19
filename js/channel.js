@@ -16,7 +16,7 @@ Object.assign(app, {
 
         const container = document.getElementById('home-list');
         if (!append) {
-            container.innerHTML = '<div style="padding:20px;">Loading Channel...</div>';
+            container.innerHTML = '<div style="padding:20px;">チャンネルを読み込み中…</div>';
         }
 
         app.isLoadingMore = true;
@@ -33,7 +33,7 @@ Object.assign(app, {
                 container.innerHTML = `
                     <div class="cat-header" style="font-size:16px;">
                         <span>${esc(ctitle)}</span>
-                        <button id="ch-sub-btn" class="c-sub-btn${isSub ? ' subscribed' : ''}">${isSub ? 'Subbed' : 'Subscribe'}</button>
+                        <button id="ch-sub-btn" class="c-sub-btn${isSub ? ' subscribed' : ''}">${isSub ? '登録済み' : '登録'}</button>
                     </div>
                     <div class="filter-bar">
                         ${tabBtn('videos', '動画')}
@@ -48,7 +48,7 @@ Object.assign(app, {
                     e.stopPropagation();
                     const sub = await app.toggleSubUniversal(
                         channelId, app.currentChannelTitle || ctitle, '');
-                    chSub.textContent = sub ? 'Subbed' : 'Subscribe';
+                    chSub.textContent = sub ? '登録済み' : '登録';
                     chSub.classList.toggle('subscribed', sub);
                 };
             }
@@ -70,7 +70,7 @@ Object.assign(app, {
         } catch (e) {
             const lst = document.getElementById('channel-v-list');
             if (lst) lst.innerHTML = '<div style="padding:24px;text-align:center;color:#888;">読み込みエラー</div>';
-            else if (!append) container.innerHTML = '<div style="padding:20px;">Error loading channel.</div>';
+            else if (!append) container.innerHTML = '<div style="padding:20px;">チャンネルを読み込めませんでした。時間をおいて再試行してください</div>';
         }
         app.isLoadingMore = false;
     },

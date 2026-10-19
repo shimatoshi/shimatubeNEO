@@ -62,7 +62,11 @@ Object.assign(app, {
         } catch (e) { console.error('autodl error', e); }
     },
 
-    estimateMb: (lengthSeconds) => Math.max(5, Math.round((lengthSeconds || 0) / 60 * AUTODL_MB_PER_MIN)),
+    // 係数はサーバー(utils/db.py AUTODL_MB_PER_MIN)が正。設定取得前だけ定数にフォールバック
+    estimateMb: (lengthSeconds) => {
+        const rate = (app.userData && app.userData.autodl && app.userData.autodl.mb_per_min) || AUTODL_MB_PER_MIN;
+        return Math.max(5, Math.round((lengthSeconds || 0) / 60 * rate));
+    },
 
     // ネイティブブリッジ(SnifferDL)経由でDownloadManagerのエントリと実ファイルを消し、
     // quotaを空ける。ブリッジが無い(未更新の古いsniffer-browser)場合は何もしない

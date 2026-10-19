@@ -37,16 +37,16 @@ Object.assign(app, {
         tabEls[0].classList.add('active');
 
         if (app.currentPlaylist) {
-            tabEls[0].textContent = 'Playlist';
+            tabEls[0].textContent = '再生リスト';
             document.getElementById('player-list').innerHTML = '';
             UI.renderVideoList(app.currentPlaylist.videos, 'player-list');
             return;
         }
 
-        tabEls[0].textContent = 'Related';
+        tabEls[0].textContent = '関連';
         const vid = app.currentVideoId;
         if (!vid) return;
-        document.getElementById('player-list').innerHTML = 'Loading...';
+        document.getElementById('player-list').innerHTML = '読み込み中…';
         try {
             // YouTube本来のおすすめ(関連, Shorts除外)
             const res = await API.getRelated(vid);
@@ -54,7 +54,7 @@ Object.assign(app, {
             app.relatedVideos = (res || []).filter(v => v.videoId !== vid);
             UI.renderVideoList(app.relatedVideos, 'player-list');
         } catch {
-            document.getElementById('player-list').innerHTML = '<div style="padding:10px;color:#666;">Error</div>';
+            document.getElementById('player-list').innerHTML = '<div style="padding:10px;color:#91a0ae;">読み込めませんでした。時間をおいて再試行してください</div>';
         }
     },
 
@@ -69,13 +69,13 @@ Object.assign(app, {
         if (!app.currentVideoId) return;
         document.querySelectorAll('#player-view .tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('#player-view .tab')[1].classList.add('active');
-        document.getElementById('player-list').innerHTML = 'Loading comments...';
+        document.getElementById('player-list').innerHTML = 'コメントを読み込み中…';
         try {
             const comments = await API.getComments(app.currentVideoId);
             const container = document.getElementById('player-list');
             container.innerHTML = '';
             if (comments.length === 0) {
-                container.innerHTML = '<div style="padding:20px;color:#666;">No comments</div>';
+                container.innerHTML = '<div style="padding:20px;color:#91a0ae;">コメントはありません</div>';
                 return;
             }
             comments.forEach(c => {
@@ -85,7 +85,7 @@ Object.assign(app, {
                 container.appendChild(div);
             });
         } catch {
-            document.getElementById('player-list').innerHTML = '<div style="padding:20px;color:#666;">Error loading comments</div>';
+            document.getElementById('player-list').innerHTML = '<div style="padding:20px;color:#91a0ae;">コメントを読み込めませんでした。時間をおいて再試行してください</div>';
         }
     },
 
@@ -99,7 +99,7 @@ Object.assign(app, {
             ta.select(); document.execCommand('copy');
             document.body.removeChild(ta);
         }
-        toast('URL copied');
+        toast('URLをコピーしました');
     },
 
     toggleDesc: () => {
@@ -159,7 +159,7 @@ Object.assign(app, {
         if (app.navStack[app.navStack.length - 1] === 'subs') {
             UI.renderChannelList(Storage.getSubs(), 'subs-list');
         } else {
-            toast(isSub ? 'Subscribed' : 'Unsubscribed');
+            toast(isSub ? '登録しました' : '登録を解除しました');
         }
         return isSub;
     }

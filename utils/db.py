@@ -309,6 +309,7 @@ def get_autodl_settings(user_id):
         'enabled': bool(row['enabled']) if row else False,
         'quota_mb': row['quota_mb'] if row else AUTODL_DEFAULT_QUOTA_MB,
         'used_mb': int(used),
+        'mb_per_min': AUTODL_MB_PER_MIN,
     }
 
 def set_autodl_settings(user_id, enabled, quota_mb):

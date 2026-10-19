@@ -52,14 +52,14 @@ app.init = async () => {
         if (app.currentPlaylist && app.playlistIndex < app.currentPlaylist.videos.length - 1) {
             app.playlistIndex++;
             const next = app.currentPlaylist.videos[app.playlistIndex];
-            toast(`Up next: ${next.title}`);
+            toast(`次の動画: ${next.title}`);
             app.playVideo(next.videoId);
             return;
         }
         // 関連動画オートプレイ（上から次へ再生し続ける）
         if (app.autoplay && app.relatedVideos && app.relatedVideos.length) {
             const next = app.relatedVideos.find(v => v.videoId !== app.currentVideoId && !v.is_live);
-            if (next) { toast(`Up next: ${next.title}`); app.playVideo(next.videoId); }
+            if (next) { toast(`次の動画: ${next.title}`); app.playVideo(next.videoId); }
         }
     });
     // 再生位置を5秒ごとに保存（続きから再生用）
@@ -76,7 +76,21 @@ app.init = async () => {
     UI.updateAutoplayBtn();
     app.initConfigDismiss();
     const verEl = document.getElementById('app-version');
-    if (verEl) verEl.textContent = 'ShimaTube NEO ' + APP_VERSION;
+    if (verEl) {
+        verEl.textContent = 'ShimaTube NEO ' + APP_VERSION;
+        // サーバー側の版も併記する(フロントとサーバーの版ズレに気付けるように)
+        fetchJSON(B('/api/version')).then(v => {
+            const sv = v && v.version ? 'v' + v.version : '不明';
+            verEl.textContent = `ShimaTube NEO ${APP_VERSION} / サーバー ${sv}`;
+        }).catch(() => {});
+    }
+    // role="button" の要素をキーボード(Enter/Space)でも操作できるようにする
+    document.addEventListener('keydown', (e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('[role="button"]')) {
+            e.preventDefault();
+            e.target.click();
+        }
+    });
 };
 
 // 初期通信が完了する前から検索をキーボードで操作できるようにする。

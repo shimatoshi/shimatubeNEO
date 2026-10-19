@@ -11,7 +11,7 @@ const UI = {
         if (!container) return;
         if (!append) container.innerHTML = '';
         if (!videos || videos.length === 0) {
-            if (!append) container.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">No items</div>';
+            if (!append) container.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">動画がありません</div>';
             return;
         }
         videos.forEach(v => {
@@ -22,7 +22,7 @@ const UI = {
                     if (!e.target.classList.contains('c-sub-btn')) app.openChannel(v.channelId);
                 };
                 const isSub = Storage.isSubscribed(v.channelId);
-                const btnText = isSub ? 'Subbed' : 'Subscribe';
+                const btnText = isSub ? '登録済み' : '登録';
                 const btnClass = isSub ? 'c-sub-btn subscribed' : 'c-sub-btn';
                 div.innerHTML = `
                     <img src="${esc(v.thumbnail)}" class="c-thumb" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(v.title).replace(/'/g, '%27')}'">
@@ -33,7 +33,7 @@ const UI = {
                 div.querySelector('.c-sub-btn').onclick = async (e) => {
                     const btn = e.target;
                     const sub = await app.toggleSubUniversal(v.channelId, v.title || '', v.thumbnail || '');
-                    btn.textContent = sub ? 'Subbed' : 'Subscribe';
+                    btn.textContent = sub ? '登録済み' : '登録';
                     btn.classList.toggle('subscribed', sub);
                 };
                 container.appendChild(div);
@@ -48,7 +48,7 @@ const UI = {
                     </div>
                     <div class="details">
                         <div class="v-title">${esc(v.title)}</div>
-                        <div class="v-meta">Playlist</div>
+                        <div class="v-meta">再生リスト</div>
                     </div>
                 `;
                 container.appendChild(div);
@@ -70,7 +70,7 @@ const UI = {
                     ? `<div class="watch-bar"><div class="watch-bar-fill" style="width:${Math.min(100, prog.p / totalSec * 100).toFixed(1)}%"></div></div>`
                     : '';
                 div.innerHTML = `
-                    <div class="thumb" onclick="app.playVideo('${esc(v.videoId)}')">
+                    <div class="thumb" role="button" tabindex="0" aria-label="再生: ${esc(v.title)}" onclick="app.playVideo('${esc(v.videoId)}')">
                         <img src="${esc(v.thumbnail)}" loading="lazy">
                         ${dur}
                         ${watched}
@@ -79,12 +79,12 @@ const UI = {
                         <div class="v-title" onclick="app.playVideo('${esc(v.videoId)}')">${esc(v.title)}</div>
                         <div class="v-meta">
                             ${esc(v.author)} • ${UI.formatViews(v.viewCount)}
-                            ${v.channelId ? '<span class="block-btn">Block</span>' : ''}
+                            ${v.channelId ? '<span class="block-btn" role="button" tabindex="0" aria-label="このチャンネルをブロック">ブロック</span>' : ''}
                         </div>
                     </div>
-                    <a class="dl-btn" href="${B('/stream/' + esc(v.videoId) + '?dl=1')}" download title="動画(mp4)で保存"
+                    <a class="dl-btn" href="${B('/stream/' + esc(v.videoId) + '?dl=1')}" download title="動画(mp4)で保存" aria-label="動画(mp4)で保存"
                        onclick="event.stopPropagation(); toast('💾 動画(mp4)で保存を開始しました', 4000)">💾</a>
-                    <a class="dl-btn dl-audio" href="${B('/stream/' + esc(v.videoId) + '?dl=1&format=audio')}" download title="音声(楽曲)で保存"
+                    <a class="dl-btn dl-audio" href="${B('/stream/' + esc(v.videoId) + '?dl=1&format=audio')}" download title="音声(楽曲)で保存" aria-label="音声(m4a)で保存"
                        onclick="event.stopPropagation(); toast('🎵 音声(m4a)で保存を開始しました', 4000)">🎵</a>
                 `;
                 const blockBtn = div.querySelector('.block-btn');
@@ -92,7 +92,6 @@ const UI = {
                     e.stopPropagation();
                     app.blockChannel(v.channelId, v.author || '');
                 };
-                UI.addLongPress(div, v.videoId);
                 container.appendChild(div);
             }
         });
@@ -102,7 +101,7 @@ const UI = {
         const container = document.getElementById(containerId);
         container.innerHTML = '';
         if (!channels || channels.length === 0) {
-            container.innerHTML = '<div style="padding:20px; color:#aaa;">No subscriptions yet.</div>';
+            container.innerHTML = '<div style="padding:20px; color:#aaa;">登録チャンネルはまだありません。</div>';
             return;
         }
         channels.forEach(c => {
@@ -114,7 +113,7 @@ const UI = {
             div.innerHTML = `
                 <img src="${esc(c.thumbnail)}" class="c-thumb" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(c.title).replace(/'/g, '%27')}'">
                 <div class="c-name">${esc(c.title)}</div>
-                <button class="c-sub-btn subscribed">Subbed</button>
+                <button class="c-sub-btn subscribed">登録済み</button>
             `;
             div.querySelector('.c-sub-btn').onclick = () =>
                 app.toggleSubUniversal(c.channelId, c.title || '', c.thumbnail || '');
@@ -130,8 +129,11 @@ const UI = {
 
         const nameEl = document.getElementById('c-name');
         const author = meta.author || 'Unknown';
-        nameEl.innerHTML = `${esc(author)} <span class="block-btn">Block</span>`;
-        nameEl.querySelector('.block-btn').onclick = (e) => {
+        // channelIdが無い動画(関連動画の一部など)ではブロック対象を特定できないので出さない
+        nameEl.innerHTML = esc(author) + (meta.channelId
+            ? ' <span class="block-btn" role="button" tabindex="0" aria-label="このチャンネルをブロック">ブロック</span>' : '');
+        const blockEl = nameEl.querySelector('.block-btn');
+        if (blockEl) blockEl.onclick = (e) => {
             e.stopPropagation();
             app.blockChannel(meta.channelId, author);
         };
@@ -191,10 +193,10 @@ const UI = {
             // B()が ?uid= を付けるため、既にクエリがある場合は & で繋ぐ
             const sep = url.includes('?') ? '&' : '?';
             el.innerHTML =
-                `<a href="${url}${sep}dl=1" class="dl-ready" download>💾動画</a>`
-                + `<a href="${url}${sep}format=audio&dl=1" class="dl-ready" download style="margin-left:8px;">🎵音声</a>`;
+                `<a href="${url}${sep}dl=1" class="dl-ready" download aria-label="動画(mp4)で保存">💾動画</a>`
+                + `<a href="${url}${sep}format=audio&dl=1" class="dl-ready" download style="margin-left:8px;" aria-label="音声(m4a)で保存">🎵音声</a>`;
         } else {
-            el.innerHTML = `<span class="dl-wait">Wait...</span>`;
+            el.innerHTML = `<span class="dl-wait">準備中…</span>`;
         }
     },
 
@@ -203,9 +205,9 @@ const UI = {
         const icon = document.getElementById('sub-icon');
         const text = document.getElementById('sub-text');
         if (isSub) {
-            icon.textContent = '★'; text.textContent = 'Subbed'; icon.style.color = 'yellow';
+            icon.textContent = '★'; text.textContent = '登録済み'; icon.style.color = 'yellow';
         } else {
-            icon.textContent = '☆'; text.textContent = 'Sub'; icon.style.color = '#fff';
+            icon.textContent = '☆'; text.textContent = '登録'; icon.style.color = '#fff';
         }
     },
 
@@ -225,31 +227,6 @@ const UI = {
         if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         return `${m}:${s.toString().padStart(2, '0')}`;
     },
-    startDownload: (videoId) => {
-        // JS合成の<a>.click()はWebViewでDownloadListenerに届かないことがあるため、
-        // 実ナビゲーション(location.assign)で確実に発火させる。
-        // attachment応答なので遷移はキャンセルされページは保持される。
-        toast('💾 動画(mp4)で保存を開始しました', 4000);
-        window.location.assign(B(`/stream/${videoId}?dl=1`));
-    },
-
-    addLongPress: (el, videoId) => {
-        let timer = null;
-        const start = () => {
-            timer = setTimeout(() => {
-                timer = null;
-                UI.startDownload(videoId);
-            }, 600);
-        };
-        const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
-        el.addEventListener('touchstart', start, { passive: true });
-        el.addEventListener('touchend', cancel);
-        el.addEventListener('touchmove', cancel);
-        el.addEventListener('mousedown', start);
-        el.addEventListener('mouseup', cancel);
-        el.addEventListener('mouseleave', cancel);
-    },
-
     formatViews: (num) => {
         if (!num) return '';
         if (num > 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -280,7 +257,7 @@ Object.assign(UI, {
         const dt = document.getElementById('v-date'); if (dt) dt.textContent = '';
         UI._hideQuality();
         const dl = document.getElementById('dl-container');
-        if (dl) dl.innerHTML = '<span class="dl-wait">Wait</span>';
+        if (dl) dl.innerHTML = '<span class="dl-wait">準備中…</span>';
     },
     _preferredQuality(heights) {
         const saved = parseInt(localStorage.getItem('shimatube_quality') || '720', 10);

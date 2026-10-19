@@ -19,7 +19,7 @@ Object.assign(app, {
         if (subs.length > 0) {
             const feedHdr = document.createElement('div');
             feedHdr.className = 'cat-header';
-            feedHdr.innerHTML = '<span>Subscriptions</span><span class="cat-toggle" id="toggle-feed">▼</span>';
+            feedHdr.innerHTML = '<span>登録チャンネルの新着</span><span class="cat-toggle" id="toggle-feed">▼</span>';
             feedHdr.onclick = () => {
                 const c = document.getElementById('feed-content');
                 const icon = document.getElementById('toggle-feed');
@@ -43,7 +43,7 @@ Object.assign(app, {
                         <span>${esc(sub.title)}</span>
                     </div>
                     <div class="feed-ch-videos" id="fch-${esc(sub.channelId)}">
-                        <div style="padding:8px;color:#666;font-size:12px;">Loading...</div>
+                        <div style="padding:8px;color:#91a0ae;font-size:12px;">読み込み中…</div>
                     </div>
                 `;
                 feedContent.appendChild(row);
@@ -75,12 +75,12 @@ Object.assign(app, {
             const trendDiv = document.createElement('div');
             trendDiv.id = 'trend-content';
             trendDiv.className = 'cat-content';
-            trendDiv.innerHTML = '<div style="padding:10px;font-size:12px;color:#666;">Loading...</div>';
+            trendDiv.innerHTML = '<div style="padding:10px;font-size:12px;color:#91a0ae;">読み込み中…</div>';
             container.appendChild(trendDiv);
             API.trending().then(res => {
                 UI.renderVideoList(res, 'trend-content');
             }).catch(() => {
-                trendDiv.innerHTML = '<div style="padding:10px;color:#666;">Error</div>';
+                trendDiv.innerHTML = '<div style="padding:10px;color:#91a0ae;">読み込めませんでした。時間をおいて再試行してください</div>';
             });
         }
 
@@ -96,7 +96,7 @@ Object.assign(app, {
             const listDiv = document.createElement('div');
             listDiv.id = listId;
             listDiv.className = 'cat-content';
-            listDiv.innerHTML = '<div style="padding:10px;font-size:12px;color:#666;">Loading...</div>';
+            listDiv.innerHTML = '<div style="padding:10px;font-size:12px;color:#91a0ae;">読み込み中…</div>';
             container.appendChild(listDiv);
 
             if (index > 0) app.toggleCategory(index);
@@ -114,7 +114,7 @@ Object.assign(app, {
                 }
             }).catch(() => {
                 const el = document.getElementById(listId);
-                if (el) el.innerHTML = '<div style="padding:10px;color:#666;">Error</div>';
+                if (el) el.innerHTML = '<div style="padding:10px;color:#91a0ae;">読み込めませんでした。時間をおいて再試行してください</div>';
             });
         });
     },
@@ -126,7 +126,7 @@ Object.assign(app, {
             const data = await API.getFeedChannel(channelId);
             const videos = [...(data.unwatched || []), ...(data.watched || [])];
             if (videos.length === 0) {
-                container.innerHTML = '<div style="padding:8px;color:#666;font-size:12px;">No videos</div>';
+                container.innerHTML = '<div style="padding:8px;color:#91a0ae;font-size:12px;">動画がありません</div>';
                 return;
             }
             container.innerHTML = '';
@@ -142,7 +142,7 @@ Object.assign(app, {
                         <img src="${esc(v.thumbnail)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;">
                         ${dur}
                         <a class="dl-btn" href="${B('/stream/' + esc(v.videoId) + '?dl=1')}" download
-                           onclick="event.stopPropagation(); toast('Download started')"
+                           onclick="event.stopPropagation(); toast('保存を開始しました')"
                            style="position:absolute;top:2px;right:2px;width:auto;padding:1px 4px;background:rgba(0,0,0,.6);border-radius:4px;font-size:14px;">💾</a>
                     </div>
                     <div class="feed-ch-title">${esc(v.title)}</div>
@@ -151,7 +151,7 @@ Object.assign(app, {
             });
         } catch {
             const el = document.getElementById(`fch-${channelId}`);
-            if (el) el.innerHTML = '<div style="padding:8px;color:#666;font-size:12px;">Error</div>';
+            if (el) el.innerHTML = '<div style="padding:8px;color:#91a0ae;font-size:12px;">読み込めませんでした。時間をおいて再試行してください</div>';
         }
     },
 
@@ -198,10 +198,10 @@ Object.assign(app, {
             const sortOpt = (val, label) =>
                 `<option value="${val}" ${sort === val ? 'selected' : ''}>${label}</option>`;
             container.innerHTML = `
-                <div class="cat-header">Search: ${esc(query)}</div>
+                <div class="cat-header">検索: ${esc(query)}</div>
                 <div class="filter-bar">
-                    <button class="filter-btn ${app.currentFilter === '' ? 'active' : ''}" onclick="app.setFilter('')">All</button>
-                    <button class="filter-btn ${app.currentFilter === 'live' ? 'active' : ''}" onclick="app.setFilter('live')">Live</button>
+                    <button class="filter-btn ${app.currentFilter === '' ? 'active' : ''}" onclick="app.setFilter('')">すべて</button>
+                    <button class="filter-btn ${app.currentFilter === 'live' ? 'active' : ''}" onclick="app.setFilter('live')">ライブ</button>
                     <select class="sort-select" onchange="app.setSort(this.value)" ${app.currentFilter === 'live' ? 'disabled' : ''}>
                         ${sortOpt('', '関連度')}
                         ${sortOpt('date', '新しい順')}
@@ -214,7 +214,7 @@ Object.assign(app, {
         }
 
         app.isLoadingMore = true;
-        if (!append) { const el = document.getElementById('search-res-list'); if (el) el.innerHTML = '<div style="padding:20px;text-align:center;color:#888;">Searching...</div>'; }
+        if (!append) { const el = document.getElementById('search-res-list'); if (el) el.innerHTML = '<div style="padding:20px;text-align:center;color:#91a0ae;">検索中…</div>'; }
         try {
             const results = await API.search(query, page, filter, sort);
             if (!isCurrent()) return;

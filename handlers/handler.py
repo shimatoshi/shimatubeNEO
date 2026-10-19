@@ -22,7 +22,7 @@ from handlers.autodl import (handle_autodl_settings, handle_autodl_list, handle_
                              handle_autodl_evict_candidates, handle_autodl_evicted)
 
 def handle_version(handler):
-    handler.send_json({"version": "29.0", "app": "ShimaTube NEO"})
+    handler.send_json({"version": "30.0", "app": "ShimaTube NEO"})
 
 GET_ROUTES = [
     ("/api/version",                handle_version),

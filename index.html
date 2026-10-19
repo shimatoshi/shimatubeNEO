@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>ShimaTube NEO</title>
-    <link rel="stylesheet" href="css/style.css?v=28">
+    <link rel="stylesheet" href="css/style.css?v=33">
     <link rel="manifest" href="manifest.json">
 </head>
 <body>
@@ -31,31 +31,31 @@
                 </div>
                 <div class="action-bar">
                     <div class="action-item" id="quality-container" style="display:none;"></div>
-                    <div class="action-item" id="dl-container"><span class="dl-wait">Wait</span></div>
-                    <div class="action-item" onclick="app.toggleAutoplay()">
+                    <div class="action-item" id="dl-container" aria-live="polite"><span class="dl-wait">準備中…</span></div>
+                    <div class="action-item" role="button" tabindex="0" onclick="app.toggleAutoplay()">
                         <span class="action-icon" id="autoplay-icon">🔁</span><span id="autoplay-text">自動</span>
                     </div>
-                    <div class="action-item" onclick="app.shareVideo()">
-                        <span class="action-icon">📤</span><span>Share</span>
+                    <div class="action-item" role="button" tabindex="0" onclick="app.shareVideo()">
+                        <span class="action-icon">📤</span><span>共有</span>
                     </div>
-                    <div class="action-item" onclick="app.toggleDesc()">
-                        <span class="action-icon">📝</span><span>Desc</span>
+                    <div class="action-item" role="button" tabindex="0" onclick="app.toggleDesc()">
+                        <span class="action-icon">📝</span><span>概要</span>
                     </div>
-                    <div class="action-item" onclick="app.togglePip()">
+                    <div class="action-item" role="button" tabindex="0" onclick="app.togglePip()">
                         <span class="action-icon">📺</span><span>PiP</span>
                     </div>
-                    <div class="action-item" onclick="app.toggleSubFromPlayer()">
-                        <span class="action-icon" id="sub-icon">☆</span><span id="sub-text">Sub</span>
+                    <div class="action-item" role="button" tabindex="0" onclick="app.toggleSubFromPlayer()">
+                        <span class="action-icon" id="sub-icon">☆</span><span id="sub-text">登録</span>
                     </div>
                 </div>
-                <div class="channel-item" onclick="app.openChannelFromPlayer()">
+                <div class="channel-item" role="button" tabindex="0" onclick="app.openChannelFromPlayer()">
                     <img id="c-icon" class="c-thumb" src="">
                     <div id="c-name" class="c-name"></div>
                 </div>
                 <div id="desc-content" class="desc-box"></div>
                 <div class="tabs">
-                    <div class="tab active" onclick="app.showRelated()">Related</div>
-                    <div class="tab" onclick="app.loadComments()">Comments</div>
+                    <div class="tab active" role="button" tabindex="0" onclick="app.showRelated()">関連</div>
+                    <div class="tab" role="button" tabindex="0" onclick="app.loadComments()">コメント</div>
                 </div>
                 <div id="player-list" class="list-container"></div>
             </div>
@@ -63,41 +63,41 @@
     </div>
 
     <div id="view-subs" class="view-section">
-        <div style="padding:10px;font-weight:bold;border-bottom:1px solid #333;">Subscribed Channels</div>
+        <div style="padding:10px;font-weight:bold;border-bottom:1px solid #333;">登録チャンネル</div>
         <div id="subs-list" class="list-container"></div>
     </div>
 
     <div id="view-history" class="view-section">
-        <div style="padding:10px;font-weight:bold;border-bottom:1px solid #333;">Watch History</div>
+        <div style="padding:10px;font-weight:bold;border-bottom:1px solid #333;">視聴履歴</div>
         <div id="history-list" class="list-container"></div>
     </div>
 
-    <div id="mini-player" onclick="app.restorePlayer()">
+    <div id="mini-player" role="button" tabindex="0" aria-label="プレイヤーに戻る" onclick="app.restorePlayer()">
         <div style="margin-right:10px;">▶</div>
         <div id="mini-info">Playing...</div>
-        <div id="mini-close" onclick="event.stopPropagation(); app.closeMiniPlayer()">✕</div>
+        <div id="mini-close" role="button" tabindex="0" aria-label="再生を終了" onclick="event.stopPropagation(); app.closeMiniPlayer()">✕</div>
     </div>
 
-    <div id="config-modal">
-        <div style="text-align:right;margin-bottom:10px;"><button onclick="app.toggleConfig()" style="background:none;border:none;color:#fff;font-size:20px;">✕</button></div>
+    <div id="config-modal" role="dialog" aria-modal="true" aria-label="設定">
+        <div style="text-align:right;margin-bottom:10px;"><button aria-label="設定を閉じる" onclick="app.toggleConfig()" style="background:none;border:none;color:#fff;font-size:20px;">✕</button></div>
         <div class="config-section">
-            <div class="config-title">Categories</div>
+            <div class="config-title">カテゴリ</div>
             <div id="cat-list" class="tag-list"></div>
             <div class="input-row">
-                <input type="text" id="cat-input" placeholder="Add Category">
-                <button class="btn" onclick="app.addCategory()">Add</button>
+                <input type="text" id="cat-input" placeholder="カテゴリを追加" aria-label="カテゴリを追加">
+                <button class="btn" onclick="app.addCategory()">追加</button>
             </div>
         </div>
         <div class="config-section">
-            <div class="config-title">Blocked Keywords</div>
+            <div class="config-title">ブロックするキーワード</div>
             <div id="kw-list" class="tag-list"></div>
             <div class="input-row">
-                <input type="text" id="kw-input" placeholder="Block Keyword">
-                <button class="btn" onclick="app.addBlockKeyword()">Block</button>
+                <input type="text" id="kw-input" placeholder="ブロックするキーワード" aria-label="ブロックするキーワード">
+                <button class="btn" onclick="app.addBlockKeyword()">ブロック</button>
             </div>
         </div>
         <div class="config-section">
-            <div class="config-title">Blocked Channels</div>
+            <div class="config-title">ブロックしたチャンネル</div>
             <div id="bc-list" class="tag-list"></div>
         </div>
         <div class="config-section">
@@ -115,10 +115,12 @@
             <div id="autodl-list" style="margin-top:6px;max-height:200px;overflow-y:auto;"></div>
         </div>
         <div class="config-section" style="border-bottom:none; margin-top:20px;">
-            <button class="btn" style="width:100%; background:#3ea6ff; padding:12px;" onclick="app.forceUpdate()">↻ Update App</button>
-            <button class="btn" style="width:100%; background:#555; padding:12px; margin-top:8px;" onclick="app.recoverData()">🛟 データ復旧（購読・履歴が消えたとき）</button>
+            <div class="config-title">メンテナンス</div>
+            <button class="btn" style="width:100%; padding:12px;" onclick="app.forceUpdate()">↻ アプリを更新（キャッシュを削除して再読み込み）</button>
+            <div style="color:#91a0ae;font-size:12px;margin:18px 0 6px;">購読・履歴が消えたとき（実行するとサーバー上の他のIDのデータは削除されます）</div>
+            <button class="btn btn-danger" style="width:100%; padding:12px;" onclick="app.recoverData()">🛟 データ復旧</button>
         </div>
-        <div style="text-align:center; color:#555; font-size:11px; margin-top:15px;" id="app-version"></div>
+        <div style="text-align:center; color:#91a0ae; font-size:12px; margin-top:15px;" id="app-version"></div>
     </div>
 
     <div id="toast" role="status"></div>
@@ -136,18 +138,18 @@
     </div>
 
     <script>const APP_VERSION = 'v30.0';</script>
-    <script defer src="js/hls.min.js?v=31"></script>
-    <script defer src="js/app.js?v=31"></script>
-    <script defer src="js/storage.js?v=31"></script>
-    <script defer src="js/api.js?v=31"></script>
-    <script defer src="js/ui.js?v=32"></script>
-    <script defer src="js/navigation.js?v=31"></script>
-    <script defer src="js/search.js?v=31"></script>
-    <script defer src="js/player.js?v=31"></script>
-    <script defer src="js/channel.js?v=31"></script>
-    <script defer src="js/playlist.js?v=31"></script>
-    <script defer src="js/config.js?v=31"></script>
-    <script defer src="js/autodl.js?v=31"></script>
-    <script defer src="js/main.js?v=31"></script>
+    <script defer src="js/hls.min.js?v=33"></script>
+    <script defer src="js/app.js?v=33"></script>
+    <script defer src="js/storage.js?v=33"></script>
+    <script defer src="js/api.js?v=33"></script>
+    <script defer src="js/ui.js?v=33"></script>
+    <script defer src="js/navigation.js?v=33"></script>
+    <script defer src="js/search.js?v=33"></script>
+    <script defer src="js/player.js?v=33"></script>
+    <script defer src="js/channel.js?v=33"></script>
+    <script defer src="js/playlist.js?v=33"></script>
+    <script defer src="js/config.js?v=33"></script>
+    <script defer src="js/autodl.js?v=33"></script>
+    <script defer src="js/main.js?v=33"></script>
 </body>
 </html>
