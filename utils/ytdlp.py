@@ -124,6 +124,11 @@ def _audio_lang_score(f):
     return lp
 
 
+# 同じ動画の抽出が走っている間に別リクエスト(プリフェッチ→タップ等)が来たら、
+# 二重に抽出せず先行の完了を待って結果を共有する(抽出は1回数秒〜十数秒かかる)
+_inflight = {}
+
+
 def _extract_video(vid):
     """1動画を1回だけ抽出してキャッシュエントリ(dict)を返す。失敗時 None。"""
     ckey = f"v:{vid}"
@@ -131,6 +136,26 @@ def _extract_video(vid):
         c = url_cache.get(ckey)
         if c and time.time() < c["expiry"]:
             return c
+        ev = _inflight.get(vid)
+        if ev is None:
+            _inflight[vid] = threading.Event()
+    if ev is not None:
+        ev.wait(timeout=_SEM_WAIT + 40)
+        with url_cache_lock:
+            c = url_cache.get(ckey)
+            if c and time.time() < c["expiry"]:
+                return c
+        return None  # 先行が失敗した。連打で再抽出を重ねない
+    try:
+        return _extract_video_uncached(vid, ckey)
+    finally:
+        with url_cache_lock:
+            done = _inflight.pop(vid, None)
+        if done:
+            done.set()
+
+
+def _extract_video_uncached(vid, ckey):
 
     ydl_opts = {
         'format': _EXTRACT_FMT,
@@ -146,13 +171,18 @@ def _extract_video(vid):
     if os.path.exists(COOKIES_FILE):
         ydl_opts['cookiefile'] = COOKIES_FILE
 
+    tw = time.time()
     if not _extract_sem.acquire(timeout=_SEM_WAIT):
         log.warning(f"extract semaphore busy, skip {vid}")
         return None
+    if time.time() - tw > 1:
+        log.info(f"extract {vid}: waited {time.time() - tw:.1f}s for a free slot")
+    t0 = time.time()
     try:
         d = _extract_with_cookie_fallback(ydl_opts, vid)
     finally:
         _extract_sem.release()
+    log.info(f"extract {vid}: {time.time() - t0:.1f}s ({'ok' if d else 'fail'})")
     if d is None:
         return None
 

@@ -38,7 +38,8 @@ const API = {
     _prefetching: new Set(),
 
     prefetchVideos: (videoIds) => {
-        const top = videoIds.slice(0, 3);
+        // 抽出はサーバーで同時2本まで。多く先読みすると、実際にタップした動画の抽出が順番待ちになるので先頭1本だけ
+        const top = videoIds.slice(0, 1);
         top.forEach(id => {
             if (API._videoCache[id] || API._prefetching.has(id)) return;
             API._prefetching.add(id);
