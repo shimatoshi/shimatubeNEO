@@ -375,6 +375,42 @@ button:focus-visible, input:focus-visible, select:focus-visible,
 .autodl-label { flex: 1; min-width: 0; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .autodl-row .btn { flex-shrink: 0; }
 
+/* ===== PC（マウス・広い画面） ===== */
+.action-bar, .feed-ch-videos { scrollbar-width: thin; scrollbar-color: var(--surface-3) transparent; }
+.feed-ch-videos.dragging, .action-bar.dragging { cursor: grabbing; user-select: none; }
+.feed-ch-videos.dragging *, .action-bar.dragging * { pointer-events: none; }
+@media (hover: hover) and (pointer: fine) {
+    html { scrollbar-color: var(--surface-3) var(--bg); }
+    .video-item:hover { background: var(--surface); border-color: var(--line); }
+    .video-item.now-playing:hover { background: #1b3b5e; }
+    .btn:hover, .btn-go:hover { background: var(--accent-strong); color: #fff; }
+    .btn-danger:hover { background: #4a2323; color: var(--danger); }
+    .btn-icon:hover, #back-btn:hover, #mini-close:hover { background: var(--surface-2); border-radius: var(--r-md); }
+    .filter-btn:hover, .sort-select:hover { background: var(--surface-2); color: var(--text); }
+    .filter-btn.active:hover { background: var(--text); color: #101820; }
+    .nav-item:hover { color: var(--text); background: rgba(255,255,255,.04); }
+    .nav-item.active:hover { color: var(--accent); }
+    .action-item:hover, .feed-ch-header:hover, .channel-item:hover { background: var(--surface); color: var(--text); }
+    .tab:hover { color: var(--text); }
+    .dl-btn:hover { opacity: 1; }
+    .block-btn:hover { background: var(--danger-bg); }
+    .tag-del:hover { color: #fff; }
+    .c-sub-btn:hover { filter: brightness(1.15); }
+    #mini-player:hover { background: var(--surface-2); }
+    .feed-ch-card:hover .feed-ch-title { color: var(--text); }
+    .feed-ch-card:hover .thumb { outline: 2px solid var(--accent); }
+}
+@media (min-width: 900px) {
+    :root { --content-w: 960px; }
+    .thumb { width: 168px; height: 94px; }
+    .video-item { min-height: 110px; }
+    .v-title { font-size: var(--fs-base); }
+    .feed-ch-card, .feed-ch-card .thumb { width: 180px; }
+    .feed-ch-card .thumb { height: 101px; }
+    #main-video { max-height: 70vh; }
+    #config-modal { padding-top: var(--sp-8); }
+}
+
 /* ===== 画面幅・環境への適応 ===== */
 @media (max-width: 430px) {
     .thumb { width: 124px; height: 70px; }
