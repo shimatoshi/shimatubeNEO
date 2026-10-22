@@ -11,7 +11,7 @@ const UI = {
         if (!container) return;
         if (!append) container.innerHTML = '';
         if (!videos || videos.length === 0) {
-            if (!append) container.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">動画がありません</div>';
+            if (!append) container.innerHTML = '<div class="state-msg center">動画がありません</div>';
             return;
         }
         videos.forEach(v => {
@@ -102,7 +102,7 @@ const UI = {
         const container = document.getElementById(containerId);
         container.innerHTML = '';
         if (!channels || channels.length === 0) {
-            container.innerHTML = '<div style="padding:20px; color:#aaa;">登録チャンネルはまだありません。</div>';
+            container.innerHTML = '<div class="state-msg">登録チャンネルはまだありません。</div>';
             return;
         }
         channels.forEach(c => {
@@ -195,7 +195,7 @@ const UI = {
             const sep = url.includes('?') ? '&' : '?';
             el.innerHTML =
                 `<a href="${url}${sep}dl=1" class="dl-ready" download aria-label="動画(mp4)で保存">💾動画</a>`
-                + `<a href="${url}${sep}format=audio&dl=1" class="dl-ready" download style="margin-left:8px;" aria-label="音声(m4a)で保存">🎵音声</a>`;
+                + `<a href="${url}${sep}format=audio&dl=1" class="dl-ready" download aria-label="音声(m4a)で保存">🎵音声</a>`;
         } else {
             el.innerHTML = `<span class="dl-wait">準備中…</span>`;
         }
@@ -206,9 +206,9 @@ const UI = {
         const icon = document.getElementById('sub-icon');
         const text = document.getElementById('sub-text');
         if (isSub) {
-            icon.textContent = '★'; text.textContent = '登録済み'; icon.style.color = 'yellow';
+            icon.textContent = '★'; text.textContent = '登録済み'; icon.classList.add('is-on');
         } else {
-            icon.textContent = '☆'; text.textContent = '登録'; icon.style.color = '#fff';
+            icon.textContent = '☆'; text.textContent = '登録'; icon.classList.remove('is-on');
         }
     },
 
@@ -349,11 +349,11 @@ Object.assign(UI, {
     _buildQuality(vid, heights, current) {
         const c = document.getElementById('quality-container');
         if (!c) return;
-        c.style.display = '';
+        c.style.display = 'flex';
         const opts = heights.slice().sort((a, b) => b - a)
             .map(h => `<option value="${h}" ${h === current ? 'selected' : ''}>${h}p</option>`).join('');
         c.innerHTML = `<select id="quality-sel" onchange="UI.switchQuality('${vid}', this.value)" `
-            + `style="background:#222;color:#fff;border:1px solid #555;border-radius:4px;padding:3px 5px;font-size:12px;">${opts}</select>`;
+            + `class="select-ui" aria-label="画質">${opts}</select>`;
     },
     switchQuality(vid, height) {
         height = parseInt(height, 10);

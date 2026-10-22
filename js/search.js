@@ -43,7 +43,7 @@ Object.assign(app, {
                         <span>${esc(sub.title)}</span>
                     </div>
                     <div class="feed-ch-videos" id="fch-${esc(sub.channelId)}">
-                        <div style="padding:8px;color:#91a0ae;font-size:12px;">読み込み中…</div>
+                        <div class="state-msg compact">読み込み中…</div>
                     </div>
                 `;
                 feedContent.appendChild(row);
@@ -75,12 +75,12 @@ Object.assign(app, {
             const trendDiv = document.createElement('div');
             trendDiv.id = 'trend-content';
             trendDiv.className = 'cat-content';
-            trendDiv.innerHTML = '<div style="padding:10px;font-size:12px;color:#91a0ae;">読み込み中…</div>';
+            trendDiv.innerHTML = '<div class="state-msg compact">読み込み中…</div>';
             container.appendChild(trendDiv);
             API.trending().then(res => {
                 UI.renderVideoList(res, 'trend-content');
             }).catch(() => {
-                trendDiv.innerHTML = '<div style="padding:10px;color:#91a0ae;">読み込めませんでした。時間をおいて再試行してください</div>';
+                trendDiv.innerHTML = '<div class="state-msg">読み込めませんでした。時間をおいて再試行してください</div>';
             });
         }
 
@@ -96,7 +96,7 @@ Object.assign(app, {
             const listDiv = document.createElement('div');
             listDiv.id = listId;
             listDiv.className = 'cat-content';
-            listDiv.innerHTML = '<div style="padding:10px;font-size:12px;color:#91a0ae;">読み込み中…</div>';
+            listDiv.innerHTML = '<div class="state-msg compact">読み込み中…</div>';
             container.appendChild(listDiv);
 
             if (index > 0) app.toggleCategory(index);
@@ -114,7 +114,7 @@ Object.assign(app, {
                 }
             }).catch(() => {
                 const el = document.getElementById(listId);
-                if (el) el.innerHTML = '<div style="padding:10px;color:#91a0ae;">読み込めませんでした。時間をおいて再試行してください</div>';
+                if (el) el.innerHTML = '<div class="state-msg">読み込めませんでした。時間をおいて再試行してください</div>';
             });
         });
     },
@@ -126,7 +126,7 @@ Object.assign(app, {
             const data = await API.getFeedChannel(channelId);
             const videos = [...(data.unwatched || []), ...(data.watched || [])];
             if (videos.length === 0) {
-                container.innerHTML = '<div style="padding:8px;color:#91a0ae;font-size:12px;">動画がありません</div>';
+                container.innerHTML = '<div class="state-msg compact">動画がありません</div>';
                 return;
             }
             container.innerHTML = '';
@@ -138,12 +138,11 @@ Object.assign(app, {
                     ? '<span class="live-badge">LIVE</span>'
                     : `<span class="duration">${UI.formatDuration(v.lengthSeconds)}</span>`;
                 card.innerHTML = `
-                    <div class="thumb" style="width:140px;height:79px;margin-bottom:4px;">
-                        <img src="${esc(v.thumbnail)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;">
+                    <div class="thumb">
+                        <img src="${esc(v.thumbnail)}" loading="lazy">
                         ${dur}
-                        <a class="dl-btn" href="${B('/stream/' + esc(v.videoId) + '?dl=1')}" download
-                           onclick="event.stopPropagation(); toast('保存を開始しました')"
-                           style="position:absolute;top:2px;right:2px;width:auto;padding:1px 4px;background:rgba(0,0,0,.6);border-radius:4px;font-size:14px;">💾</a>
+                        <a class="dl-btn on-thumb" href="${B('/stream/' + esc(v.videoId) + '?dl=1')}" download
+                           onclick="event.stopPropagation(); toast('保存を開始しました')">💾</a>
                     </div>
                     <div class="feed-ch-title">${esc(v.title)}</div>
                 `;
@@ -151,7 +150,7 @@ Object.assign(app, {
             });
         } catch {
             const el = document.getElementById(`fch-${channelId}`);
-            if (el) el.innerHTML = '<div style="padding:8px;color:#91a0ae;font-size:12px;">読み込めませんでした。時間をおいて再試行してください</div>';
+            if (el) el.innerHTML = '<div class="state-msg compact">読み込めませんでした。時間をおいて再試行してください</div>';
         }
     },
 
@@ -214,7 +213,7 @@ Object.assign(app, {
         }
 
         app.isLoadingMore = true;
-        if (!append) { const el = document.getElementById('search-res-list'); if (el) el.innerHTML = '<div style="padding:20px;text-align:center;color:#91a0ae;">検索中…</div>'; }
+        if (!append) { const el = document.getElementById('search-res-list'); if (el) el.innerHTML = '<div class="state-msg center">検索中…</div>'; }
         try {
             const results = await API.search(query, page, filter, sort);
             if (!isCurrent()) return;
@@ -266,17 +265,17 @@ Object.assign(app, {
         const fresh = app._liveLoadedAt && Date.now() - app._liveLoadedAt < 300000;
         if (!force && fresh && container.children.length) return;
         const requestId = app._liveRequestId = (app._liveRequestId || 0) + 1;
-        container.innerHTML = '<div style="padding:20px;text-align:center;color:#91a0ae;">配信中のライブを探しています…</div>';
+        container.innerHTML = '<div class="state-msg center">配信中のライブを探しています…</div>';
         try {
             const res = await API.live();
             if (app._liveRequestId !== requestId) return;
             app._liveLoadedAt = Date.now();
             UI.renderVideoList(res, 'live-list');
-            if (!res.length) container.innerHTML = '<div style="padding:20px;text-align:center;color:#91a0ae;">配信中のライブが見つかりませんでした。「更新」で再取得できます。</div>';
+            if (!res.length) container.innerHTML = '<div class="state-msg center">配信中のライブが見つかりませんでした。「更新」で再取得できます。</div>';
         } catch (e) {
             if (app._liveRequestId !== requestId) return;
             app._liveLoadedAt = 0;
-            container.innerHTML = '<div style="padding:20px;color:#91a0ae;">ライブ一覧を読み込めませんでした。時間をおいて「更新」を押してください。</div>';
+            container.innerHTML = '<div class="state-msg">ライブ一覧を読み込めませんでした。時間をおいて「更新」を押してください。</div>';
         }
     }
 });

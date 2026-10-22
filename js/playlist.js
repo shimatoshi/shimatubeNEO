@@ -4,7 +4,7 @@ Object.assign(app, {
         app.homeState = 'playlist';
         if (!isBack) app.pushHomeState({ type: 'playlist', key: 'pl:' + playlistId, playlistId });
         const container = document.getElementById('home-list');
-        container.innerHTML = '<div style="padding:20px;">再生リストを読み込み中…</div>';
+        container.innerHTML = '<div class="state-msg">再生リストを読み込み中…</div>';
 
         try {
             const res = await API.getPlaylist(playlistId);
@@ -12,16 +12,16 @@ Object.assign(app, {
             app.playlistIndex = -1;
 
             container.innerHTML = `
-                <div class="cat-header" style="font-size:16px;">
+                <div class="cat-header lg">
                     <span>${esc(res.title)}</span>
-                    <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="app.playAllPlaylist()">▶ すべて再生</button>
+                    <button class="btn btn-sm" onclick="app.playAllPlaylist()">▶ すべて再生</button>
                 </div>
-                <div style="padding:4px 10px;font-size:12px;color:#888;">${res.videos.length} videos</div>
+                <div class="meta-note">${res.videos.length} videos</div>
                 <div id="playlist-v-list"></div>
             `;
             UI.renderVideoList(res.videos, 'playlist-v-list');
         } catch (e) {
-            container.innerHTML = '<div style="padding:20px;">再生リストを読み込めませんでした。時間をおいて再試行してください</div>';
+            container.innerHTML = '<div class="state-msg">再生リストを読み込めませんでした。時間をおいて再試行してください</div>';
         }
     },
 

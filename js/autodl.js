@@ -215,19 +215,18 @@ Object.assign(app, {
             const data = await res.json();
             const items = data.items || [];
             if (!items.length) {
-                listEl.innerHTML = '<div style="color:#666;font-size:12px;padding:4px 0;">自動DL済みはまだありません</div>';
+                listEl.innerHTML = '<div class="state-msg compact">自動DL済みはまだありません</div>';
                 return;
             }
             listEl.innerHTML = '';
             items.forEach(it => {
                 const row = document.createElement('div');
-                row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #333;font-size:12px;';
+                row.className = 'autodl-row';
                 const label = document.createElement('span');
-                label.style.cssText = 'flex:1;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                label.className = 'autodl-label';
                 label.textContent = `${it.title || it.video_id} (${it.mb}MB)`;
                 const btn = document.createElement('button');
-                btn.className = 'btn';
-                btn.style.cssText = 'padding:4px 8px;font-size:11px;flex-shrink:0;';
+                btn.className = 'btn btn-sm';
                 btn.textContent = it.pinned ? '🔒キープ中' : '🔓リリース対象';
                 btn.onclick = () => app.toggleAutodlPin(it.video_id, !it.pinned);
                 row.append(label, btn);

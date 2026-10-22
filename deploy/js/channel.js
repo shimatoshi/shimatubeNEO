@@ -16,7 +16,7 @@ Object.assign(app, {
 
         const container = document.getElementById('home-list');
         if (!append) {
-            container.innerHTML = '<div style="padding:20px;">チャンネルを読み込み中…</div>';
+            container.innerHTML = '<div class="state-msg">チャンネルを読み込み中…</div>';
         }
 
         app.isLoadingMore = true;
@@ -31,7 +31,7 @@ Object.assign(app, {
                     `<button class="filter-btn ${ctab === key ? 'active' : ''}" onclick="app.setChannelTab('${key}')">${label}</button>`;
                 const isSub = Storage.isSubscribed(channelId);
                 container.innerHTML = `
-                    <div class="cat-header" style="font-size:16px;">
+                    <div class="cat-header lg">
                         <span>${esc(ctitle)}</span>
                         <button id="ch-sub-btn" class="c-sub-btn${isSub ? ' subscribed' : ''}">${isSub ? '登録済み' : '登録'}</button>
                     </div>
@@ -61,7 +61,7 @@ Object.assign(app, {
             UI.renderVideoList(vids, 'channel-v-list', append);
             if (!append && vids.length === 0) {
                 const lst = document.getElementById('channel-v-list');
-                if (lst) lst.innerHTML = '<div style="padding:24px;text-align:center;color:#888;">ここには何もありません</div>';
+                if (lst) lst.innerHTML = '<div class="state-msg center">ここには何もありません</div>';
             }
             if (!append) {
                 app.setupInfiniteScroll(() => app.openChannel(channelId, app.currentChannelPage + 1, true), vids.length >= 20);
@@ -69,8 +69,8 @@ Object.assign(app, {
             }
         } catch (e) {
             const lst = document.getElementById('channel-v-list');
-            if (lst) lst.innerHTML = '<div style="padding:24px;text-align:center;color:#888;">読み込みエラー</div>';
-            else if (!append) container.innerHTML = '<div style="padding:20px;">チャンネルを読み込めませんでした。時間をおいて再試行してください</div>';
+            if (lst) lst.innerHTML = '<div class="state-msg center">読み込みエラー</div>';
+            else if (!append) container.innerHTML = '<div class="state-msg">チャンネルを読み込めませんでした。時間をおいて再試行してください</div>';
         }
         app.isLoadingMore = false;
     },

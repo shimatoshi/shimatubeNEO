@@ -54,7 +54,7 @@ Object.assign(app, {
             app.relatedVideos = (res || []).filter(v => v.videoId !== vid);
             UI.renderVideoList(app.relatedVideos, 'player-list');
         } catch {
-            document.getElementById('player-list').innerHTML = '<div style="padding:10px;color:#91a0ae;">読み込めませんでした。時間をおいて再試行してください</div>';
+            document.getElementById('player-list').innerHTML = '<div class="state-msg">読み込めませんでした。時間をおいて再試行してください</div>';
         }
     },
 
@@ -75,17 +75,17 @@ Object.assign(app, {
             const container = document.getElementById('player-list');
             container.innerHTML = '';
             if (comments.length === 0) {
-                container.innerHTML = '<div style="padding:20px;color:#91a0ae;">コメントはありません</div>';
+                container.innerHTML = '<div class="state-msg">コメントはありません</div>';
                 return;
             }
             comments.forEach(c => {
                 const div = document.createElement('div');
-                div.style.marginBottom = '15px'; div.style.fontSize = '13px';
-                div.innerHTML = `<div style="font-weight:bold;color:#aaa;font-size:11px;">${esc(c.author)}</div><div>${esc(c.text)}</div>`;
+                div.className = 'comment';
+                div.innerHTML = `<div class="comment-author">${esc(c.author)}</div><div>${esc(c.text)}</div>`;
                 container.appendChild(div);
             });
         } catch {
-            document.getElementById('player-list').innerHTML = '<div style="padding:20px;color:#91a0ae;">コメントを読み込めませんでした。時間をおいて再試行してください</div>';
+            document.getElementById('player-list').innerHTML = '<div class="state-msg">コメントを読み込めませんでした。時間をおいて再試行してください</div>';
         }
     },
 

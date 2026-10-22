@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>ShimaTube NEO</title>
-    <link rel="stylesheet" href="css/style.css?v=33">
+    <link rel="stylesheet" href="css/style.css?v=34">
     <link rel="manifest" href="manifest.json">
 </head>
 <body>
@@ -27,10 +27,10 @@
                 <div class="meta-row">
                     <span id="v-views"></span>
                     <span id="v-date"></span>
-                    <span id="live-badge" class="live-badge" style="display:none;">● LIVE</span>
+                    <span id="live-badge" class="live-badge">● LIVE</span>
                 </div>
                 <div class="action-bar">
-                    <div class="action-item" id="quality-container" style="display:none;"></div>
+                    <div class="action-item" id="quality-container"></div>
                     <div class="action-item" id="dl-container" aria-live="polite"><span class="dl-wait">準備中…</span></div>
                     <div class="action-item" role="button" tabindex="0" onclick="app.toggleAutoplay()">
                         <span class="action-icon" id="autoplay-icon">🔁</span><span id="autoplay-text">自動</span>
@@ -63,31 +63,31 @@
     </div>
 
     <div id="view-subs" class="view-section">
-        <div style="padding:10px;font-weight:bold;border-bottom:1px solid #333;">登録チャンネル</div>
+        <div class="page-title">登録チャンネル</div>
         <div id="subs-list" class="list-container"></div>
     </div>
 
     <div id="view-live" class="view-section">
-        <div style="padding:10px;font-weight:bold;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;">
+        <div class="page-title">
             <span>🔴 配信中のライブ</span>
-            <button class="btn" onclick="app.loadLive(true)" aria-label="ライブ一覧を更新">更新</button>
+            <button class="btn btn-sm" onclick="app.loadLive(true)" aria-label="ライブ一覧を更新">更新</button>
         </div>
         <div id="live-list" class="list-container"></div>
     </div>
 
     <div id="view-history" class="view-section">
-        <div style="padding:10px;font-weight:bold;border-bottom:1px solid #333;">視聴履歴</div>
+        <div class="page-title">視聴履歴</div>
         <div id="history-list" class="list-container"></div>
     </div>
 
     <div id="mini-player" role="button" tabindex="0" aria-label="プレイヤーに戻る" onclick="app.restorePlayer()">
-        <div style="margin-right:10px;">▶</div>
+        <div aria-hidden="true">▶</div>
         <div id="mini-info">Playing...</div>
         <div id="mini-close" role="button" tabindex="0" aria-label="再生を終了" onclick="event.stopPropagation(); app.closeMiniPlayer()">✕</div>
     </div>
 
     <div id="config-modal" role="dialog" aria-modal="true" aria-label="設定">
-        <div style="text-align:right;margin-bottom:10px;"><button aria-label="設定を閉じる" onclick="app.toggleConfig()" style="background:none;border:none;color:#fff;font-size:20px;">✕</button></div>
+        <button class="btn-icon btn-close" aria-label="設定を閉じる" onclick="app.toggleConfig()">✕</button>
         <div class="config-section">
             <div class="config-title">カテゴリ</div>
             <div id="cat-list" class="tag-list"></div>
@@ -110,7 +110,7 @@
         </div>
         <div class="config-section">
             <div class="config-title">使い方のヒント</div>
-            <div style="color:#c3ced8;font-size:13px;line-height:1.7;">
+            <div class="config-text">
                 ・動画の行を<b>長押し（約0.6秒）</b>すると、動画(mp4)をダウンロードします。<br>
                 ・💾は動画、🎵は音声(m4a)の保存ボタンです。<br>
                 ・長押し中に指を動かすとキャンセルされます（スクロール用）。
@@ -118,25 +118,25 @@
         </div>
         <div class="config-section">
             <div class="config-title">自動DL</div>
-            <label style="display:flex;align-items:center;gap:8px;color:#ccc;font-size:13px;">
+            <label class="check-row">
                 <input type="checkbox" id="autodl-enabled" onchange="app.toggleAutodl(this.checked)">
                 起動のたびに購読チャンネルの新着をまとめて自動DL
             </label>
-            <div class="input-row" style="margin-top:8px;">
-                <input type="number" id="autodl-quota" min="100" step="100" style="width:100px;" onchange="app.setAutodlQuota(this.value)">
-                <span style="color:#999;font-size:12px;align-self:center;">MB上限</span>
+            <div class="input-row">
+                <input type="number" id="autodl-quota" class="narrow" min="100" step="100" onchange="app.setAutodlQuota(this.value)">
+                <span class="unit">MB上限</span>
             </div>
-            <div id="autodl-usage" style="color:#999;font-size:12px;margin-top:4px;"></div>
-            <div style="color:#777;font-size:11px;margin-top:8px;">容量上限に達すると「リリース対象」の古い順から自動で消して入れ替えます。消したくない動画は🔒キープにしてください。</div>
-            <div id="autodl-list" style="margin-top:6px;max-height:200px;overflow-y:auto;"></div>
+            <div id="autodl-usage" class="config-note"></div>
+            <div class="config-note">容量上限に達すると「リリース対象」の古い順から自動で消して入れ替えます。消したくない動画は🔒キープにしてください。</div>
+            <div id="autodl-list" class="autodl-list"></div>
         </div>
-        <div class="config-section" style="border-bottom:none; margin-top:20px;">
+        <div class="config-section last">
             <div class="config-title">メンテナンス</div>
-            <button class="btn" style="width:100%; padding:12px;" onclick="app.forceUpdate()">↻ アプリを更新（キャッシュを削除して再読み込み）</button>
-            <div style="color:#91a0ae;font-size:12px;margin:18px 0 6px;">購読・履歴が消えたとき（実行するとサーバー上の他のIDのデータは削除されます）</div>
-            <button class="btn btn-danger" style="width:100%; padding:12px;" onclick="app.recoverData()">🛟 データ復旧</button>
+            <button class="btn btn-block" onclick="app.forceUpdate()">↻ アプリを更新（キャッシュを削除して再読み込み）</button>
+            <div class="config-lead">購読・履歴が消えたとき（実行するとサーバー上の他のIDのデータは削除されます）</div>
+            <button class="btn btn-danger btn-block" onclick="app.recoverData()">🛟 データ復旧</button>
         </div>
-        <div style="text-align:center; color:#91a0ae; font-size:12px; margin-top:15px;" id="app-version"></div>
+        <div class="app-version" id="app-version"></div>
     </div>
 
     <div id="toast" role="status"></div>
@@ -157,18 +157,18 @@
     </div>
 
     <script>const APP_VERSION = 'v30.0';</script>
-    <script defer src="js/hls.min.js?v=33"></script>
-    <script defer src="js/app.js?v=33"></script>
-    <script defer src="js/storage.js?v=33"></script>
-    <script defer src="js/api.js?v=33"></script>
-    <script defer src="js/ui.js?v=33"></script>
-    <script defer src="js/navigation.js?v=33"></script>
-    <script defer src="js/search.js?v=33"></script>
-    <script defer src="js/player.js?v=33"></script>
-    <script defer src="js/channel.js?v=33"></script>
-    <script defer src="js/playlist.js?v=33"></script>
-    <script defer src="js/config.js?v=33"></script>
-    <script defer src="js/autodl.js?v=33"></script>
-    <script defer src="js/main.js?v=33"></script>
+    <script defer src="js/hls.min.js?v=34"></script>
+    <script defer src="js/app.js?v=34"></script>
+    <script defer src="js/storage.js?v=34"></script>
+    <script defer src="js/api.js?v=34"></script>
+    <script defer src="js/ui.js?v=34"></script>
+    <script defer src="js/navigation.js?v=34"></script>
+    <script defer src="js/search.js?v=34"></script>
+    <script defer src="js/player.js?v=34"></script>
+    <script defer src="js/channel.js?v=34"></script>
+    <script defer src="js/playlist.js?v=34"></script>
+    <script defer src="js/config.js?v=34"></script>
+    <script defer src="js/autodl.js?v=34"></script>
+    <script defer src="js/main.js?v=34"></script>
 </body>
 </html>
